@@ -16,6 +16,12 @@ class MinaRepoDBA(object):
     def get_reports(
             self, t_start=None, t_end=None, nodes=None,
             top_left=None, bottom_right=None):
+        result = self._get_reports(t_start, t_end, nodes, top_left, bottom_right)
+        return list(result)
+
+    def _get_reports(
+            self, t_start=None, t_end=None, nodes=None,
+            top_left=None, bottom_right=None):
         args = []
         conditions = []
 
@@ -58,17 +64,16 @@ class MinaRepoDBA(object):
         ]
 
         if len(conditions) == 0:
-            sql = 'SELECT %s FROM minarepo;' % cols
+            sql = 'SELECT %s FROM minarepo ORDER BY timestamp;' % cols
         else:
             cond = ' AND '.join(conditions)
-            sql = 'SELECT %s FROM minarepo WHERE %s;' % (cols, cond)
+            sql = 'SELECT %s FROM minarepo WHERE %s ORDER BY timestamp;' % (cols, cond)
 
         if self._last_comm + self._timeout < time.time():
             self._reconnect()
 
         print 'sql=%s' % sql
         print 'sql-args=%s' % args
-        ret = []
         cursor = self._conn.cursor()
         try:
             cursor.execute(sql, args)
@@ -79,12 +84,11 @@ class MinaRepoDBA(object):
                     r_obj[col] = row[i]
                     if col == 'geo':
                         r_obj[col] = parse_geo_point(r_obj[col])
-                ret.append(r_obj)
+                yield r_obj
+
 
         finally:
             cursor.close()
-
-        return ret
 
     def get_report(self, report_id):
         cols = 'id, type, user, astext(geo), timestamp, image, comment, address'

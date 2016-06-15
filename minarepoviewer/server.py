@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 import re
 import sys
 import os
@@ -7,14 +8,16 @@ import json
 import datetime
 import gzip
 import cStringIO as StringIO
+import traceback
 
 import click
 # from bottleapi import WebApiError
 # from bottleapi.jsonapi import json_endpoint
-from bottle import Bottle, HTTPResponse, request, static_file
+from bottle import Bottle, HTTPResponse, request, response, static_file
 from jinja2 import Template
 
 from dbaccess import MinaRepoDBA
+from export import MRExportFile
 
 
 DEFAULT_PORT = 3780
@@ -130,6 +133,45 @@ class MinaRepoViewer(object):
         result = dict(reports=reports)
         return self._json_response(result)
 
+    def export_reports(self):
+        try:
+            time_start = request.params.get('time_start', None)
+            time_end = request.params.get('time_end', None)
+            top_left = request.params.get('top_left', None)
+            bottom_right = request.params.get('bottom_right', None)
+
+            if time_start:
+                time_start = parse_time(time_start)
+
+            if time_end:
+                time_end = parse_time(time_end)
+
+            nodes = request.params.get('nodes', None)
+            if nodes:
+                nodes = json.loads(nodes)
+            else:
+                print 'nodes was None'
+                nodes = None
+
+            exporter = MRExportFile(self._dba)
+            exporter.export(
+                time_start, time_end, nodes, top_left, bottom_right
+            )
+
+            now = datetime.datetime.now()
+            download_fname = 'minarepo_%s.csv' % now.strftime('%Y%m%d%H%M%S')
+            dispo = ('attachment; filename="%s"' % download_fname).encode('utf-8')
+            response.set_header('Content-Disposition', dispo)
+            response.content_type = 'text/csv; charset=cp932'
+            with open(exporter.file_name, 'rb') as fh:
+                while True:
+                    chunk = fh.read(1024 * 4)
+                    if chunk == '':
+                        break
+                    yield chunk
+        except Exception as e:
+            logging.exception('error')
+
     def api_detail(self, report_id):
         report = self._dba.get_report(report_id)
         result = dict(report=report)
@@ -146,6 +188,7 @@ class MinaRepoViewer(object):
         app.route('/', ['GET'], self.html_index)
         app.route('/api/reports', ['GET', 'POST'], self.api_reports)
         app.route('/api/detail/<report_id>', ['GET'], self.api_detail)
+        app.route('/export/reports', ['GET', 'POST'], self.export_reports)
 
         return app
 
@@ -157,6 +200,9 @@ class MinaRepoViewer(object):
 @click.option('-p', '--port', type=int, default=DEFAULT_PORT)
 def main(mysql_conf, static_dir, template_dir, port):
     from wsgiref.simple_server import make_server
+
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.DEBUG)
 
     app = MinaRepoViewer(mysql_conf, static_dir, template_dir)
     wsgi_app = app.create_wsgi_app()
