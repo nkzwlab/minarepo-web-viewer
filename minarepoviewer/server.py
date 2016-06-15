@@ -166,6 +166,7 @@ class MinaRepoViewer(object):
                     if chunk == '':
                         break
                     yield chunk
+            exporter.remove_file()
         except Exception as e:
             logging.exception('error')
 
