@@ -1,0 +1,70 @@
+
+$map-width: 300px;
+$map-height: 300px;
+
+$btn-size: 45px;
+
+$sp-btn-size: 85px;
+
+.mrv-btn-image {
+    @media screen and (min-width: 641px) {
+        width: $btn-size;
+        height: $btn-size;
+    }
+    @media screen and (max-width: 640px) {
+        width: $sp-btn-size;
+        height: $sp-btn-size;
+    }
+}
+
+.mrv-btn-row {
+    margin-bottom: 15px;
+
+}
+
+.mrv-btn-container {
+    text-align: center;
+
+}
+
+.mrv-btn-inner-container {
+    margin-left: auto;
+    margin-right: auto;
+    width: auto;
+}
+
+.mrv-detail-image {
+
+}
+
+.mrv-detial-no-comment {
+
+}
+
+.mrv-detail-error {
+    color: red;
+}
+
+.mrv-map-container {
+    text-align: center;
+
+}
+
+// .mrv-map-inner-container {
+//     margin-left: auto;
+//     margin-right: auto;
+//     width: auto;
+// }
+
+#report-map {
+    // width: $map-width;
+    // height: $map-height;
+    // width: 100px;
+    // height: 100px;
+    width: 95%;
+    height: 80%;
+    // height: auto;
+    margin-left: auto;
+    margin-right: auto;
+
+}

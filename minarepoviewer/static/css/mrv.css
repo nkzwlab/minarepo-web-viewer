@@ -1,0 +1,33 @@
+@media screen and (min-width: 641px) {
+  .mrv-btn-image {
+    width: 45px;
+    height: 45px; } }
+@media screen and (max-width: 640px) {
+  .mrv-btn-image {
+    width: 85px;
+    height: 85px; } }
+
+.mrv-btn-row {
+  margin-bottom: 15px; }
+
+.mrv-btn-container {
+  text-align: center; }
+
+.mrv-btn-inner-container {
+  margin-left: auto;
+  margin-right: auto;
+  width: auto; }
+
+.mrv-detail-error {
+  color: red; }
+
+.mrv-map-container {
+  text-align: center; }
+
+#report-map {
+  width: 95%;
+  height: 80%;
+  margin-left: auto;
+  margin-right: auto; }
+
+/*# sourceMappingURL=mrv.css.map */
