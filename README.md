@@ -81,9 +81,16 @@ next time, you just activate virtualenv.
     $ (edit mysql.secret.json)
 
 
-## run web app on your machine
+### run web app on your machine
 
     $ python ./minarepoviewer/server.py -m ./junk/mysql.secret.json
 
 
 Then MinaRepoVewier will runs on http://localhost:3780/
+
+### interested in table schema?
+
+
+see `schema.sql`  
+or  
+use `desc minarepo;` command in MySQL command line.
