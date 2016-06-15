@@ -48,15 +48,14 @@ class MinaRepoDBA(object):
         # TODO: top_left, bottom_right のcondition組み立てる
         if top_left and bottom_right:
             # WHERE MBRWithin(geom_field, GeomFromText('LineString(130.00 30.00, 140.00 40.00)', 4326));
-            geo_cond = 'MBRWithin(geo, GeomFromText(%s, 4326)'
-            geo_arg = 'LineString(%s %s %s %s)' % (
+            linestring = 'LineString(%s %s %s %s)' % (
                 top_left['latitude'],
                 top_left['longitude'],
                 bottom_right['latitude'],
                 bottom_right['longitude']
             )
+            geo_cond = 'MBRWithin(geo, GeomFromText(%s, 4326)' % linestring
             conditions.append(geo_cond)
-            args.append(geo_arg)
 
         cols = 'id, type, user, astext(geo), timestamp, image, comment, address'
         col_keys = [
