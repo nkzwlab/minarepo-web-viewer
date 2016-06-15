@@ -8,11 +8,8 @@ import json
 import datetime
 import gzip
 import cStringIO as StringIO
-import traceback
 
 import click
-# from bottleapi import WebApiError
-# from bottleapi.jsonapi import json_endpoint
 from bottle import Bottle, HTTPResponse, request, response, static_file
 from jinja2 import Template
 

@@ -85,7 +85,6 @@ class MinaRepoDBA(object):
                         r_obj[col] = parse_geo_point(r_obj[col])
                 yield r_obj
 
-
         finally:
             cursor.close()
 
