@@ -65,9 +65,6 @@ next time, you just activate virtualenv.
 ## run web app on your machine
 
     $ python ./minarepoviewer/server.py -m ./junk/mysql.secret.json
-<<<<<<< HEAD
 
 
 Then MinaRepoVewier will runs on http://localhost:3780/
-=======
->>>>>>> 7ebe328dd1c0d6aa9a7de66e541a4e7a9fa8ab6e
