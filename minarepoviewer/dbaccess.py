@@ -54,7 +54,7 @@ class MinaRepoDBA(object):
 
         cols = 'id, type, user, astext(geo), timestamp, image, comment, address'
         col_keys = [
-            'id', 'type', 'user', 'geo', 'timestamp', 'image', 'comment, address'
+            'id', 'type', 'user', 'geo', 'timestamp', 'image', 'comment', 'address'
         ]
 
         if len(conditions) == 0:
@@ -87,9 +87,9 @@ class MinaRepoDBA(object):
         return ret
 
     def get_report(self, report_id):
-        cols = 'id, type, user, astext(geo), timestamp, image, comment'
+        cols = 'id, type, user, astext(geo), timestamp, image, comment, address'
         col_keys = [
-            'id', 'type', 'user', 'geo', 'timestamp', 'image', 'comment'
+            'id', 'type', 'user', 'geo', 'timestamp', 'image', 'comment', 'address'
         ]
         sql = 'SELECT %s FROM minarepo WHERE id = %%s;' % cols
 
