@@ -10,6 +10,7 @@ minarepo's web viewer!!
   - python 2.7
   - bottle (web app framework)
   - Jinja2 (template language)
+- client responsive framework(css+js): Zurb Foundation
 - client logic: React.js + Fluxxor
 - client css: SCSS
 
