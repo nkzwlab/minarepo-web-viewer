@@ -3,7 +3,26 @@
 minarepo's web viewer!!
 
 
-## prepare python env to develop
+## Technology Stack
+
+- database: mysql 5.7
+- server:
+  - python 2.7
+  - bottle (web app framework)
+  - Jinja2 (template language)
+- client logic: React.js + Fluxxor
+- client css: SCSS
+
+
+## develop guide
+
+### which file to edit?
+
+- modify server side: edit minarepoviewer/server.py and minarepoviewer/dbaccess.py
+- modify server html: edit minarepoviewer/template/index.html.j2 (note: template language is Jinja2)
+- modify images: see minarepoviewer/static/img/*
+- modify client logic: edit minarepoviewer/static/jsx/mrv.jsx and make sure compile it into mrv.js by babel command
+- modify css: edit minarepoviewer/static/scss/mrv.scss and make sure compile it into mrv.css by sass command
 
 
 ### install sass
