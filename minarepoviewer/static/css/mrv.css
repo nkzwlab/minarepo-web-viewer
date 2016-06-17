@@ -1,3 +1,18 @@
+.mrv-hidden {
+  display: none; }
+
+.mrv-title-container {
+  text-align: center; }
+
+.mrv-loading-reports {
+  display: inline-block;
+  margin-bottom: 5px;
+  color: #666666; }
+  .mrv-loading-reports .mrv-img-loading-reports {
+    vertical-align: middle;
+    width: 20px;
+    height: 20px; }
+
 @media screen and (min-width: 641px) {
   .mrv-btn-image {
     width: 45px;
@@ -18,16 +33,39 @@
   margin-right: auto;
   width: auto; }
 
-.mrv-detail-error {
-  color: red; }
+DIV.mrv-detail {
+  margin-top: 20px; }
+  DIV.mrv-detail DIV.mrv-detail-img-container {
+    text-align: center; }
+    DIV.mrv-detail DIV.mrv-detail-img-container DIV.mrv-detail-img-inner-container {
+      margin-left: auto;
+      margin-right: auto;
+      width: auto; }
+  DIV.mrv-detail IMG.mrv-detail-report-type-image {
+    width: 20px;
+    height: 20px; }
+  DIV.mrv-detail DL.mrv-detail-info DD {
+    margin-bottom: 10px;
+    margin-left: 20px; }
+  DIV.mrv-detail .mrv-detail-no-address {
+    color: #888888; }
+  DIV.mrv-detail .mrv-detail-no-comment {
+    color: #888888; }
+  DIV.mrv-detail .mrv-detail-error {
+    color: red; }
 
 .mrv-map-container {
   text-align: center; }
 
 #report-map {
   width: 95%;
-  height: 80%;
+  height: 40%;
   margin-left: auto;
   margin-right: auto; }
+
+.mrv-footer {
+  text-align: center;
+  font-size: 14px;
+  color: #666666; }
 
 /*# sourceMappingURL=mrv.css.map */

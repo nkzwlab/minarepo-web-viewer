@@ -24,6 +24,22 @@ var type2pinInfo = {
   'ps_others': { label: '他', color: '#ffffff', textColor: '#000000' } // その他
 };
 
+var type2text = {
+  'ps_animal': '動物の死骸',
+  'ps_illegalGarbage': '不法投棄ごみ',
+  'ps_garbageStation': '回収されていないゴミ',
+  'ps_graffiti': '落書き',
+  'ps_damage': '痛んだ道路',
+  'ps_streetlight': '問題のある街灯',
+  'ps_kyun': 'キュン',
+  'ps_others': 'その他'
+};
+
+var type2img = function type2img(type, isSelected) {
+  var suffix = isSelected ? '' : '-unselected';
+  return '/static/img/minarepo-icons/' + type + suffix + '.png';
+};
+
 var getMarkerUrl = function getMarkerUrl(type) {
   var pinInfo = type2pinInfo[type];
   var label = encodeURI(pinInfo.label);
@@ -141,9 +157,11 @@ var updatePins = function updatePins(reports) {
     });
     console.debug('created marker for report=' + r.id + ', lat=' + latitude + ', lng=' + longitude + ', icon=' + iconUrl);
 
+    var reportId = r.id;
     marker.addListener('click', function () {
       // TODO: 詳細表示
-      console.debug('pin clicked: report.id=' + r.id);
+      console.debug('pin clicked: report.id=' + reportId);
+      flux.actions.onClickPin({ reportId: reportId });
     });
 
     placedReportIds[r.id] = marker; // このreportはもうピンを追加した。
@@ -181,7 +199,7 @@ var fetchReports = function fetchReports(types, startDate, endDate, isUsingDate,
       flux.actions.onFetchingReportsFailed();
     }
   });
-  flux.actions.onFetchingReportsFailed();
+  flux.actions.onStartFetchingReports();
   console.debug('reports requested!');
 };
 
@@ -229,7 +247,6 @@ var MinaRepoStore = Fluxxor.createStore({
     });
     this.selectedTypes = selectedTypes;
     this.clickedPinReportId = null;
-    this.detail = null;
     this.startDate = null;
     this.endDate = null;
     this.isUsingDate = false;
@@ -260,7 +277,6 @@ var MinaRepoStore = Fluxxor.createStore({
       selectedReport: this.selectedReport,
       selectedTypes: this.selectedTypes,
       clickedPinReportId: this.clickedPinReportId,
-      detail: this.detail,
       startDate: this.startDate,
       endDate: this.endDate,
       isUsingDate: this.isUsingDate,
@@ -306,6 +322,7 @@ var MinaRepoStore = Fluxxor.createStore({
   },
   onClickPin: function onClickPin(data) {
     this.clickedPinReportId = data.reportId;
+    console.debug('updated clickedPinReportId! ' + data.reportId);
     this.emit('change');
   },
   onUpdateStartDate: function onUpdateStartDate(data) {
@@ -396,27 +413,66 @@ var flux = new Fluxxor.Flux(stores, actions);
 var ReportDetail = React.createClass({
   displayName: 'ReportDetail',
 
+  componentWillReceiveProps: function componentWillReceiveProps(newProps) {
+    console.debug('ReportDetail: componentWillReceiveProps() called');
+    var newReportId = newProps.clickedPinReportId;
+    var currentReportId = this.props.clickedPinReportId;
+    if (currentReportId !== newReportId) {
+      // fetch detail
+      setTimeout(function () {
+        console.debug('going to fetch report detail id=' + newReportId);
+        var url = '/api/detail/' + newReportId;
+        $.ajax({
+          url: url,
+          method: 'GET',
+          success: function success(data, status, jqxhr) {
+            console.debug('got report detail id=' + newReportId);
+            var report = data.result.report;
+            flux.actions.onFetchingDetailSuccess({ selectedReport: report });
+          },
+          error: function error() {
+            console.error('detail fetch error');
+            flux.actions.onFetchingDetailFailed();
+          }
+        });
+        flux.actions.onStartFetchingDetail();
+      }, 0);
+    }
+  },
   render: function render() {
     var pinId = this.props.clickedPinReportId;
     if (pinId === null || pinId === undefined) {
-      console.debug('not clicked');
+      console.debug('detail pattern 0: not clicked');
       return React.createElement('div', null);
     }
 
     var isFetchingDetail = this.props.isFetchingDetail;
     var isFetchingDetailFailed = this.props.isFetchingDetailFailed;
 
-    var detail;
+    var detail = this.props.selectedReport;
+    var detailExists = detail !== undefined && detail.id !== null && detail.id !== undefined;
+
     var detailReportId;
     var detailType;
     var detailComment;
     var detailUser;
+    var detailImage;
+    var detailLocation;
     var detailTimestamp;
 
-    if (!isFetchingDetail && !isFetchingDetailFailed && detail.id !== null && detail.id !== undefined) {
-      detail = this.props.detail;
+    if (!isFetchingDetail && !isFetchingDetailFailed && detailExists) {
+      console.debug('detail pattern 1: got report');
       detailReportId = detail.id;
-      detailType = detail.type;
+      var detailTypeStr = type2text[detail.type];
+      var reportTypeImg = type2img(detail.type, true);
+      var detailTypeImg = React.createElement('img', { src: reportTypeImg, className: 'mrv-detail-report-type-image' });
+      detailType = React.createElement(
+        'span',
+        null,
+        detailTypeImg,
+        ' ',
+        detailTypeStr
+      );
       detailComment = detail.comment;
       detailUser = detail.user;
       detailImage = detail.image;
@@ -424,16 +480,39 @@ var ReportDetail = React.createClass({
       if (detailComment === '') {
         detailComment = React.createElement(
           'span',
-          { className: 'mrv-detial-no-comment' },
+          { className: 'mrv-detail-no-comment' },
           '(コメントなし)'
         );
       }
+      var address = detail.address;
+      if (address === null) {
+        address = React.createElement(
+          'span',
+          { className: 'mrv-detail-no-address' },
+          '(取得されていません)'
+        );
+      }
+      detailLocation = React.createElement(
+        'div',
+        null,
+        '住所: ',
+        address,
+        React.createElement('br', null),
+        'GPS座標: 緯度=',
+        detail.geo[0],
+        ', 経度=',
+        detail.geo[1]
+      );
     } else if (isFetchingDetail) {
+      console.debug('detail pattern 2: fetching');
       detailTimestamp = '読み込み中...';
       detailUser = '読み込み中...';
+      detailType = '読み込み中...';
       detailComment = '読み込み中...';
+      detailLocation = '読み込み中...';
       detailImage = '/static/img/loading-big.gif'; // FIXME: 権利？
     } else if (!isFetchingDetail && isFetchingDetailFailed) {
+        console.debug('detail pattern 3: fetch failed');
         detailTimestamp = React.createElement(
           'span',
           { className: 'mrv-detail-error' },
@@ -444,7 +523,17 @@ var ReportDetail = React.createClass({
           { className: 'mrv-detail-error' },
           '読み込みに失敗しました'
         );
+        detailType = React.createElement(
+          'span',
+          { className: 'mrv-detail-error' },
+          '読み込みに失敗しました'
+        );
         detailComment = React.createElement(
+          'span',
+          { className: 'mrv-detail-error' },
+          '読み込みに失敗しました'
+        );
+        detailLocation = React.createElement(
           'span',
           { className: 'mrv-detail-error' },
           '読み込みに失敗しました'
@@ -454,15 +543,23 @@ var ReportDetail = React.createClass({
 
     return React.createElement(
       'div',
-      { className: 'row' },
+      { className: 'row mrv-detail' },
       React.createElement(
         'div',
-        { className: 'large-6 columns' },
-        'レポート画像',
+        { className: 'large-6 columns mrv-detail-img-container' },
         React.createElement(
           'div',
-          null,
-          React.createElement('img', { src: detailImage, className: 'mrv-detail-image' })
+          { className: 'mrv-detail-img-inner-container' },
+          React.createElement(
+            'h3',
+            null,
+            'レポート画像'
+          ),
+          React.createElement(
+            'div',
+            null,
+            React.createElement('img', { src: detailImage, className: 'mrv-detail-image' })
+          )
         )
       ),
       React.createElement(
@@ -470,7 +567,17 @@ var ReportDetail = React.createClass({
         { className: 'large-6 columns' },
         React.createElement(
           'dl',
-          null,
+          { className: 'mrv-detail-info' },
+          React.createElement(
+            'dt',
+            null,
+            'レポート種別'
+          ),
+          React.createElement(
+            'dd',
+            null,
+            detailType
+          ),
           React.createElement(
             'dt',
             null,
@@ -480,6 +587,16 @@ var ReportDetail = React.createClass({
             'dd',
             null,
             detailTimestamp
+          ),
+          React.createElement(
+            'dt',
+            null,
+            '場所'
+          ),
+          React.createElement(
+            'dd',
+            null,
+            detailLocation
           ),
           React.createElement(
             'dt',
@@ -539,17 +656,31 @@ var ReportMap = React.createClass({
   },
   render: function render() {
     // TODO
+
+    var nReports = this.props.reports.length;
+    var msgReportNum = '';
+
+    if (this.props.isFetchingReports) {
+      msgReportNum = React.createElement(
+        'div',
+        { className: 'mrv-loading-reports' },
+        React.createElement('img', { src: '/static/img/loading2.gif', className: 'mrv-img-loading-reports' }),
+        'レポートを読み込み中...'
+      );
+    } else if (this.props.isFetchingReportsFailed) {
+      msgReportNum = 'レポートの読み込みに失敗しました';
+    } else {
+      msgReportNum = '' + nReports + '件のレポート';
+    }
+
     return React.createElement(
       'div',
       { className: 'row' },
       React.createElement(
         'div',
         { className: 'large-12 columns mrv-map-container' },
-        React.createElement(
-          'div',
-          { className: 'mrv-map-inner-container' },
-          React.createElement('div', { id: 'report-map' })
-        )
+        msgReportNum,
+        React.createElement('div', { id: 'report-map' })
       )
     );
   }
@@ -570,15 +701,10 @@ var TypeButtons = React.createClass({
   render: function render() {
     var selBtnMap = this.props.selectedTypes;
 
-    var type2fname = function type2fname(type, isSelected) {
-      var suffix = isSelected ? '' : '-unselected';
-      return '/static/img/minarepo-icons/' + type + suffix + '.png';
-    };
-
     var that = this;
     var buttons = _.map(reportTypes, function (type) {
       var isSelected = selBtnMap[type];
-      var imgFile = type2fname(type, isSelected);
+      var imgFile = type2img(type, isSelected);
       return React.createElement('img', {
         onClick: that.onButtonClick(type),
         src: imgFile,
@@ -591,7 +717,7 @@ var TypeButtons = React.createClass({
 
     group1 = React.createElement(
       'div',
-      { className: 'large-6 columns mrv-btn-container' },
+      { className: 'medium-6 columns mrv-btn-container' },
       React.createElement(
         'div',
         { className: 'mrv-btn-inner-container' },
@@ -600,7 +726,7 @@ var TypeButtons = React.createClass({
     );
     group2 = React.createElement(
       'div',
-      { className: 'large-6 columns mrv-btn-container' },
+      { className: 'medium-6 columns mrv-btn-container' },
       React.createElement(
         'div',
         { className: 'mrv-btn-inner-container' },
@@ -626,11 +752,11 @@ var MinaRepoViewer = React.createClass({
       { className: 'row' },
       React.createElement(
         'div',
-        { className: 'large-12 columns' },
+        { className: 'large-12 columns mrv-title-container' },
         React.createElement(
           'h1',
           null,
-          'Mina Repo Viewer'
+          '藤沢みなレポ'
         )
       )
     );
@@ -653,24 +779,51 @@ var MinaRepoViewer = React.createClass({
     var reportMap = React.createElement(ReportMap, {
       reports: this.props.reports,
       selectedReport: this.props.selectedReport,
-      clickedPinReportId: this.props.clickedPinReportId
+      clickedPinReportId: this.props.clickedPinReportId,
+      isFetchingReports: this.props.isFetchingReports,
+      isFetchingReportsFailed: this.props.isFetchingReportsFailed
     });
 
     var reportDetail = React.createElement(ReportDetail, {
+      detail: this.props.detail,
       isFetchingDetail: this.props.isFetchingDetail,
       isFetchingDetailFailed: this.props.isFetchingDetailFailed,
       selectedReport: this.props.selectedReport,
       clickedPinReportId: this.props.clickedPinReportId
     });
 
+    var footer = React.createElement(
+      'div',
+      { className: 'row' },
+      React.createElement(
+        'div',
+        { className: 'large-12 columns mrv-footer' },
+        'Powered by ',
+        React.createElement(
+          'a',
+          { href: 'https://www.city.fujisawa.kanagawa.jp/' },
+          '藤沢市'
+        ),
+        ' and ',
+        React.createElement(
+          'a',
+          { href: 'https://www.ht.sfc.keio.ac.jp/' },
+          'htlab'
+        )
+      )
+    );
+
     return React.createElement(
       'div',
       null,
       header,
+      React.createElement('hr', null),
       buttons,
       dateController,
       reportMap,
-      reportDetail
+      reportDetail,
+      React.createElement('hr', null),
+      footer
     );
   }
 });
@@ -694,6 +847,7 @@ var MinaRepoViewerApp = React.createClass({
       detail: s.detail,
       startDate: s.startDate,
       endDate: s.endDate,
+      selectedReport: s.selectedReport,
       isUsingDate: s.isUsingDate,
       isFetchingReports: s.isFetchingReports,
       isFetchingReportsFailed: s.isFetchingReportsFailed,

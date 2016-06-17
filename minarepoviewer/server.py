@@ -172,6 +172,7 @@ class MinaRepoViewer(object):
 
     def api_detail(self, report_id):
         report = self._dba.get_report(report_id)
+        report['timestamp'] = report['timestamp'].strftime('%Y-%m-%d %H:%M:%S')
         result = dict(report=report)
         return self._json_response(result)
 
