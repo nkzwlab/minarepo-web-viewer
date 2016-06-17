@@ -566,6 +566,15 @@ var ReportDetail = React.createClass({
         'div',
         { className: 'large-6 columns' },
         React.createElement(
+          'div',
+          { className: 'mrv-detail-info-header' },
+          React.createElement(
+            'h3',
+            null,
+            'レポート内容'
+          )
+        ),
+        React.createElement(
           'dl',
           { className: 'mrv-detail-info' },
           React.createElement(
@@ -809,7 +818,9 @@ var MinaRepoViewer = React.createClass({
           'a',
           { href: 'https://www.ht.sfc.keio.ac.jp/' },
           'htlab'
-        )
+        ),
+        React.createElement('br', null),
+        React.createElement('br', null)
       )
     );
 

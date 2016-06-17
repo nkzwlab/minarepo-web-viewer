@@ -3,6 +3,8 @@
 
 .mrv-title-container {
   text-align: center; }
+  .mrv-title-container H1 {
+    margin-top: 15px; }
 
 .mrv-loading-reports {
   display: inline-block;
@@ -41,9 +43,14 @@ DIV.mrv-detail {
       margin-left: auto;
       margin-right: auto;
       width: auto; }
+      @media screen and (max-width: 640px) {
+        DIV.mrv-detail DIV.mrv-detail-img-container DIV.mrv-detail-img-inner-container IMG.mrv-detail-image {
+          margin-bottom: 25px; } }
   DIV.mrv-detail IMG.mrv-detail-report-type-image {
     width: 20px;
     height: 20px; }
+  DIV.mrv-detail DIV.mrv-detail-info-header {
+    text-align: center; }
   DIV.mrv-detail DL.mrv-detail-info DD {
     margin-bottom: 10px;
     margin-left: 20px; }

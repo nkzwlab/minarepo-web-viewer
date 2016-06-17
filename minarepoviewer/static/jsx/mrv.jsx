@@ -504,6 +504,9 @@ var ReportDetail = React.createClass({
         </div>
       </div>
       <div className="large-6 columns">
+        <div className="mrv-detail-info-header">
+          <h3>レポート内容</h3>
+        </div>
         <dl className="mrv-detail-info">
           <dt>レポート種別</dt>
           <dd>{detailType}</dd>
@@ -667,6 +670,7 @@ var MinaRepoViewer = React.createClass({
     var footer = <div className="row">
       <div className="large-12 columns mrv-footer">
         Powered by <a href="https://www.city.fujisawa.kanagawa.jp/">藤沢市</a> and <a href="https://www.ht.sfc.keio.ac.jp/">htlab</a>
+        <br/><br/>
       </div>
     </div>;
 

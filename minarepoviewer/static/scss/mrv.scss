@@ -12,6 +12,10 @@ $sp-btn-size: 85px;
 
 .mrv-title-container {
     text-align: center;
+
+    H1 {
+        margin-top: 15px;
+    }
 }
 
 .mrv-loading-reports {
@@ -66,13 +70,21 @@ DIV.mrv-detail {
             margin-right: auto;
             width: auto;
             IMG.mrv-detail-image {
-
+                @media screen and (max-width: 640px) {
+                    // width: $btn-size;
+                    // height: $btn-size;
+                    margin-bottom: 25px;
+                }
             }
         }
     }
     IMG.mrv-detail-report-type-image {
         width: 20px;
         height: 20px;
+    }
+
+    DIV.mrv-detail-info-header {
+        text-align: center;
     }
 
     DL.mrv-detail-info {
