@@ -63,10 +63,10 @@ class MinaRepoDBA(object):
         ]
 
         if len(conditions) == 0:
-            sql = 'SELECT %s FROM minarepo ORDER BY timestamp;' % cols
+            sql = 'SELECT %s FROM minarepo ORDER BY timestamp DESC;' % cols
         else:
             cond = ' AND '.join(conditions)
-            sql = 'SELECT %s FROM minarepo WHERE %s ORDER BY timestamp;' % (cols, cond)
+            sql = 'SELECT %s FROM minarepo WHERE %s ORDER BY timestamp DESC;' % (cols, cond)
 
         if self._last_comm + self._timeout < time.time():
             self._reconnect()
