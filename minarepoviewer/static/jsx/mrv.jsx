@@ -32,7 +32,8 @@ var reportTypes = [
 ];
 
 var type2pinInfo = {
-  'ps_animal':         { label: '逝', color: '#91d8f6', textColor: '#000000' },  // 動物
+  // 'ps_animal':         { label: '逝', color: '#91d8f6', textColor: '#000000' },  // 動物
+  'ps_animal':         { label: 'ど', color: '#91d8f6', textColor: '#000000' },  // 動物
   'ps_illegalGarbage': { label: '棄', color: '#b4b4b5', textColor: '#000000' },  // 不法投棄
   'ps_garbageStation': { label: '残', color: '#76c47b', textColor: '#000000' },  // 集積所
   'ps_graffiti':       { label: '塗', color: '#f0b44f', textColor: '#000000' },  // 落書き
