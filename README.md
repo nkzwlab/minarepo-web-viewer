@@ -32,7 +32,7 @@ minarepo's web viewer!!
     $ sass --scss --watch ./scss:./css
 
 
-###install react-tools
+### install react-tools
 You need react-tools to compile .jsx file into .js file.
   
     $ npm (-g) install react-tools
