@@ -22,26 +22,22 @@ minarepo's web viewer!!
 - modify server side: edit minarepoviewer/server.py and minarepoviewer/dbaccess.py
 - modify server html: edit minarepoviewer/template/index.html.j2 (note: template language is Jinja2)
 - modify images: see minarepoviewer/static/img/*
-- modify client logic: edit minarepoviewer/static/jsx/mrv.jsx and make sure compile it into mrv.js by babel command
+- modify client logic: edit minarepoviewer/static/jsx/mrv.jsx and make sure compile it into mrv.js by jsx command
 - modify css: edit minarepoviewer/static/scss/mrv.scss and make sure compile it into mrv.css by sass command
 
 
-### install sass
-
-You need to run sass on command line.
-
-1. install sass http://sass-lang.com/install
 2. keep sass running to compile mrv.scss file into mrv.css like:
 
     $ cd minarepoviewer/static
     $ sass --scss --watch ./scss:./css
 
-### install babel
 
-You need Babel ( https://babeljs.io/ ) to compile .jsx file into .js file.
-
-    $ cd minarepoviewr/static
-    $ babel --watch ./jsx --out-dir ./js
+### install react-tools
+You need react-tools to compile .jsx file into .js file.
+  
+    $ npm (-g) install react-tools
+    $ cd minarepoviewer/static
+    $ jsx -x jsx --watch ./jsx ./js
 
 ### prepare mysql
 
