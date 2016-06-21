@@ -5,6 +5,10 @@ server {
 
   server_name fujisawa-minarepo.ht.sfc.keio.ac.jp;
 
+  location = /favicon.ico {
+    root /usr/local/minarepo-web-viewer/app/minarepoviewer/static;
+  }
+
   location /static {
     alias /usr/local/minarepo-web-viewer/app/minarepoviewer/static;
   }
