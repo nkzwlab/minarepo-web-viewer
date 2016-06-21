@@ -17,11 +17,13 @@ $table-font-size-smartphone: 12px;
 
 .mrv-title-container {
     text-align: center;
+    padding-top: 15px;
 
-    H1 {
-        margin-top: 15px;
+    IMG.mrv-title-image {
+        width: 300px;
     }
 }
+
 
 .mrv-loading-reports {
     // vertical-align: middle;;
