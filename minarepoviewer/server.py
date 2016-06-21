@@ -23,6 +23,10 @@ DEFAULT_PORT = 3780
 _pat_time_sep = re.compile(r'[\-: ]')
 
 
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
+
 def parse_time(t_start):
     chunks = re.split(_pat_time_sep, _pat_time_sep)
     y, m, d, hour, min, sec = [ int(c) for c in chunks ]
@@ -108,24 +112,24 @@ class MinaRepoViewer(object):
         if nodes:
             nodes = json.loads(nodes)
         else:
-            print 'nodes was None'
+            # print 'nodes was None'
             nodes = None
 
         reports = self._dba.get_reports(time_start, time_end, nodes)
-        print '------------------'
-        print 'nodes=%s' % nodes
-        print 'len(reports)=%d' % len(reports)
+        # print '------------------'
+        # print 'nodes=%s' % nodes
+        # print 'len(reports)=%d' % len(reports)
         for r in reports:
             if not include_image:
                 del r['image']
             r['timestamp'] = r['timestamp'].strftime('%Y-%m-%d %H:%M:%S')
-            print 'id=%d\ttype=%s\ttimestamp=%s\tuser=%s\tcomment=%s' % (
-                r['id'],
-                r['type'],
-                r['timestamp'],
-                r['user'],
-                r['comment']
-            )
+            # print 'id=%d\ttype=%s\ttimestamp=%s\tuser=%s\tcomment=%s' % (
+            #     r['id'],
+            #     r['type'],
+            #     r['timestamp'],
+            #     r['user'],
+            #     r['comment']
+            # )
 
         result = dict(reports=reports)
         return self._json_response(result)
@@ -190,6 +194,12 @@ class MinaRepoViewer(object):
         app.route('/export/reports', ['GET', 'POST'], self.export_reports)
 
         return app
+
+
+# for gunicorn
+def build_wsgi_app(mysql_conf, static_dir, template_dir):
+    app = MinaRepoViewer(mysql_conf, static_dir, template_dir)
+    return app.create_wsgi_app()
 
 
 @click.command()
