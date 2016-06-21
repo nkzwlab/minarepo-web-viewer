@@ -944,7 +944,7 @@ var MinaRepoViewer = React.createClass({displayName: "MinaRepoViewer",
   render: function() {
     var header = React.createElement("div", {className: "row"}, 
       React.createElement("div", {className: "large-12 columns mrv-title-container"}, 
-        React.createElement("h1", null, "藤沢みなレポ")
+        React.createElement("img", {src: "/static/img/minarepo-title.png", className: "mrv-title-image"})
       )
     );
 

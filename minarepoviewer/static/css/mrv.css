@@ -2,9 +2,10 @@
   display: none; }
 
 .mrv-title-container {
-  text-align: center; }
-  .mrv-title-container H1 {
-    margin-top: 15px; }
+  text-align: center;
+  padding-top: 15px; }
+  .mrv-title-container IMG.mrv-title-image {
+    width: 300px; }
 
 .mrv-loading-reports {
   display: inline-block;
