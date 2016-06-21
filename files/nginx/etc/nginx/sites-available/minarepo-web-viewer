@@ -1,0 +1,17 @@
+
+server {
+  listen 80 default_server;
+  listen [::]:80 default_server ipv6only=on;
+
+  server_name fujisawa-minarepo.ht.sfc.keio.ac.jp;
+
+  location /static {
+    alias /usr/local/minarepo-web-viewer/app/minarepoviewer/static;
+  }
+
+  location / {
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_pass http://127.0.0.1:3780;
+  }
+}
