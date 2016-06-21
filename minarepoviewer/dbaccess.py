@@ -125,7 +125,8 @@ class MinaRepoDBA(object):
             db=self._cfg['db'],
             host=self._cfg['host'],
             user=self._cfg['user'],
-            passwd=self._cfg['pass']
+            passwd=self._cfg['pass'],
+            charset='utf8'
         )
         self._last_comm = time.time()
 
