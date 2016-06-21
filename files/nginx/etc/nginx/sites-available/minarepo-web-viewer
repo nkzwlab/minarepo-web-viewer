@@ -11,6 +11,8 @@ server {
 
   location /static {
     alias /usr/local/minarepo-web-viewer/app/minarepoviewer/static;
+    gzip on;
+    gzip_types text/plain application/javascript application/x-javascript text/css;
   }
 
   location / {
