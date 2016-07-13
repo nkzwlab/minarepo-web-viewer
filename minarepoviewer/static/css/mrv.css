@@ -22,8 +22,8 @@
     height: 45px; } }
 @media screen and (max-width: 640px) {
   .mrv-btn-image {
-    width: 85px;
-    height: 85px; } }
+    width: 65px;
+    height: 65px; } }
 
 .mrv-btn-row {
   margin-bottom: 15px; }
