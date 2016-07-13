@@ -28,6 +28,8 @@ var reportTypes = [
   'ps_damage',         // 道路
   'ps_streetlight',    // 街灯
   'ps_kyun',           // キュン
+  'ps_disaster',       // 災害
+  'ps_zansa',          // 残渣
   'ps_others'          // その他
 ];
 
@@ -40,6 +42,8 @@ var type2pinInfo = {
   'ps_damage':         { label: '道', color: '#595757', textColor: '#ffffff' },  // 道路
   'ps_streetlight':    { label: '灯', color: '#f5ef8e', textColor: '#000000' },  // 街灯
   'ps_kyun':           { label: '幸', color: '#e8212d', textColor: '#000000' },  // キュン
+  'ps_disaster':       { label: '災', color: '#031435', textColor: '#000000' },  // 災害
+  'ps_zansa':          { label: '別', color: '#ff8dd0', textColor: '#000000' },  // 残渣
   'ps_others':         { label: '他', color: '#ffffff', textColor: '#000000' }  // その他
 };
 
@@ -51,6 +55,8 @@ var type2text = {
   'ps_damage': '痛んだ道路',
   'ps_streetlight': '問題のある街灯',
   'ps_kyun': 'キュン',
+  'ps_disaster': '災害の発生',
+  'ps_zansa': 'ゴミの出し間違い',
   'ps_others': 'その他'
 };
 
@@ -62,6 +68,8 @@ var type2textShort = {
   'ps_damage': '道路',
   'ps_streetlight': '街灯',
   'ps_kyun': '♡♡',
+  'ps_disaster': '災害',
+  'ps_zansa': '残渣',
   'ps_others': '他'
 };
 
@@ -927,8 +935,8 @@ var TypeButtons = React.createClass({displayName: "TypeButtons",
       );
     });
 
-    var group1 = [ buttons[0], buttons[1], buttons[2], buttons[3] ];
-    var group2 = [ buttons[4], buttons[5], buttons[6], buttons[7] ];
+    var group1 = [ buttons[0], buttons[1], buttons[2], buttons[3], buttons[4] ];
+    var group2 = [ buttons[5], buttons[6], buttons[7], buttons[8], buttons[9] ];
 
     group1 = React.createElement("div", {className: "medium-6 columns mrv-btn-container"}, React.createElement("div", {className: "mrv-btn-inner-container"}, group1));
     group2 = React.createElement("div", {className: "medium-6 columns mrv-btn-container"}, React.createElement("div", {className: "mrv-btn-inner-container"}, group2));
