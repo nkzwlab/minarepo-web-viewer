@@ -935,15 +935,10 @@ var TypeButtons = React.createClass({
       />;
     });
 
-    var group1 = [ buttons[0], buttons[1], buttons[2], buttons[3], buttons[4] ];
-    var group2 = [ buttons[5], buttons[6], buttons[7], buttons[8], buttons[9] ];
-
-    group1 = <div className="medium-6 columns mrv-btn-container"><div className="mrv-btn-inner-container">{group1}</div></div>;
-    group2 = <div className="medium-6 columns mrv-btn-container"><div className="mrv-btn-inner-container">{group2}</div></div>;
-
     return <div className="row mrv-btn-row">
-      {group1}
-      {group2}
+      <div className="medium-12 columns mrv-btn-container">
+        {buttons}
+      </div>
     </div>;
   }
 });

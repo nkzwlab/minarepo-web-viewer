@@ -935,15 +935,10 @@ var TypeButtons = React.createClass({displayName: "TypeButtons",
       );
     });
 
-    var group1 = [ buttons[0], buttons[1], buttons[2], buttons[3], buttons[4] ];
-    var group2 = [ buttons[5], buttons[6], buttons[7], buttons[8], buttons[9] ];
-
-    group1 = React.createElement("div", {className: "medium-6 columns mrv-btn-container"}, React.createElement("div", {className: "mrv-btn-inner-container"}, group1));
-    group2 = React.createElement("div", {className: "medium-6 columns mrv-btn-container"}, React.createElement("div", {className: "mrv-btn-inner-container"}, group2));
-
     return React.createElement("div", {className: "row mrv-btn-row"}, 
-      group1, 
-      group2
+      React.createElement("div", {className: "medium-12 columns mrv-btn-container"},
+        buttons
+      )
     );
   }
 });
@@ -951,7 +946,7 @@ var TypeButtons = React.createClass({displayName: "TypeButtons",
 var MinaRepoViewer = React.createClass({displayName: "MinaRepoViewer",
   render: function() {
     var header = React.createElement("div", {className: "row"}, 
-      React.createElement("div", {className: "large-12 columns mrv-title-container"}, 
+      React.createElement("div", {className: "large-12 columns mrv-title-container"},
         React.createElement("img", {src: "/static/img/minarepo-title.png", className: "mrv-title-image"})
       )
     );
