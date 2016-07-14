@@ -4,7 +4,7 @@ $map-height: 300px;
 
 $btn-size: 45px;
 
-$sp-btn-size: 85px;
+$sp-btn-size: 65px;
 
 $rtype-mini-icon-size: 20px;
 
@@ -43,6 +43,7 @@ $table-font-size-smartphone: 12px;
     @media screen and (min-width: 641px) {
         width: $btn-size;
         height: $btn-size;
+        margin: 0 7px 0 7px;
     }
     @media screen and (max-width: 640px) {
         width: $sp-btn-size;

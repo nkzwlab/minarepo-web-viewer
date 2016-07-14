@@ -19,11 +19,12 @@
 @media screen and (min-width: 641px) {
   .mrv-btn-image {
     width: 45px;
-    height: 45px; } }
+    height: 45px;
+    margin: 0 7px 0 7px; } }
 @media screen and (max-width: 640px) {
   .mrv-btn-image {
-    width: 85px;
-    height: 85px; } }
+    width: 65px;
+    height: 65px; } }
 
 .mrv-btn-row {
   margin-bottom: 15px; }
