@@ -8,9 +8,11 @@ import json
 import datetime
 import gzip
 import cStringIO as StringIO
+import hashlib
+import base64
 
 import click
-from bottle import Bottle, HTTPResponse, request, response, static_file
+from bottle import Bottle, HTTPResponse, request, response, route, static_file, auth_basic
 from jinja2 import Template
 
 from dbaccess import MinaRepoDBA
@@ -31,6 +33,21 @@ def parse_time(t_start):
     chunks = re.split(_pat_time_sep, _pat_time_sep)
     y, m, d, hour, min, sec = [ int(c) for c in chunks ]
     return datetime.datetime(y, m, d, hour, min, sec)
+
+
+def check(username, password):
+    here = os.path.dirname(__file__)
+
+    cfg_file = os.path.join(here, './config/.htpasswd')
+    f = open(cfg_file, 'r')
+    auth_check_word = f.readline()
+    f.close()
+
+    hs= hashlib.sha1()
+    hs.update(password.encode("utf-8"))
+    login_word = username + ":{SHA}" + str(base64.b64encode(hs.digest()).decode("utf-8"))
+
+    return auth_check_word.strip() ==login_word.strip()
 
 
 class MinaRepoViewer(object):
@@ -188,10 +205,15 @@ class MinaRepoViewer(object):
 
         app.route('/static/<file_name:path>', ['GET'], self.static)
 
-        app.route('/', ['GET'], self.html_index)
+        # app.route('/', ['GET'], self.html_index)
         app.route('/api/reports', ['GET', 'POST'], self.api_reports)
         app.route('/api/detail/<report_id>', ['GET'], self.api_detail)
         app.route('/export/reports', ['GET', 'POST'], self.export_reports)
+
+        @app.route('/', method='GET')
+        #@auth_basic(check)
+        def minarepo_home():
+            return self.html_index()
 
         return app
 
