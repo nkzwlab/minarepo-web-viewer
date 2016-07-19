@@ -108,11 +108,11 @@ var convertBounds = function(mapBounds) {
 
 // for DEBUG
 // function gen(ln) {
-// 	var ret = [];
-// 	for (var i = 1; i <= ln; i++) {
-// 		ret.push([i]);
-// 	}
-// 	return ret;
+//   var ret = [];
+//   for (var i = 1; i <= ln; i++) {
+//     ret.push([i]);
+//   }
+//   return ret;
 // }
 
 // for DEBUG
@@ -387,7 +387,7 @@ var MinaRepoStore = Fluxxor.createStore({
     this.mapTopLeft = null;
     this.mapBottomRight = null;
     this.tableSelectedPage = 1;
-    this.isShowingTable = false;
+    this.isShowingTable = true; // shinny modifyied to show from beginning [false -> true]
 
     this.bindActions(constants.START_FETCHING_REPORTS, this.onStartFetchingReports);
     this.bindActions(constants.FETCHING_REPORTS_SUCCESS, this.onFetchingReportsSuccess);
@@ -772,11 +772,9 @@ var ReportMap = React.createClass({
       msgReportNum = '' + nReports + '件のレポート';
     }
 
-    return <div className="row">
-      <div className="large-12 columns mrv-map-container">
-        {msgReportNum}
-        <div id="report-map" key="report-map"></div>
-      </div>
+    return <div className="large-6 columns mrv-map-container">
+      {msgReportNum}
+      <div id="report-map" key="report-map"></div>
     </div>;
   }
 });
@@ -795,17 +793,23 @@ var ReportTable = React.createClass({
       var key = 'report-' + String(report.id);
       var showHandler = function(event) {
         flux.actions.onClickPin({ reportId: reportId });
+
+        var lat = Number(report.geo[0]);
+        var lng = Number(report.geo[1]);
+        document.getElementById('report-map').scrollIntoView();
+        reportMap.setZoom(18);
+        reportMap.panTo({ lat: lat, lng: lng });
       };
       var reportTypeStr = type2textShort[report.type];
       var reportTypeImg = type2img(report.type, true);
       var reportTypeImg = <img src={reportTypeImg} className="mrv-report-table-report-type-image" />;
       var reportType = <span>{reportTypeImg} {reportTypeStr}</span>;
 
-      return <tr key={key}>
-        <td><span className="mrv-report-table-show-detail-link" onClick={showHandler}>{reportId}</span></td>
-        <td><span className="mrv-report-table-show-detail-link" onClick={showHandler}>{reportType}</span></td>
-        <td><span className="mrv-report-table-show-detail-link" onClick={showHandler}>{report.user}</span></td>
-        <td><span className="mrv-report-table-show-detail-link" onClick={showHandler}>{report.timestamp}</span></td>
+      return <tr className="mrv-report-table-show-detail-link" key={key} onClick={showHandler}>
+        <td><span>{reportId}</span></td>
+        <td><span>{reportType}</span></td>
+        <td><span>{report.user}</span></td>
+        <td><span>{report.timestamp}</span></td>
       </tr>;
     });
 
@@ -871,31 +875,29 @@ var ReportTable = React.createClass({
     var pager1 = <ul className="pagination text-center pager1" role="pagination" aria-label="Pagination" key="pager1">{paginationElements}</ul>;
     var pager2 = <ul className="pagination text-center pager2" role="pagination" aria-label="Pagination" key="pager2">{paginationElements}</ul>;
 
-    return <div className="row">
-      <div className="large-12 columns mrv-report-table-container">
-        <nav>
-          {pager1}
-        </nav>
+    return <div className="large-6 columns mrv-report-table-container">
+      <nav>
+        {pager1}
+      </nav>
 
-        <table className="hover mrv-report-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>レポ種類</th>
-              <th>投稿者</th>
-              <th>投稿時刻</th>
-            </tr>
-          </thead>
+      <table className="hover mrv-report-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>レポ種類</th>
+            <th>投稿者</th>
+            <th>投稿時刻</th>
+          </tr>
+        </thead>
 
-          <tbody>
-            {reportRows}
-          </tbody>
-        </table>
+        <tbody>
+          {reportRows}
+        </tbody>
+      </table>
 
-        <nav>
-          {pager2}
-        </nav>
-      </div>
+      <nav>
+        {pager2}
+      </nav>
     </div>;
   }
 });
@@ -1001,6 +1003,11 @@ var MinaRepoViewer = React.createClass({
       </div>
     </div>;
 
+    var reportView = <div className="row mrv-rv-row">
+      {reportTable}
+      {reportMap}
+    </div>;
+
     var reportDetail = <ReportDetail
       detail={this.props.detail}
       isFetchingDetail={this.props.isFetchingDetail}
@@ -1021,9 +1028,12 @@ var MinaRepoViewer = React.createClass({
       <hr/>
       {buttons}
       {dateController}
+      {/*
       {reportMap}
-      {reportTable}
+      {reportTable}     // Merged into below {reportView}
       {tableToggleButton}
+      */}
+      {reportView}
       {reportDetail}
       <hr/>
       {footer}

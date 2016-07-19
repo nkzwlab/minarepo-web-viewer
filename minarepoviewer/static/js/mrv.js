@@ -108,11 +108,11 @@ var convertBounds = function(mapBounds) {
 
 // for DEBUG
 // function gen(ln) {
-// 	var ret = [];
-// 	for (var i = 1; i <= ln; i++) {
-// 		ret.push([i]);
-// 	}
-// 	return ret;
+//   var ret = [];
+//   for (var i = 1; i <= ln; i++) {
+//     ret.push([i]);
+//   }
+//   return ret;
 // }
 
 // for DEBUG
@@ -387,7 +387,7 @@ var MinaRepoStore = Fluxxor.createStore({
     this.mapTopLeft = null;
     this.mapBottomRight = null;
     this.tableSelectedPage = 1;
-    this.isShowingTable = false;
+    this.isShowingTable = true; // shinny modifyied to show from beginning [false -> true]
 
     this.bindActions(constants.START_FETCHING_REPORTS, this.onStartFetchingReports);
     this.bindActions(constants.FETCHING_REPORTS_SUCCESS, this.onFetchingReportsSuccess);
@@ -772,11 +772,9 @@ var ReportMap = React.createClass({displayName: "ReportMap",
       msgReportNum = '' + nReports + '件のレポート';
     }
 
-    return React.createElement("div", {className: "row"}, 
-      React.createElement("div", {className: "large-12 columns mrv-map-container"}, 
-        msgReportNum, 
-        React.createElement("div", {id: "report-map", key: "report-map"})
-      )
+    return React.createElement("div", {className: "large-6 columns mrv-map-container"}, 
+      msgReportNum, 
+      React.createElement("div", {id: "report-map", key: "report-map"})
     );
   }
 });
@@ -795,17 +793,23 @@ var ReportTable = React.createClass({displayName: "ReportTable",
       var key = 'report-' + String(report.id);
       var showHandler = function(event) {
         flux.actions.onClickPin({ reportId: reportId });
+
+        var lat = Number(report.geo[0]);
+        var lng = Number(report.geo[1]);
+        document.getElementById('report-map').scrollIntoView();
+        reportMap.setZoom(18);
+        reportMap.panTo({ lat: lat, lng: lng });
       };
       var reportTypeStr = type2textShort[report.type];
       var reportTypeImg = type2img(report.type, true);
       var reportTypeImg = React.createElement("img", {src: reportTypeImg, className: "mrv-report-table-report-type-image"});
       var reportType = React.createElement("span", null, reportTypeImg, " ", reportTypeStr);
 
-      return React.createElement("tr", {key: key}, 
-        React.createElement("td", null, React.createElement("span", {className: "mrv-report-table-show-detail-link", onClick: showHandler}, reportId)), 
-        React.createElement("td", null, React.createElement("span", {className: "mrv-report-table-show-detail-link", onClick: showHandler}, reportType)), 
-        React.createElement("td", null, React.createElement("span", {className: "mrv-report-table-show-detail-link", onClick: showHandler}, report.user)), 
-        React.createElement("td", null, React.createElement("span", {className: "mrv-report-table-show-detail-link", onClick: showHandler}, report.timestamp))
+      return React.createElement("tr", {className: "mrv-report-table-show-detail-link", key: key, onClick: showHandler}, 
+        React.createElement("td", null, React.createElement("span", null, reportId)), 
+        React.createElement("td", null, React.createElement("span", null, reportType)), 
+        React.createElement("td", null, React.createElement("span", null, report.user)), 
+        React.createElement("td", null, React.createElement("span", null, report.timestamp))
       );
     });
 
@@ -871,30 +875,28 @@ var ReportTable = React.createClass({displayName: "ReportTable",
     var pager1 = React.createElement("ul", {className: "pagination text-center pager1", role: "pagination", "aria-label": "Pagination", key: "pager1"}, paginationElements);
     var pager2 = React.createElement("ul", {className: "pagination text-center pager2", role: "pagination", "aria-label": "Pagination", key: "pager2"}, paginationElements);
 
-    return React.createElement("div", {className: "row"}, 
-      React.createElement("div", {className: "large-12 columns mrv-report-table-container"}, 
-        React.createElement("nav", null, 
-          pager1
-        ), 
+    return React.createElement("div", {className: "large-6 columns mrv-report-table-container"}, 
+      React.createElement("nav", null, 
+        pager1
+      ), 
 
-        React.createElement("table", {className: "hover mrv-report-table"}, 
-          React.createElement("thead", null, 
-            React.createElement("tr", null, 
-              React.createElement("th", null, "ID"), 
-              React.createElement("th", null, "レポ種類"), 
-              React.createElement("th", null, "投稿者"), 
-              React.createElement("th", null, "投稿時刻")
-            )
-          ), 
-
-          React.createElement("tbody", null, 
-            reportRows
+      React.createElement("table", {className: "hover mrv-report-table"}, 
+        React.createElement("thead", null, 
+          React.createElement("tr", null, 
+            React.createElement("th", null, "ID"), 
+            React.createElement("th", null, "レポ種類"), 
+            React.createElement("th", null, "投稿者"), 
+            React.createElement("th", null, "投稿時刻")
           )
         ), 
 
-        React.createElement("nav", null, 
-          pager2
+        React.createElement("tbody", null, 
+          reportRows
         )
+      ), 
+
+      React.createElement("nav", null, 
+        pager2
       )
     );
   }
@@ -936,7 +938,7 @@ var TypeButtons = React.createClass({displayName: "TypeButtons",
     });
 
     return React.createElement("div", {className: "row mrv-btn-row"}, 
-      React.createElement("div", {className: "medium-12 columns mrv-btn-container"},
+      React.createElement("div", {className: "medium-12 columns mrv-btn-container"}, 
         buttons
       )
     );
@@ -946,7 +948,7 @@ var TypeButtons = React.createClass({displayName: "TypeButtons",
 var MinaRepoViewer = React.createClass({displayName: "MinaRepoViewer",
   render: function() {
     var header = React.createElement("div", {className: "row"}, 
-      React.createElement("div", {className: "large-12 columns mrv-title-container"},
+      React.createElement("div", {className: "large-12 columns mrv-title-container"}, 
         React.createElement("img", {src: "/static/img/minarepo-title.png", className: "mrv-title-image"})
       )
     );
@@ -1001,6 +1003,11 @@ var MinaRepoViewer = React.createClass({displayName: "MinaRepoViewer",
       )
     );
 
+    var reportView = React.createElement("div", {className: "row mrv-rv-row"}, 
+      reportTable, 
+      reportMap
+    );
+
     var reportDetail = React.createElement(ReportDetail, {
       detail: this.props.detail, 
       isFetchingDetail: this.props.isFetchingDetail, 
@@ -1021,9 +1028,12 @@ var MinaRepoViewer = React.createClass({displayName: "MinaRepoViewer",
       React.createElement("hr", null), 
       buttons, 
       dateController, 
-      reportMap, 
-      reportTable, 
-      tableToggleButton, 
+      /*
+      {reportMap}
+      {reportTable}     // Merged into below {reportView}
+      {tableToggleButton}
+      */
+      reportView, 
       reportDetail, 
       React.createElement("hr", null), 
       footer

@@ -1,6 +1,9 @@
 
-$map-width: 300px;
-$map-height: 300px;
+$map-width: 450px;
+$map-height: 450px;
+
+$sp-map-width: 300px;
+$sp-map-height: 300px;
 
 $btn-size: 45px;
 
@@ -23,7 +26,6 @@ $table-font-size-smartphone: 12px;
         width: 300px;
     }
 }
-
 
 .mrv-loading-reports {
     // vertical-align: middle;;
@@ -172,7 +174,7 @@ DIV.mrv-detail {
 
 .mrv-map-container {
     text-align: center;
-
+    margin: 26px 0 26px 0;
 }
 
 .mrv-btn-close-table {
@@ -194,8 +196,14 @@ DIV.mrv-detail {
     // height: $map-height;
     // width: 100px;
     // height: 100px;
-    width: 95%;
-    height: 40%;
+    @media screen and (min-width: 641px) {
+        width: 95%;
+        height: 70%;
+    }
+    @media screen and (max-width: 640px) {
+        width: 95%;
+        height: 40%;
+    }
     // height: auto;
     margin-left: auto;
     margin-right: auto;
