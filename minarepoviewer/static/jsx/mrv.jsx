@@ -1,6 +1,7 @@
 
 var reportMap = null;
 var placedReportIds = {};  // id => marker
+var infoWindow = null;
 
 var INIT_MAP_CENTER = {
   lat: 35.339193,  // 藤沢市役所(緯度)
@@ -288,6 +289,7 @@ var updatePins = function(reports) {
     marker.addListener('click', function() {
       // console.debug('pin clicked: report.id=' + reportId);
       flux.actions.onClickPin({ reportId: reportId });
+      reportMap.panTo({ lat: Number(latitude), lng: Number(longitude) });
     });
 
     placedReportIds[r.id] = marker;  // このreportはもうピンを追加した。
@@ -675,6 +677,26 @@ var ReportDetail = React.createClass({
         reportMap.panTo({ lat: lat, lng: lng });
       };
       centerButtonDom = <button className="button" onClick={centerButtonHandler}>マップに表示</button>;
+
+      var openInfoWindow = function(img, lat, lng) {
+        if (infoWindow === null || infoWindow === undefined) {
+          infoWindow = new google.maps.InfoWindow({
+            content: '<section><img src="' + img + '" style="width: 64px; height:96px"></img></section>',
+            position: new google.maps.LatLng(lat, lng),
+            pixelOffset: new google.maps.Size(0, -30)
+          });
+
+          google.maps.event.addListener(reportMap, 'click', function() {
+            infoWindow.close();
+          });
+        } else {
+          infoWindow.setContent('<section><img src="' + img + '" style="width: 64px; height:96px"></img></section>');
+          infoWindow.position = new google.maps.LatLng(lat, lng);
+        }
+
+        infoWindow.setMap(reportMap);
+      };
+      openInfoWindow(detail.image, detail.geo[0], detail.geo[1]);
     } else if (isFetchingDetail) {
       // console.debug('detail pattern 2: fetching');
       detailTimestamp = '読み込み中...';
