@@ -211,7 +211,7 @@ class MinaRepoViewer(object):
         app.route('/export/reports', ['GET', 'POST'], self.export_reports)
 
         @app.route('/', method='GET')
-        #@auth_basic(check)
+        @auth_basic(check)
         def minarepo_home():
             return self.html_index()
 
