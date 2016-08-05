@@ -87,16 +87,23 @@ DIV.mrv-detail {
     color: red; }
 
 .mrv-map-container {
-  text-align: center; }
+  text-align: center;
+  margin: 26px 0 26px 0; }
 
 .mrv-btn-open-table {
   margin-top: 20px; }
 
 #report-map {
-  width: 95%;
-  height: 40%;
   margin-left: auto;
   margin-right: auto; }
+  @media screen and (min-width: 641px) {
+    #report-map {
+      width: 95%;
+      height: 70%; } }
+  @media screen and (max-width: 640px) {
+    #report-map {
+      width: 95%;
+      height: 40%; } }
 
 .mrv-footer {
   text-align: center;

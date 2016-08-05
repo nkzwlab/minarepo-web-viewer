@@ -1,6 +1,7 @@
 
 var reportMap = null;
 var placedReportIds = {};  // id => marker
+var infoWindow = null;
 
 var INIT_MAP_CENTER = {
   lat: 35.339193,  // 藤沢市役所(緯度)
@@ -30,6 +31,7 @@ var reportTypes = [
   'ps_kyun',           // キュン
   'ps_disaster',       // 災害
   'ps_zansa',          // 残渣
+  'ps_kaisyuwasure',  // 回収忘れ
   'ps_others'          // その他
 ];
 
@@ -44,6 +46,7 @@ var type2pinInfo = {
   'ps_kyun':           { label: '幸', color: '#e8212d', textColor: '#000000' },  // キュン
   'ps_disaster':       { label: '災', color: '#031435', textColor: '#000000' },  // 災害
   'ps_zansa':          { label: '別', color: '#ff8dd0', textColor: '#000000' },  // 残渣
+  'ps_kaisyuwasure':  { label: '忘', color: '#ee82ee', textColor: '#000000' },  // 回収忘れ
   'ps_others':         { label: '他', color: '#ffffff', textColor: '#000000' }  // その他
 };
 
@@ -57,6 +60,7 @@ var type2text = {
   'ps_kyun': 'キュン',
   'ps_disaster': '災害の発生',
   'ps_zansa': 'ゴミの出し間違い',
+  'ps_kaisyuwasure': 'ゴミの回収し忘れ',
   'ps_others': 'その他'
 };
 
@@ -70,6 +74,7 @@ var type2textShort = {
   'ps_kyun': '♡♡',
   'ps_disaster': '災害',
   'ps_zansa': '残渣',
+  'ps_kaisyuwasure': '回収忘',
   'ps_others': '他'
 };
 
@@ -108,11 +113,11 @@ var convertBounds = function(mapBounds) {
 
 // for DEBUG
 // function gen(ln) {
-// 	var ret = [];
-// 	for (var i = 1; i <= ln; i++) {
-// 		ret.push([i]);
-// 	}
-// 	return ret;
+//   var ret = [];
+//   for (var i = 1; i <= ln; i++) {
+//     ret.push([i]);
+//   }
+//   return ret;
 // }
 
 // for DEBUG
@@ -288,6 +293,7 @@ var updatePins = function(reports) {
     marker.addListener('click', function() {
       // console.debug('pin clicked: report.id=' + reportId);
       flux.actions.onClickPin({ reportId: reportId });
+      reportMap.panTo({ lat: Number(latitude), lng: Number(longitude) });
     });
 
     placedReportIds[r.id] = marker;  // このreportはもうピンを追加した。
@@ -387,7 +393,7 @@ var MinaRepoStore = Fluxxor.createStore({
     this.mapTopLeft = null;
     this.mapBottomRight = null;
     this.tableSelectedPage = 1;
-    this.isShowingTable = false;
+    this.isShowingTable = true; // shinny modifyied to show from beginning [false -> true]
 
     this.bindActions(constants.START_FETCHING_REPORTS, this.onStartFetchingReports);
     this.bindActions(constants.FETCHING_REPORTS_SUCCESS, this.onFetchingReportsSuccess);
@@ -675,6 +681,26 @@ var ReportDetail = React.createClass({
         reportMap.panTo({ lat: lat, lng: lng });
       };
       centerButtonDom = <button className="button" onClick={centerButtonHandler}>マップに表示</button>;
+
+      var openInfoWindow = function(img, lat, lng) {
+        if (infoWindow === null || infoWindow === undefined) {
+          infoWindow = new google.maps.InfoWindow({
+            content: '<section><img src="' + img + '" style="width: 64px; height:96px"></img></section>',
+            position: new google.maps.LatLng(lat, lng),
+            pixelOffset: new google.maps.Size(0, -30)
+          });
+
+          google.maps.event.addListener(reportMap, 'click', function() {
+            infoWindow.close();
+          });
+        } else {
+          infoWindow.setContent('<section><img src="' + img + '" style="width: 64px; height:96px"></img></section>');
+          infoWindow.position = new google.maps.LatLng(lat, lng);
+        }
+
+        infoWindow.setMap(reportMap);
+      };
+      openInfoWindow(detail.image, detail.geo[0], detail.geo[1]);
     } else if (isFetchingDetail) {
       // console.debug('detail pattern 2: fetching');
       detailTimestamp = '読み込み中...';
@@ -772,11 +798,9 @@ var ReportMap = React.createClass({
       msgReportNum = '' + nReports + '件のレポート';
     }
 
-    return <div className="row">
-      <div className="large-12 columns mrv-map-container">
-        {msgReportNum}
-        <div id="report-map" key="report-map"></div>
-      </div>
+    return <div className="large-6 columns mrv-map-container">
+      {msgReportNum}
+      <div id="report-map" key="report-map"></div>
     </div>;
   }
 });
@@ -795,17 +819,23 @@ var ReportTable = React.createClass({
       var key = 'report-' + String(report.id);
       var showHandler = function(event) {
         flux.actions.onClickPin({ reportId: reportId });
+
+        var lat = Number(report.geo[0]);
+        var lng = Number(report.geo[1]);
+        document.getElementById('report-map').scrollIntoView();
+        reportMap.setZoom(18);
+        reportMap.panTo({ lat: lat, lng: lng });
       };
       var reportTypeStr = type2textShort[report.type];
       var reportTypeImg = type2img(report.type, true);
       var reportTypeImg = <img src={reportTypeImg} className="mrv-report-table-report-type-image" />;
       var reportType = <span>{reportTypeImg} {reportTypeStr}</span>;
 
-      return <tr key={key}>
-        <td><span className="mrv-report-table-show-detail-link" onClick={showHandler}>{reportId}</span></td>
-        <td><span className="mrv-report-table-show-detail-link" onClick={showHandler}>{reportType}</span></td>
-        <td><span className="mrv-report-table-show-detail-link" onClick={showHandler}>{report.user}</span></td>
-        <td><span className="mrv-report-table-show-detail-link" onClick={showHandler}>{report.timestamp}</span></td>
+      return <tr className="mrv-report-table-show-detail-link" key={key} onClick={showHandler}>
+        <td><span>{reportId}</span></td>
+        <td><span>{reportType}</span></td>
+        <td><span>{report.user}</span></td>
+        <td><span>{report.timestamp}</span></td>
       </tr>;
     });
 
@@ -871,31 +901,29 @@ var ReportTable = React.createClass({
     var pager1 = <ul className="pagination text-center pager1" role="pagination" aria-label="Pagination" key="pager1">{paginationElements}</ul>;
     var pager2 = <ul className="pagination text-center pager2" role="pagination" aria-label="Pagination" key="pager2">{paginationElements}</ul>;
 
-    return <div className="row">
-      <div className="large-12 columns mrv-report-table-container">
-        <nav>
-          {pager1}
-        </nav>
+    return <div className="large-6 columns mrv-report-table-container">
+      <nav>
+        {pager1}
+      </nav>
 
-        <table className="hover mrv-report-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>レポ種類</th>
-              <th>投稿者</th>
-              <th>投稿時刻</th>
-            </tr>
-          </thead>
+      <table className="hover mrv-report-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>レポ種類</th>
+            <th>投稿者</th>
+            <th>投稿時刻</th>
+          </tr>
+        </thead>
 
-          <tbody>
-            {reportRows}
-          </tbody>
-        </table>
+        <tbody>
+          {reportRows}
+        </tbody>
+      </table>
 
-        <nav>
-          {pager2}
-        </nav>
-      </div>
+      <nav>
+        {pager2}
+      </nav>
     </div>;
   }
 });
@@ -1001,6 +1029,11 @@ var MinaRepoViewer = React.createClass({
       </div>
     </div>;
 
+    var reportView = <div className="row mrv-rv-row">
+      {reportTable}
+      {reportMap}
+    </div>;
+
     var reportDetail = <ReportDetail
       detail={this.props.detail}
       isFetchingDetail={this.props.isFetchingDetail}
@@ -1021,9 +1054,12 @@ var MinaRepoViewer = React.createClass({
       <hr/>
       {buttons}
       {dateController}
+      {/*
       {reportMap}
-      {reportTable}
+      {reportTable}     // Merged into below {reportView}
       {tableToggleButton}
+      */}
+      {reportView}
       {reportDetail}
       <hr/>
       {footer}
