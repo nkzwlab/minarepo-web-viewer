@@ -46,7 +46,7 @@ var type2pinInfo = {
   'ps_kyun':           { label: '幸', color: '#e8212d', textColor: '#000000' },  // キュン
   'ps_disaster':       { label: '災', color: '#031435', textColor: '#000000' },  // 災害
   'ps_zansa':          { label: '別', color: '#ff8dd0', textColor: '#000000' },  // 残渣
-  'ps_kaisyuwasure':  { label: '忘', color: '#ee82ee', textColor: '#000000' },  // 回収忘れ
+  'ps_kaisyuwasure':   { label: '忘', color: '#ee82ee', textColor: '#000000' },  // 回収忘れ
   'ps_others':         { label: '他', color: '#ffffff', textColor: '#000000' }  // その他
 };
 
@@ -109,6 +109,25 @@ var convertBounds = function(mapBounds) {
     topLeft: northWest,
     bottomRight: southEast
   };
+};
+
+var countSelectedTypes = function(selectedTypes) {
+  var count = 0;
+  for (var i = 0; i < reportTypes.length; i++) {
+    var t = reportTypes[i];
+    if (selectedTypes[t]) {
+      count++;
+    }
+  }
+  return count;
+};
+
+var changeAllTypes = function(selectedTypes, bool) {
+  for (var i = 0; i < reportTypes.length; i++) {
+    var t = reportTypes[i];
+    selectedTypes[t] = bool;
+  }
+  return selectedTypes;
 };
 
 // for DEBUG
@@ -366,11 +385,13 @@ var constants = {
   TOGGLE_USE_DATE: 'TOGGLE_USE_DATE',
   DRAG_MAP: 'DRAG_MAP',
   TOGGLE_TYPE_BUTTON: 'TOGGLE_TYPE_BUTTON',
+  TOGGLE_SELECT_ALL_TYPE_BUTTON: 'TOGGLE_SELECT_ALL_TYPE_BUTTON',
   SET_REPORTS: 'SET_REPORTS',
   TABLE_PREV_PAGE_CLICKED: 'TABLE_PREV_PAGE_CLICKED',
   TABLE_NEXT_PAGE_CLICKED: 'TABLE_NEXT_PAGE_CLICKED',
   TABLE_SET_PAGE: 'TABLE_SET_PAGE',
-  TOGGLE_SHOWING_TABLE: 'TOGGLE_SHOWING_TABLE'
+  TOGGLE_SHOWING_TABLE: 'TOGGLE_SHOWING_TABLE',
+  TOGGLE_SHOWING_FILTER: 'TOGGLE_SHOWING_FILTER',
 };
 
 var MinaRepoStore = Fluxxor.createStore({
@@ -394,6 +415,7 @@ var MinaRepoStore = Fluxxor.createStore({
     this.mapBottomRight = null;
     this.tableSelectedPage = 1;
     this.isShowingTable = true; // shinny modifyied to show from beginning [false -> true]
+    this.isShowingFilter = false;
 
     this.bindActions(constants.START_FETCHING_REPORTS, this.onStartFetchingReports);
     this.bindActions(constants.FETCHING_REPORTS_SUCCESS, this.onFetchingReportsSuccess);
@@ -407,11 +429,13 @@ var MinaRepoStore = Fluxxor.createStore({
     this.bindActions(constants.TOGGLE_USE_DATE, this.onToggleUseDate);
     this.bindActions(constants.DRAG_MAP, this.onDragMap);
     this.bindActions(constants.TOGGLE_TYPE_BUTTON, this.onToggleTypeButton);
+    this.bindActions(constants.TOGGLE_SELECT_ALL_TYPE_BUTTON, this.onToggleSelectAllTypeButton);
     this.bindActions(constants.SET_REPORTS, this.onSetReports);
     this.bindActions(constants.TABLE_PREV_PAGE_CLICKED, this.onTablePrevPageClicked);
     this.bindActions(constants.TABLE_NEXT_PAGE_CLICKED, this.onTableNextPageClicked);
     this.bindActions(constants.TABLE_SET_PAGE, this.onTableSetPage);
     this.bindActions(constants.TOGGLE_SHOWING_TABLE, this.onToggleShowingTable);
+    this.bindActions(constants.TOGGLE_SHOWING_FILTER, this.onToggleShowingFilter);
   },
   getState: function() {
     return {
@@ -429,7 +453,8 @@ var MinaRepoStore = Fluxxor.createStore({
       mapTopLeft: this.mapTopLeft,
       mapBottomRight: this.mapBottomRight,
       tableSelectedPage: this.tableSelectedPage,
-      isShowingTable: this.isShowingTable
+      isShowingTable: this.isShowingTable,
+      isShowingFilter: this.isShowingFilter
     }
   },
   onStartFetchingReports: function(data) {
@@ -488,7 +513,24 @@ var MinaRepoStore = Fluxxor.createStore({
   },
   onToggleTypeButton: function(data) {
     var type = data.type;
-    this.selectedTypes[type] = !this.selectedTypes[type];
+    var selectedNum = countSelectedTypes(this.selectedTypes);
+
+    if (selectedNum == reportTypes.length) { // all selected -> single filter
+      changeAllTypes(this.selectedTypes, false);
+      this.selectedTypes[type] = !this.selectedTypes[type];
+    } else if (selectedNum == 1) {
+      if (this.selectedTypes[type]) { // single filter -> all selected
+        changeAllTypes(this.selectedTypes, true);
+      } else {
+        this.selectedTypes[type] = !this.selectedTypes[type]; // just add filter type
+      }
+    } else {
+      this.selectedTypes[type] = !this.selectedTypes[type]; // just add filter type
+    }
+    this.emit('change');
+  },
+  onToggleSelectAllTypeButton: function() {
+    changeAllTypes(this.selectedTypes, true);
     this.emit('change');
   },
   onSetReports: function(data) {
@@ -521,6 +563,10 @@ var MinaRepoStore = Fluxxor.createStore({
   },
   onToggleShowingTable: function() {
     this.isShowingTable = !this.isShowingTable;
+    this.emit('change');
+  },
+  onToggleShowingFilter: function() {
+    this.isShowingFilter = !this.isShowingFilter;
     this.emit('change');
   }
 });
@@ -571,6 +617,9 @@ var actions = {
   onToggleTypeButton: function(data) {
     this.dispatch(constants.TOGGLE_TYPE_BUTTON, { type: data.type });
   },
+  onToggleSelectAllTypeButton: function() {
+    this.dispatch(constants.TOGGLE_SELECT_ALL_TYPE_BUTTON);
+  },
   onSetReports: function(data) {
     this.dispatch(constants.SET_REPORTS, { reports: data.reports });
   },
@@ -585,6 +634,9 @@ var actions = {
   },
   onToggleShowingTable: function() {
     this.dispatch(constants.TOGGLE_SHOWING_TABLE);
+  },
+  onToggleShowingFilter: function() {
+    this.dispatch(constants.TOGGLE_SHOWING_FILTER);
   }
 };
 
@@ -947,6 +999,24 @@ var TypeButtons = React.createClass({
       flux.actions.onTableSetPage({ page: 1 });
     };
   },
+  onSelectAllButtonClick: function() {
+    var that = this;
+    return function(event) {
+      flux.actions.onToggleSelectAllTypeButton();
+
+      // 新しくクエリする => マーカーの差分が表示される
+      console.debug('!!! TypeButtons.onSelectAllButtonClick');
+      fetchReports(
+        selectSelected(that.props.selectedTypes),
+        that.props.startDate,
+        that.props.endDate,
+        that.props.isUsingDate,
+        that.props.mapTopLeft,
+        that.props.mapBottomRight
+      );
+      flux.actions.onTableSetPage({ page: 1 });
+    };
+  },
   render: function() {
     var selBtnMap = this.props.selectedTypes;
 
@@ -962,10 +1032,17 @@ var TypeButtons = React.createClass({
         className="mrv-btn-image"
       />;
     });
+    var selectAllButton = <button className="button" onClick={this.onSelectAllButtonClick()}>全種類選択</button>;
 
     return <div className="row mrv-btn-row">
+      <div className="small-12 columns">
+        レポート種類別フィルタ
+      </div>
       <div className="medium-12 columns mrv-btn-container">
         {buttons}
+      </div>
+      <div className="small-12 columns mrv-select-all-btn">
+        {selectAllButton}
       </div>
     </div>;
   }
@@ -993,6 +1070,28 @@ var MinaRepoViewer = React.createClass({
       endDate={this.props.endDate}
       isUsingDate={this.props.isUsingDate}
     />;
+
+    var isShowingFilter = this.props.isShowingFilter;
+    var reportFilter = '';
+    if (isShowingFilter) {
+      reportFilter = <div>
+        {buttons}
+      </div>;
+    }
+
+    var filterToggleButtonMsg = (isShowingFilter) ? 'フィルタ ▲' : 'フィルタ ▼';
+    var filterToggleButtonClass = classNames({
+      button: true,
+      success: true
+    });
+    var filterToggleButtonHandler = function(event) {
+      flux.actions.onToggleShowingFilter();
+    };
+    var filterToggleButton = <div className="row">
+      <div className="large-12 columns">
+        <button className={filterToggleButtonClass} onClick={filterToggleButtonHandler}>{filterToggleButtonMsg}</button>
+      </div>
+    </div>;
 
     var reportMap = <ReportMap
       reports={this.props.reports}
@@ -1052,9 +1151,10 @@ var MinaRepoViewer = React.createClass({
     return <div>
       {header}
       <hr/>
-      {buttons}
-      {dateController}
+      {filterToggleButton}
+      {reportFilter}
       {/*
+      {dateController}
       {reportMap}
       {reportTable}     // Merged into below {reportView}
       {tableToggleButton}
@@ -1102,6 +1202,7 @@ var MinaRepoViewerApp = React.createClass({
       mapBottomRight={s.mapBottomRight}
       tableSelectedPage={s.tableSelectedPage}
       isShowingTable={s.isShowingTable}
+      isShowingFilter={s.isShowingFilter}
     />;
   }
 });

@@ -7,7 +7,7 @@ $sp-map-height: 300px;
 
 $btn-size: 45px;
 
-$sp-btn-size: 65px;
+$sp-btn-size: 55px;
 
 $rtype-mini-icon-size: 20px;
 
@@ -53,14 +53,21 @@ $table-font-size-smartphone: 12px;
     }
 }
 
+.mrv-filter-btn {
+    background-color: #ec5840;
+}
+
 .mrv-btn-row {
     margin-bottom: 15px;
-
 }
 
 .mrv-btn-container {
     text-align: center;
+}
 
+.mrv-select-all-btn {
+    margin-top: 1rem;
+    text-align: center;
 }
 
 .mrv-btn-inner-container {
