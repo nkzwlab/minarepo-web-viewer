@@ -53,16 +53,13 @@ $table-font-size-smartphone: 12px;
     }
 }
 
-.mrv-filter-btn {
-    background-color: #ec5840;
-}
-
 .mrv-btn-row {
     margin-bottom: 15px;
 }
 
 .mrv-btn-container {
     text-align: center;
+    margin: 0 auto;
 }
 
 .mrv-select-all-btn {
@@ -74,6 +71,10 @@ $table-font-size-smartphone: 12px;
     margin-left: auto;
     margin-right: auto;
     width: auto;
+}
+
+.mrv-filter-btn {
+    background-color: #ec5840;
 }
 
 .mrv-report-table-container {
@@ -214,6 +215,7 @@ DIV.mrv-detail {
     // height: auto;
     margin-left: auto;
     margin-right: auto;
+    margin-bottom: 1rem;
 }
 
 
@@ -221,4 +223,14 @@ DIV.mrv-detail {
     text-align: center;
     font-size: 14px;
     color: #666666;
+}
+
+.file-upload-btn {
+    width: auto;
+    margin-left: 1rem;
+}
+
+.btn-set {
+    width: 65px;
+    margin: 0 auto;
 }

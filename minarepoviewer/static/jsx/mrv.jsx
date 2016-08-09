@@ -392,6 +392,7 @@ var constants = {
   TABLE_SET_PAGE: 'TABLE_SET_PAGE',
   TOGGLE_SHOWING_TABLE: 'TOGGLE_SHOWING_TABLE',
   TOGGLE_SHOWING_FILTER: 'TOGGLE_SHOWING_FILTER',
+  TOGGLE_NEW_REPORT: 'TOGGLE_NEW_REPORT'
 };
 
 var MinaRepoStore = Fluxxor.createStore({
@@ -436,6 +437,7 @@ var MinaRepoStore = Fluxxor.createStore({
     this.bindActions(constants.TABLE_SET_PAGE, this.onTableSetPage);
     this.bindActions(constants.TOGGLE_SHOWING_TABLE, this.onToggleShowingTable);
     this.bindActions(constants.TOGGLE_SHOWING_FILTER, this.onToggleShowingFilter);
+    this.bindActions(constants.TOGGLE_NEW_REPORT, this.onToggleNewReport);
   },
   getState: function() {
     return {
@@ -568,6 +570,9 @@ var MinaRepoStore = Fluxxor.createStore({
   onToggleShowingFilter: function() {
     this.isShowingFilter = !this.isShowingFilter;
     this.emit('change');
+  },
+  onToggleNewReport: function() {
+    return;
   }
 });
 
@@ -637,6 +642,10 @@ var actions = {
   },
   onToggleShowingFilter: function() {
     this.dispatch(constants.TOGGLE_SHOWING_FILTER);
+  },
+  onToggleNewReport: function() {
+    console.log("soge");
+    window.location.href = '/new_report';
   }
 };
 
@@ -1087,10 +1096,24 @@ var MinaRepoViewer = React.createClass({
     var filterToggleButtonHandler = function(event) {
       flux.actions.onToggleShowingFilter();
     };
-    var filterToggleButton = <div className="row">
-      <div className="large-12 columns">
-        <button className={filterToggleButtonClass} onClick={filterToggleButtonHandler}>{filterToggleButtonMsg}</button>
-      </div>
+    var filterToggleButton = <div className="small-6 columns">
+      <button className={filterToggleButtonClass} onClick={filterToggleButtonHandler}>{filterToggleButtonMsg}</button>
+    </div>;
+
+    var newReportToggleButtonClass = classNames({
+      button: true,
+      "float-right": true
+    });
+    var newReportToggleButtonHandler = function(event) {
+      flux.actions.onToggleNewReport();
+    };
+    var newReportToggleButton = <div className="small-6 columns">
+      <button className={newReportToggleButtonClass} onClick={newReportToggleButtonHandler}>+新規レポート</button>
+    </div>;
+
+    var toggleButtonRow = <div className="row">
+      {filterToggleButton}
+      {newReportToggleButton}
     </div>;
 
     var reportMap = <ReportMap
@@ -1151,9 +1174,10 @@ var MinaRepoViewer = React.createClass({
     return <div>
       {header}
       <hr/>
-      {filterToggleButton}
+      {toggleButtonRow}
       {reportFilter}
       {/*
+      {filterToggleButton}
       {dateController}
       {reportMap}
       {reportTable}     // Merged into below {reportView}

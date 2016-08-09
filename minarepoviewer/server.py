@@ -215,6 +215,11 @@ class MinaRepoViewer(object):
         def minarepo_home():
             return self.html_index()
 
+        @app.route('/new_report', method='GET')
+        @auth_basic(check)
+        def minarepo_new_report():
+            return self._render('new-report.html.j2')
+
         return app
 
 
