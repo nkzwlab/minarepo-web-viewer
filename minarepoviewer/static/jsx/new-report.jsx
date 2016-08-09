@@ -68,6 +68,7 @@ var type2img = function(type, isSelected) {
 var createObjectURL = (window.URL || window.webkitURL).createObjectURL || window.createObjectURL;
 
 var constants = {
+  TOGGLE_VIEWER_PAGE_BUTTON: 'TOGGLE_VIEWER_PAGE_BUTTON',
   TOGGLE_TYPE_BUTTON: 'TOGGLE_TYPE_BUTTON',
   TOGGLE_IMG_UPLOAD_BUTTON: 'TOGGLE_IMG_UPLOAD_BUTTON',
   TOGGLE_PUBLISH_BUTTON: 'TOGGLE_PUBLISH_BUTTON'
@@ -78,6 +79,7 @@ var MinaRepoStore = Fluxxor.createStore({
     this.selectedType = "";
     this.reportImage = "";
 
+    this.bindActions(constants.TOGGLE_VIEWER_PAGE_BUTTON, this.onToggleViewerPageButton);
     this.bindActions(constants.TOGGLE_TYPE_BUTTON, this.onToggleTypeButton);
     this.bindActions(constants.TOGGLE_IMG_UPLOAD_BUTTON, this.onToggleImgUploadButton);
     this.bindActions(constants.TOGGLE_PUBLISH_BUTTON, this.onTogglePublishButton);
@@ -88,23 +90,29 @@ var MinaRepoStore = Fluxxor.createStore({
       reportImage: this.reportImage
     }
   },
+  onToggleViewerPageButton: function(data) {
+    return;
+  },
   onToggleTypeButton: function(data) {
     this.selectedType = data.type;
     reportValues.type = this.selectedType;
-    this.emit('change')
+    this.emit('change');
   },
   onToggleImgUploadButton: function(data) {
     this.reportImage = data.img;
     reportValues.image = this.reportImage;
-    this.emit('change')
+    this.emit('change');
   },
   onTogglePublishButton: function() {
     console.log(reportValues);
-    this.emit('change')
+    this.emit('change');
   }
 });
 
 var actions = {
+  onToggleViewerPageButton: function() {
+    window.location.href = "/";
+  },
   onToggleTypeButton: function(data) {
     this.dispatch(constants.TOGGLE_TYPE_BUTTON, {type: data.type});
   },
@@ -209,6 +217,39 @@ var ReportMap = React.createClass({
         map: reportMap,
         title: 'レポート地点'
     });
+
+    var input = document.getElementById('pac-input');
+    var searchBox = new google.maps.places.SearchBox(input);
+    reportMap.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+    reportMap.addListener('bounds_changed', function() {
+        searchBox.setBounds(reportMap.getBounds());
+    });
+    searchBox.addListener('places_changed', function() {
+      var places = searchBox.getPlaces();
+
+      if (places.length == 0) {
+        return;
+      }
+
+      // Clear out the old markers.
+      marker.setMap(null);
+
+      var bounds = new google.maps.LatLngBounds();
+      marker = new google.maps.Marker({
+        map: reportMap,
+        title: places[0].name,
+        position: places[0].geometry.location
+      });
+      reportMap.fitBounds(bounds);
+      reportMap.panTo(places[0].geometry.location);
+      reportMap.setZoom(15);
+
+      reportValues.latitude = places[0].geometry.location.lat();
+      reportValues.longitude = places[0].geometry.location.lng();
+
+      console.log(places[0]);
+    });
+
     google.maps.event.addListener(reportMap, 'click', function(e) {
       var clickedLat = e.latLng.lat();
       var clickedLng = e.latLng.lng();
@@ -233,6 +274,7 @@ var ReportMap = React.createClass({
     </div>;
     var mapRow = <div className="row">
       <div className="small-12 medium-8 small-centered columns">
+        <input id="pac-input" className="controls" type="text" placeholder="検索"/>
         <div id="report-map" key="report-map"></div>
       </div>
     </div>;
@@ -312,6 +354,22 @@ var PublishButton = React.createClass({
   }
 });
 
+var ViewerPageButton = React.createClass({
+  onToggleViewerPageButton: function() {
+    return function() {
+      console.log("moge");
+      flux.actions.onToggleViewerPageButton();
+    }
+  },
+  render: function() {
+     return <div className="row">
+       <div className="small-10 small-centered columns mrv-btn-row">
+         <a onClick={this.onToggleViewerPageButton()}>&lt;&lt; 藤沢みなレポへ</a>
+       </div>
+     </div>;
+  }
+});
+
 var MinaRepoViewer = React.createClass({
   render: function() {
     var header = <div className="row">
@@ -319,6 +377,8 @@ var MinaRepoViewer = React.createClass({
         <img src="/static/img/minarepo-title.png" className="mrv-title-image" />
       </div>
     </div>;
+
+    var viewerPageButton = <ViewerPageButton/>;
 
     var reporterName = <ReporterName/>;
     var buttons = <TypeButtons
@@ -341,6 +401,7 @@ var MinaRepoViewer = React.createClass({
     return <div>
       {header}
       <hr/>
+      {viewerPageButton}
       {reporterName}
       {buttons}
       {reportMap}
