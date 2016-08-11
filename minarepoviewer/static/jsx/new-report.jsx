@@ -1,4 +1,3 @@
-
 var BOSHSERVICE = "http://soxfujisawa.ht.sfc.keio.ac.jp:5280/http-bind/";
 var XMPPSERVER = "soxfujisawa.ht.sfc.keio.ac.jp";
 
@@ -71,8 +70,6 @@ var checkValues = function() {
   var rName = reportValues.user;
   var rLat = reportValues.latitude;
   var rLng = reportValues.longitude;
-  var rCmmnt = reportValues.comment;
-  var rImg = reportValues.image;
 
   if (!rName || !rLat || !rLng) {
     return false;
@@ -82,11 +79,7 @@ var checkValues = function() {
 
 var publishReport = function(type) {
   var device = new Device(type);
-  device = setReportData(device);
-  client.publishDevice(device);
-};
 
-var setReportData = function(device) {
   for (key in reportValues) {
     var transducer = new Transducer();
     transducer.name = key;
@@ -96,7 +89,8 @@ var setReportData = function(device) {
     var data = new SensorData(key, new Date(), reportValues[key], reportValues[key]);
     transducer.setSensorData(data);
   }
-  return device;
+
+  client.publishDevice(device);
 };
 
 var constants = {
@@ -367,14 +361,46 @@ var ReportComment = React.createClass({
 var ReportImage = React.createClass({
   onUploadImage: function(img) {
     var imgfiles = img.target.files;
-
     if(!imgfiles.length) {
       return;
     }
 
+    var resizeImage = function(img) {
+      var MAX_SIZE = 550;
+    
+      var canvas = document.getElementById('img-canvas');
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+    
+      var width = img.width;
+      var height = img.height;
+       
+      if (width > height) {
+        if (width > MAX_SIZE) {
+          height *= MAX_SIZE / width;
+          width = MAX_SIZE;
+        }
+      } else {
+        if (height > MAX_SIZE) {
+          width *= MAX_SIZE / height;
+          height = MAX_SIZE;
+        }
+      }
+      canvas.width = width;
+      canvas.height = height;
+      ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+    
+      var dataurl = canvas.toDataURL("image/png");
+    
+      return dataurl;
+    };
+
     var fileReader =new FileReader();
     fileReader.onload=function(event) {
-      reportValues.image = event.target.result;
+      var img = document.getElementById('tmp-img');
+      img.src = event.target.result;
+      reportValues.image = resizeImage(img);
     }
     fileReader.readAsDataURL(imgfiles[0]);
   },
@@ -445,7 +471,7 @@ var PublishButton = React.createClass({
         heading: 'Error',
         icon: 'error',
         text: toastMsg,
-        allowToastClose: true,
+        allowToastClose: false,
         position: 'mid-center',
         loader: false
       });
