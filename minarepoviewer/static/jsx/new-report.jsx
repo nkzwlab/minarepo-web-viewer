@@ -69,13 +69,12 @@ var type2img = function(type, isSelected) {
 
 var checkValues = function() {
   var rName = reportValues.user;
-  var rType = reportValues.type;
   var rLat = reportValues.latitude;
   var rLng = reportValues.longitude;
   var rCmmnt = reportValues.comment;
   var rImg = reportValues.image;
 
-  if (!rName || !rType || !rLat || !rLng) {
+  if (!rName || !rLat || !rLng) {
     return false;
   }
   return true;
@@ -83,11 +82,8 @@ var checkValues = function() {
 
 var publishReport = function(type) {
   var device = new Device(type);
-
-  if (!client.resolveDevice(device)) {
-    device = setReportData(device);
-    client.publishDevice(device);
-  }
+  device = setReportData(device);
+  client.publishDevice(device);
 };
 
 var setReportData = function(device) {
@@ -101,7 +97,7 @@ var setReportData = function(device) {
     transducer.setSensorData(data);
   }
   return device;
-}
+};
 
 var constants = {
   TOGGLE_VIEWER_PAGE_BUTTON: 'TOGGLE_VIEWER_PAGE_BUTTON',
@@ -142,7 +138,16 @@ var MinaRepoStore = Fluxxor.createStore({
   onTogglePublishButton: function() {
     var check = checkValues();
     if (!check) {
-      alert("No!");
+      $.toast({
+        hideAfter: '2500',
+        heading: 'Error',
+        icon: 'error',
+        text: '<p class="toast-msg">未記入の項目があります</p>',
+        allowToastClose: true,
+        position: 'mid-center',
+        loader: false
+      });
+
       return;
     }
 
@@ -387,13 +392,26 @@ var ReportImage = React.createClass({
 
 var PublishButton = React.createClass({
   componentDidMount: function() {
-    client = new SoxClient(BOSHSERVICE, XMPPSERVER, JID);
+    client = new SoxClient(BOSHSERVICE, XMPPSERVER);
 
     var soxEventListener = new SoxEventListener();
     soxEventListener.connected = function(soxEvent) {
       console.debug("Connected!" + soxEvent);
     };
     soxEventListener.connectionFailed = function(soxEvent) {
+      var toastMsg = '<div class="toast-msg">\
+        <p>サーバに接続できませんでした．ページを再読み込みしてください</p>\
+      </div>';
+
+      $.toast({
+        hideAfter: '2500',
+        heading: 'Error',
+        icon: 'error',
+        text: toastMsg,
+        allowToastClose: true,
+        position: 'mid-center',
+        loader: false
+      });
       console.debug("Connection Failed" + soxEvent);
     };
     soxEventListener.resolved = function(soxEvent) {
@@ -403,9 +421,34 @@ var PublishButton = React.createClass({
       console.debug("Resolve Failed" + soxEvent);
     };
     soxEventListener.published = function(soxEvent) {
+      $.toast({
+        hideAfter: '1500',
+        heading: 'Success',
+        icon: 'success',
+        text: '<p class="toast-msg">送信しました</p>',
+        allowToastClose: true,
+        position: 'mid-center',
+        loader: false,
+        afterHidden: function() {
+          window.location.href = "/";
+        }
+      });
       console.debug("Published" + soxEvent);
     };
     soxEventListener.publishFailed = function(soxEvent) {
+      var toastMsg = '<div class="toast-msg">\
+        <p>送信できませんでした．しばらく経ってから再度お試しください</p>\
+      </div>';
+
+      $.toast({
+        hideAfter: '2500',
+        heading: 'Error',
+        icon: 'error',
+        text: toastMsg,
+        allowToastClose: true,
+        position: 'mid-center',
+        loader: false
+      });
       console.debug("Publish Failed" + soxEvent);
     };
 
