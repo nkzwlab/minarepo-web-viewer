@@ -1,12 +1,14 @@
 
+var BOSHSERVICE = "http://soxfujisawa.ht.sfc.keio.ac.jp:5280/http-bind/";
+var XMPPSERVER = "soxfujisawa.ht.sfc.keio.ac.jp";
+
 var reportMap = null;
 var reportValues = {
-  reporterName: null,
-  type: null,
+  user: null,
   latitude: null,
   longitude: null,
-  comment: null,
-  image: null
+  comment: "",
+  image: ""
 };
 
 var INIT_MAP_CENTER = {
@@ -65,7 +67,41 @@ var type2img = function(type, isSelected) {
   return '/static/img/minarepo-icons/' + type + suffix +'.png';
 };
 
-var createObjectURL = (window.URL || window.webkitURL).createObjectURL || window.createObjectURL;
+var checkValues = function() {
+  var rName = reportValues.user;
+  var rType = reportValues.type;
+  var rLat = reportValues.latitude;
+  var rLng = reportValues.longitude;
+  var rCmmnt = reportValues.comment;
+  var rImg = reportValues.image;
+
+  if (!rName || !rType || !rLat || !rLng) {
+    return false;
+  }
+  return true;
+};
+
+var publishReport = function(type) {
+  var device = new Device(type);
+
+  if (!client.resolveDevice(device)) {
+    device = setReportData(device);
+    client.publishDevice(device);
+  }
+};
+
+var setReportData = function(device) {
+  for (key in reportValues) {
+    var transducer = new Transducer();
+    transducer.name = key;
+    transducer.id = key;
+    device.addTransducer(transducer);
+
+    var data = new SensorData(key, new Date(), reportValues[key], reportValues[key]);
+    transducer.setSensorData(data);
+  }
+  return device;
+}
 
 var constants = {
   TOGGLE_VIEWER_PAGE_BUTTON: 'TOGGLE_VIEWER_PAGE_BUTTON',
@@ -104,7 +140,13 @@ var MinaRepoStore = Fluxxor.createStore({
     this.emit('change');
   },
   onTogglePublishButton: function() {
-    console.log(reportValues);
+    var check = checkValues();
+    if (!check) {
+      alert("No!");
+      return;
+    }
+
+    publishReport(this.selectedType);
     this.emit('change');
   }
 });
@@ -130,9 +172,9 @@ var StoreWatchMixin = Fluxxor.StoreWatchMixin;
 var stores = { MinaRepoStore: new MinaRepoStore() };
 var flux = new Fluxxor.Flux(stores, actions);
 
-var ReporterName = React.createClass({
+var User = React.createClass({
   onChangeName: function(text) {
-    reportValues.reporterName = text.target.value;
+    reportValues.user = text.target.value;
   },
   render: function() {
     var descRow = <div className="row">
@@ -246,8 +288,6 @@ var ReportMap = React.createClass({
 
       reportValues.latitude = places[0].geometry.location.lat();
       reportValues.longitude = places[0].geometry.location.lng();
-
-      console.log(places[0]);
     });
 
     google.maps.event.addListener(reportMap, 'click', function(e) {
@@ -265,6 +305,16 @@ var ReportMap = React.createClass({
         title: 'レポート地点'
       });
     });
+
+    var set = google.maps.InfoWindow.prototype.set;
+    google.maps.InfoWindow.prototype.set = function(key, val) {
+        if (key === "map") {
+            if (! this.get("noSuppress")) {
+                return;
+            }
+        }
+        set.apply(this, arguments);
+    };
   },
   render: function() {
     var descRow = <div className="row"> 
@@ -274,7 +324,7 @@ var ReportMap = React.createClass({
     </div>;
     var mapRow = <div className="row">
       <div className="small-12 medium-8 small-centered columns">
-        <input id="pac-input" className="controls" type="text" placeholder="検索"/>
+        <input id="pac-input" className="controls small-2" type="text" placeholder="検索"/>
         <div id="report-map" key="report-map"></div>
       </div>
     </div>;
@@ -328,7 +378,7 @@ var ReportImage = React.createClass({
       <div className="small-10 small-centered columns">
         <p>
           (5) 画像を登録してください [<font color="blue">任意</font>]:
-          <input className="file-upload-btn" type="file" onChange={this.onUploadImage}/>
+          <input className="file-upload-btn" type="file" onChange={this.onUploadImage} accept="image/*" />
         </p>
       </div>
     </div>
@@ -336,6 +386,32 @@ var ReportImage = React.createClass({
 });
 
 var PublishButton = React.createClass({
+  componentDidMount: function() {
+    client = new SoxClient(BOSHSERVICE, XMPPSERVER, JID);
+
+    var soxEventListener = new SoxEventListener();
+    soxEventListener.connected = function(soxEvent) {
+      console.debug("Connected!" + soxEvent);
+    };
+    soxEventListener.connectionFailed = function(soxEvent) {
+      console.debug("Connection Failed" + soxEvent);
+    };
+    soxEventListener.resolved = function(soxEvent) {
+      console.debug("Resolved" + soxEvent);
+    };
+    soxEventListener.resolveFailed = function(soxEvent) {
+      console.debug("Resolve Failed" + soxEvent);
+    };
+    soxEventListener.published = function(soxEvent) {
+      console.debug("Published" + soxEvent);
+    };
+    soxEventListener.publishFailed = function(soxEvent) {
+      console.debug("Publish Failed" + soxEvent);
+    };
+
+    client.setSoxEventListener(soxEventListener);
+    client.connect();
+  },
   onButtonClick: function() {
     return function(event) {
       flux.actions.onTogglePublishButton();
@@ -357,7 +433,6 @@ var PublishButton = React.createClass({
 var ViewerPageButton = React.createClass({
   onToggleViewerPageButton: function() {
     return function() {
-      console.log("moge");
       flux.actions.onToggleViewerPageButton();
     }
   },
@@ -380,7 +455,7 @@ var MinaRepoViewer = React.createClass({
 
     var viewerPageButton = <ViewerPageButton/>;
 
-    var reporterName = <ReporterName/>;
+    var user = <User/>;
     var buttons = <TypeButtons
       selectedType={this.props.selectedType}
     />;
@@ -402,7 +477,7 @@ var MinaRepoViewer = React.createClass({
       {header}
       <hr/>
       {viewerPageButton}
-      {reporterName}
+      {user}
       {buttons}
       {reportMap}
       {reportComment}
