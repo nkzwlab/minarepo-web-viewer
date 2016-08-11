@@ -1,14 +1,13 @@
-
-var BOSHSERVICE = "http://soxfujisawa.ht.sfc.keio.ac.jp:5280/http-bind/";
-var XMPPSERVER = "soxfujisawa.ht.sfc.keio.ac.jp";
+var BOSHSERVICE = 'http://soxfujisawa.ht.sfc.keio.ac.jp:5280/http-bind/';
+var XMPPSERVER = 'soxfujisawa.ht.sfc.keio.ac.jp';
 
 var reportMap = null;
 var reportValues = {
   user: null,
   latitude: null,
   longitude: null,
-  comment: "",
-  image: ""
+  comment: '',
+  image: ''
 };
 
 var INIT_MAP_CENTER = {
@@ -71,8 +70,6 @@ var checkValues = function() {
   var rName = reportValues.user;
   var rLat = reportValues.latitude;
   var rLng = reportValues.longitude;
-  var rCmmnt = reportValues.comment;
-  var rImg = reportValues.image;
 
   if (!rName || !rLat || !rLng) {
     return false;
@@ -82,11 +79,7 @@ var checkValues = function() {
 
 var publishReport = function(type) {
   var device = new Device(type);
-  device = setReportData(device);
-  client.publishDevice(device);
-};
 
-var setReportData = function(device) {
   for (key in reportValues) {
     var transducer = new Transducer();
     transducer.name = key;
@@ -96,7 +89,8 @@ var setReportData = function(device) {
     var data = new SensorData(key, new Date(), reportValues[key], reportValues[key]);
     transducer.setSensorData(data);
   }
-  return device;
+
+  client.publishDevice(device);
 };
 
 var constants = {
@@ -108,8 +102,7 @@ var constants = {
 
 var MinaRepoStore = Fluxxor.createStore({
   initialize: function() {
-    this.selectedType = "";
-    this.reportImage = "";
+    this.selectedType = '';
 
     this.bindActions(constants.TOGGLE_VIEWER_PAGE_BUTTON, this.onToggleViewerPageButton);
     this.bindActions(constants.TOGGLE_TYPE_BUTTON, this.onToggleTypeButton);
@@ -118,8 +111,7 @@ var MinaRepoStore = Fluxxor.createStore({
   },
   getState: function() {
     return {
-      selectedType: this.selectedType,
-      reportImage: this.reportImage
+      selectedType: this.selectedType
     }
   },
   onToggleViewerPageButton: function(data) {
@@ -131,8 +123,7 @@ var MinaRepoStore = Fluxxor.createStore({
     this.emit('change');
   },
   onToggleImgUploadButton: function(data) {
-    this.reportImage = data.img;
-    reportValues.image = this.reportImage;
+    reportValues.image = data.img;
     this.emit('change');
   },
   onTogglePublishButton: function() {
@@ -313,8 +304,8 @@ var ReportMap = React.createClass({
 
     var set = google.maps.InfoWindow.prototype.set;
     google.maps.InfoWindow.prototype.set = function(key, val) {
-        if (key === "map") {
-            if (! this.get("noSuppress")) {
+        if (key === 'map') {
+            if (! this.get('noSuppress')) {
                 return;
             }
         }
@@ -367,14 +358,46 @@ var ReportComment = React.createClass({
 var ReportImage = React.createClass({
   onUploadImage: function(img) {
     var imgfiles = img.target.files;
-
     if(!imgfiles.length) {
       return;
     }
 
+    var resizeImage = function(img) {
+      var MAX_SIZE = 550;
+    
+      var canvas = document.getElementById('img-canvas');
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+    
+      var width = img.width;
+      var height = img.height;
+       
+      if (width > height) {
+        if (width > MAX_SIZE) {
+          height *= MAX_SIZE / width;
+          width = MAX_SIZE;
+        }
+      } else {
+        if (height > MAX_SIZE) {
+          width *= MAX_SIZE / height;
+          height = MAX_SIZE;
+        }
+      }
+      canvas.width = width;
+      canvas.height = height;
+      ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+    
+      var dataurl = canvas.toDataURL('image/png');
+    
+      return dataurl;
+    };
+
     var fileReader =new FileReader();
     fileReader.onload=function(event) {
-      reportValues.image = event.target.result;
+      var img = document.getElementById('tmp-img');
+      img.src = event.target.result;
+      reportValues.image = resizeImage(img);
     }
     fileReader.readAsDataURL(imgfiles[0]);
   },
@@ -396,7 +419,7 @@ var PublishButton = React.createClass({
 
     var soxEventListener = new SoxEventListener();
     soxEventListener.connected = function(soxEvent) {
-      console.debug("Connected!" + soxEvent);
+      console.debug('Connected!' + soxEvent);
     };
     soxEventListener.connectionFailed = function(soxEvent) {
       var toastMsg = '<div class="toast-msg">\
@@ -412,13 +435,13 @@ var PublishButton = React.createClass({
         position: 'mid-center',
         loader: false
       });
-      console.debug("Connection Failed" + soxEvent);
+      console.debug('Connection Failed' + soxEvent);
     };
     soxEventListener.resolved = function(soxEvent) {
-      console.debug("Resolved" + soxEvent);
+      console.debug('Resolved' + soxEvent);
     };
     soxEventListener.resolveFailed = function(soxEvent) {
-      console.debug("Resolve Failed" + soxEvent);
+      console.debug('Resolve Failed' + soxEvent);
     };
     soxEventListener.published = function(soxEvent) {
       $.toast({
@@ -433,7 +456,7 @@ var PublishButton = React.createClass({
           window.location.href = "/";
         }
       });
-      console.debug("Published" + soxEvent);
+      console.debug('Published' + soxEvent);
     };
     soxEventListener.publishFailed = function(soxEvent) {
       var toastMsg = '<div class="toast-msg">\
@@ -445,11 +468,11 @@ var PublishButton = React.createClass({
         heading: 'Error',
         icon: 'error',
         text: toastMsg,
-        allowToastClose: true,
+        allowToastClose: false,
         position: 'mid-center',
         loader: false
       });
-      console.debug("Publish Failed" + soxEvent);
+      console.debug('Publish Failed' + soxEvent);
     };
 
     client.setSoxEventListener(soxEventListener);
@@ -504,9 +527,7 @@ var MinaRepoViewer = React.createClass({
     />;
     var reportMap = <ReportMap/>;
     var reportComment = <ReportComment/>;
-    var reportImage = <ReportImage
-      reportImage={this.props.reportImage}
-    />;
+    var reportImage = <ReportImage/>;
     var publishButton = <PublishButton/>;
 
     var footer = <div className="row">
