@@ -51,7 +51,7 @@ var type2text = {
 var type2textShort = {
   'ps_animal': '動物',
   'ps_illegalGarbage': '投棄',
-  'ps_garbageStation': 'ゴミ',
+  'ps_garbageStation': 'ゴミ置場',
   'ps_graffiti': '落書',
   'ps_damage': '道路',
   'ps_streetlight': '街灯',
