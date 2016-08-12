@@ -362,44 +362,22 @@ var ReportImage = React.createClass({
       return;
     }
 
-    var resizeImage = function(img) {
-      var MAX_SIZE = 550;
-    
-      var canvas = document.getElementById('img-canvas');
-      var ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0);
-    
-      var width = img.width;
-      var height = img.height;
-       
-      if (width > height) {
-        if (width > MAX_SIZE) {
-          height *= MAX_SIZE / width;
-          width = MAX_SIZE;
-        }
-      } else {
-        if (height > MAX_SIZE) {
-          width *= MAX_SIZE / height;
-          height = MAX_SIZE;
-        }
+    var reportImage = imgfiles[0];
+    var options = {canvas: true};
+    loadImage.parseMetaData(reportImage, function(data) {
+      if (data.exif) {
+        options.orientation = data.exif.get('Orientation');
       }
-      canvas.width = width;
-      canvas.height = height;
-      ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, width, height);
-    
-      var dataurl = canvas.toDataURL('image/png');
-    
-      return dataurl;
-    };
-
-    var fileReader =new FileReader();
-    fileReader.onload=function(event) {
-      var img = document.getElementById('tmp-img');
-      img.src = event.target.result;
-      reportValues.image = resizeImage(img);
-    }
-    fileReader.readAsDataURL(imgfiles[0]);
+      options.maxHeight = 550;
+      options.maxWidth = 550;
+    });
+    loadImage(
+      reportImage,
+      function(canvas) {
+        reportValues.image = canvas.toDataURL('image/png');
+      },
+      options
+    );
   },
   render: function() {
     return <div className="row">
