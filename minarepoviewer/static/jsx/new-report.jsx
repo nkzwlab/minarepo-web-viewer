@@ -66,17 +66,6 @@ var type2img = function(type, isSelected) {
   return '/static/img/minarepo-icons/' + type + suffix +'.png';
 };
 
-var checkValues = function() {
-  var rName = reportValues.user;
-  var rLat = reportValues.latitude;
-  var rLng = reportValues.longitude;
-
-  if (!rName || !rLat || !rLng) {
-    return false;
-  }
-  return true;
-};
-
 var publishReport = function(type) {
   var device = new Device(type);
 
@@ -93,10 +82,22 @@ var publishReport = function(type) {
   client.publishDevice(device);
 };
 
+var showToast = function(type, msg, msec) {
+  $.toast({
+    heading: type,
+    icon: type.toLowerCase(),
+    text: msg,
+    hideAfter: msec,
+    allowToastClose: true,
+    position: 'mid-center',
+    loader: false
+  });
+  return;
+};
+
 var constants = {
   TOGGLE_VIEWER_PAGE_BUTTON: 'TOGGLE_VIEWER_PAGE_BUTTON',
   TOGGLE_TYPE_BUTTON: 'TOGGLE_TYPE_BUTTON',
-  TOGGLE_IMG_UPLOAD_BUTTON: 'TOGGLE_IMG_UPLOAD_BUTTON',
   TOGGLE_PUBLISH_BUTTON: 'TOGGLE_PUBLISH_BUTTON'
 };
 
@@ -106,7 +107,6 @@ var MinaRepoStore = Fluxxor.createStore({
 
     this.bindActions(constants.TOGGLE_VIEWER_PAGE_BUTTON, this.onToggleViewerPageButton);
     this.bindActions(constants.TOGGLE_TYPE_BUTTON, this.onToggleTypeButton);
-    this.bindActions(constants.TOGGLE_IMG_UPLOAD_BUTTON, this.onToggleImgUploadButton);
     this.bindActions(constants.TOGGLE_PUBLISH_BUTTON, this.onTogglePublishButton);
   },
   getState: function() {
@@ -122,26 +122,16 @@ var MinaRepoStore = Fluxxor.createStore({
     reportValues.type = this.selectedType;
     this.emit('change');
   },
-  onToggleImgUploadButton: function(data) {
-    reportValues.image = data.img;
-    this.emit('change');
-  },
   onTogglePublishButton: function() {
-    var check = checkValues();
-    if (!check) {
-      $.toast({
-        hideAfter: '2500',
-        heading: 'Error',
-        icon: 'error',
-        text: '<p class="toast-msg">未記入の項目があります</p>',
-        allowToastClose: true,
-        position: 'mid-center',
-        loader: false
-      });
+    var rName = reportValues.user;
+    var rLat = reportValues.latitude;
+    var rLng = reportValues.longitude;
 
+    if (!rName || !rLat || !rLng) {
+      var toastMsg = '<p class="toast-msg">未記入の項目があります</p>';
+      showToast('Error', toastMsg, '2500');
       return;
     }
-
     publishReport(this.selectedType);
     this.emit('change');
   }
@@ -153,9 +143,6 @@ var actions = {
   },
   onToggleTypeButton: function(data) {
     this.dispatch(constants.TOGGLE_TYPE_BUTTON, {type: data.type});
-  },
-  onToggleImgUploadButton: function(data) {
-    this.dispatch(constants.TOGGLE_IMG_UPLOAD_BUTTON, {img: data.img});
   },
   onTogglePublishButton: function() {
     this.dispatch(constants.TOGGLE_PUBLISH_BUTTON);
@@ -403,16 +390,7 @@ var PublishButton = React.createClass({
       var toastMsg = '<div class="toast-msg">\
         <p>サーバに接続できませんでした．ページを再読み込みしてください</p>\
       </div>';
-
-      $.toast({
-        hideAfter: '2500',
-        heading: 'Error',
-        icon: 'error',
-        text: toastMsg,
-        allowToastClose: true,
-        position: 'mid-center',
-        loader: false
-      });
+      showToast('Error', toastMsg, '2500');
       console.debug('Connection Failed' + soxEvent);
     };
     soxEventListener.resolved = function(soxEvent) {
@@ -440,16 +418,7 @@ var PublishButton = React.createClass({
       var toastMsg = '<div class="toast-msg">\
         <p>送信できませんでした．しばらく経ってから再度お試しください</p>\
       </div>';
-
-      $.toast({
-        hideAfter: '2500',
-        heading: 'Error',
-        icon: 'error',
-        text: toastMsg,
-        allowToastClose: false,
-        position: 'mid-center',
-        loader: false
-      });
+      showToast('Error', toastMsg, '3000');
       console.debug('Publish Failed' + soxEvent);
     };
 
