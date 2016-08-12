@@ -217,7 +217,7 @@ var TypeButtons = React.createClass({
 
     var descRow = <div className="row"> 
       <div className="small-10 small-centered columns">
-        <p>(2) レポートの種類を選んでください [<font color="red">必須</font>]</p>
+        <p>(2) レポート種類を選んでください [<font color="red">必須</font>]</p>
       </div>
     </div>;
     var buttonRow = <div className="row mrv-btn-row">
@@ -242,11 +242,11 @@ var ReportMap = React.createClass({
     // FIXME: センターの位置をスマートフォンのGPSから取得する？
     // var sfcLatitude = 35.388281;
     // var sfcLongitude = 139.427309;
-    reportMap = new google.maps.Map(
-      document.getElementById('report-map'),
-      {
+    reportMap = new google.maps.Map(document.getElementById('report-map'), {
         center: INIT_MAP_CENTER,
-        zoom: 15
+        zoom: 15,
+        mapTypeControl: false,
+        streetViewControl: false
       }
     );
 
