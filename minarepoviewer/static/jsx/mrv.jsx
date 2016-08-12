@@ -719,6 +719,9 @@ var ReportDetail = React.createClass({
       detailComment = detail.comment;
       detailUser = detail.user;
       detailImage = detail.image;
+      if (detailImage == '' || detailImage == 'data:,') {
+        detailImage = '/static/img/no-image.png';
+      }
       detailTimestamp = detail.timestamp;
       if (detailComment === '') {
         detailComment = <span className="mrv-detail-no-comment">(コメントなし)</span>
