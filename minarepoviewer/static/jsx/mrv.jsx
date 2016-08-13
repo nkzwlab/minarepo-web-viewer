@@ -746,10 +746,21 @@ var ReportDetail = React.createClass({
       };
       centerButtonDom = <button className="button" onClick={centerButtonHandler}>マップに表示</button>;
 
-      var openInfoWindow = function(img, lat, lng) {
+      var openInfoWindow = function(imgData, lat, lng) {
+        var img = new Image();
+        img.src = imgData;
+        if (img.width > img.height) {
+          img.className = 'info-img-horizontal';
+        } else if (img.height > img.width) {
+          img.className = 'info-img-vertical';
+        } else {
+          img.src = '/static/img/no-image.png'
+          img.className = 'info-img-horizontal';
+        }
+
         if (infoWindow === null || infoWindow === undefined) {
           infoWindow = new google.maps.InfoWindow({
-            content: '<section><img src="' + img + '" style="width: 64px; height:96px"></img></section>',
+            content: '<section>' + img.outerHTML + '</section>',
             position: new google.maps.LatLng(lat, lng),
             pixelOffset: new google.maps.Size(0, -30)
           });
@@ -758,10 +769,9 @@ var ReportDetail = React.createClass({
             infoWindow.close();
           });
         } else {
-          infoWindow.setContent('<section><img src="' + img + '" style="width: 64px; height:96px"></img></section>');
+          infoWindow.setContent('<section>' + img.outerHTML + '</section>');
           infoWindow.position = new google.maps.LatLng(lat, lng);
         }
-
         infoWindow.setMap(reportMap);
       };
       openInfoWindow(detail.image, detail.geo[0], detail.geo[1]);
