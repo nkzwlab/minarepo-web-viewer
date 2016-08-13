@@ -644,7 +644,6 @@ var actions = {
     this.dispatch(constants.TOGGLE_SHOWING_FILTER);
   },
   onToggleNewReport: function() {
-    console.log("soge");
     window.location.href = '/new_report';
   }
 };
