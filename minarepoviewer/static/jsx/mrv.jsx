@@ -747,33 +747,30 @@ var ReportDetail = React.createClass({
 
       var openInfoWindow = function(imgData, lat, lng) {
         var img = new Image();
+        img.className = 'info-img-horizontal';
+        img.addEventListener('load', function() {
+          if (img.width < img.height) {
+            img.className = 'info-img-vertical';
+          }
+
+          if (infoWindow === null || infoWindow === undefined) {
+            infoWindow = new google.maps.InfoWindow({
+              content: '<section>' + img.outerHTML + '</section>',
+              position: new google.maps.LatLng(lat, lng),
+              pixelOffset: new google.maps.Size(0, -30)
+            });
+            google.maps.event.addListener(reportMap, 'click', function() {
+              infoWindow.close();
+            });
+          } else {
+            infoWindow.setContent('<section>' + img.outerHTML + '</section>');
+            infoWindow.position = new google.maps.LatLng(lat, lng);
+          }
+          infoWindow.setMap(reportMap);
+        });
         img.src = imgData;
-        if (img.width > img.height) {
-          img.className = 'info-img-horizontal';
-        } else if (img.height > img.width) {
-          img.className = 'info-img-vertical';
-        } else {
-          img.src = '/static/img/no-image.png'
-          img.className = 'info-img-horizontal';
-        }
-
-        if (infoWindow === null || infoWindow === undefined) {
-          infoWindow = new google.maps.InfoWindow({
-            content: '<section>' + img.outerHTML + '</section>',
-            position: new google.maps.LatLng(lat, lng),
-            pixelOffset: new google.maps.Size(0, -30)
-          });
-
-          google.maps.event.addListener(reportMap, 'click', function() {
-            infoWindow.close();
-          });
-        } else {
-          infoWindow.setContent('<section>' + img.outerHTML + '</section>');
-          infoWindow.position = new google.maps.LatLng(lat, lng);
-        }
-        infoWindow.setMap(reportMap);
       };
-      openInfoWindow(detail.image, detail.geo[0], detail.geo[1]);
+      openInfoWindow(detailImage, detail.geo[0], detail.geo[1]);
     } else if (isFetchingDetail) {
       // console.debug('detail pattern 2: fetching');
       detailTimestamp = '読み込み中...';
