@@ -1,5 +1,5 @@
-var BOSHSERVICE = 'http://soxfujisawa.ht.sfc.keio.ac.jp:5280/http-bind/';
-var XMPPSERVER = 'soxfujisawa.ht.sfc.keio.ac.jp';
+// var BOSHSERVICE = 'http://soxfujisawa.ht.sfc.keio.ac.jp:5280/http-bind/';
+// var XMPPSERVER = 'soxfujisawa.ht.sfc.keio.ac.jp';
 
 var reportMap = null;
 var reportValues = {
@@ -82,6 +82,36 @@ var publishReport = function(type) {
   client.publishDevice(device);
 };
 
+var postReport = function(type) {
+  reportValues['type'] = type;
+  $.ajax({
+    type: 'POST',
+    url: '/post/new_report',
+    data: reportValues,
+    dataType: 'json',
+    success: function(data) {
+      $.toast({
+        hideAfter: '1500',
+        heading: 'Success',
+        icon: 'success',
+        text: '<p class="toast-msg">送信しました</p>',
+        allowToastClose: true,
+        position: 'mid-center',
+        loader: false,
+        afterHidden: function() {
+          window.location.href = "/";
+        }
+      });
+    },
+    error: function() {
+      var toastMsg = '<div class="toast-msg">\
+        <p>送信できませんでした．しばらく経ってから再度お試しください</p>\
+      </div>';
+      showToast('Error', toastMsg, '3000');
+    }
+  });
+}
+
 var showToast = function(type, msg, msec) {
   $.toast({
     heading: type,
@@ -98,7 +128,8 @@ var showToast = function(type, msg, msec) {
 var constants = {
   TOGGLE_VIEWER_PAGE_BUTTON: 'TOGGLE_VIEWER_PAGE_BUTTON',
   TOGGLE_TYPE_BUTTON: 'TOGGLE_TYPE_BUTTON',
-  TOGGLE_PUBLISH_BUTTON: 'TOGGLE_PUBLISH_BUTTON'
+  TOGGLE_PUBLISH_BUTTON: 'TOGGLE_PUBLISH_BUTTON',
+  TOGGLE_POST_BUTTON: 'TOGGLE_POST_BUTTON',
 };
 
 var MinaRepoStore = Fluxxor.createStore({
@@ -108,6 +139,7 @@ var MinaRepoStore = Fluxxor.createStore({
     this.bindActions(constants.TOGGLE_VIEWER_PAGE_BUTTON, this.onToggleViewerPageButton);
     this.bindActions(constants.TOGGLE_TYPE_BUTTON, this.onToggleTypeButton);
     this.bindActions(constants.TOGGLE_PUBLISH_BUTTON, this.onTogglePublishButton);
+    this.bindActions(constants.TOGGLE_POST_BUTTON, this.onTogglePostButton);
   },
   getState: function() {
     return {
@@ -134,6 +166,19 @@ var MinaRepoStore = Fluxxor.createStore({
     }
     publishReport(this.selectedType);
     this.emit('change');
+  },
+  onTogglePostButton: function() {
+    var rName = reportValues.user;
+    var rLat = reportValues.latitude;
+    var rLng = reportValues.longitude;
+
+    if (!rName || !rLat || !rLng) {
+      var toastMsg = '<p class="toast-msg">未記入の項目があります</p>';
+      showToast('Error', toastMsg, '2500');
+      return;
+    }
+    postReport(this.selectedType);
+    this.emit('change');
   }
 });
 
@@ -146,6 +191,9 @@ var actions = {
   },
   onTogglePublishButton: function() {
     this.dispatch(constants.TOGGLE_PUBLISH_BUTTON);
+  },
+  onTogglePostButton: function() {
+    this.dispatch(constants.TOGGLE_POST_BUTTON);
   }
 };
 
@@ -380,6 +428,7 @@ var ReportImage = React.createClass({
 
 var PublishButton = React.createClass({
   componentDidMount: function() {
+    /*
     client = new SoxClient(BOSHSERVICE, XMPPSERVER);
 
     var soxEventListener = new SoxEventListener();
@@ -424,10 +473,12 @@ var PublishButton = React.createClass({
 
     client.setSoxEventListener(soxEventListener);
     client.connect();
+    */
   },
   onButtonClick: function() {
     return function(event) {
-      flux.actions.onTogglePublishButton();
+      // flux.actions.onTogglePublishButton();
+      flux.actions.onTogglePostButton();
     };
   },
   render: function() {

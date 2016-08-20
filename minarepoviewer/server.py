@@ -12,7 +12,7 @@ import hashlib
 import base64
 
 import click
-from bottle import Bottle, HTTPResponse, request, response, route, static_file, auth_basic
+from bottle import Bottle, HTTPResponse, request, response, route, static_file, auth_basic, BaseRequest
 from jinja2 import Template
 
 from dbaccess import MinaRepoDBA
@@ -101,7 +101,7 @@ class MinaRepoViewer(object):
         if self._accept_gzip(request):
             body = self._gzip(body)
 
-        resp = HTTPResponse(body=body, status=200)
+        resp = HTTPResponse(body=body, status=status)
         resp.set_header('Content-Type', 'application/json')
         resp.set_header('Cache-Control', 'no-cache')
         resp.set_header('Pragma', 'no-cache')
@@ -191,6 +191,20 @@ class MinaRepoViewer(object):
         except Exception as e:
             logging.exception('error')
 
+    def insert_report(self):
+        report_type = request.forms.get('type', None)
+        user = request.forms.get('user', None)
+        lat = request.forms.get('latitude', None)
+        lon = request.forms.get('longitude', None)
+        image = request.forms.get('image', '')
+        comment = request.forms.get('comment', '')
+        api_key = 'YOUR_API_KEY'
+
+        ret = self._dba.insert_report(report_type, user, lat, lon, image, comment, api_key)
+        if not ret:
+            return self._json_response(ret, 500)
+        return self._json_response(ret)
+
     def api_detail(self, report_id):
         report = self._dba.get_report(report_id)
         report['timestamp'] = report['timestamp'].strftime('%Y-%m-%d %H:%M:%S')
@@ -202,6 +216,7 @@ class MinaRepoViewer(object):
 
     def create_wsgi_app(self):
         app = Bottle()
+        BaseRequest.MEMFILE_MAX = 1024 * 1024
 
         app.route('/static/<file_name:path>', ['GET'], self.static)
 
@@ -209,6 +224,7 @@ class MinaRepoViewer(object):
         app.route('/api/reports', ['GET', 'POST'], self.api_reports)
         app.route('/api/detail/<report_id>', ['GET'], self.api_detail)
         app.route('/export/reports', ['GET', 'POST'], self.export_reports)
+        app.route('/post/new_report', ['POST'], self.insert_report)
 
         @app.route('/', method='GET')
         @auth_basic(check)
