@@ -52,13 +52,14 @@ def check(username, password):
 
 class MinaRepoViewer(object):
 
-    def __init__(self, mysql_conf_file, static_dir=None, template_dir=None):
-        assert mysql_conf_file and os.path.exists(mysql_conf_file)
+    def __init__(self, conf_file, static_dir=None, template_dir=None):
+        assert conf_file and os.path.exists(conf_file)
 
-        self._mysql_conf_file = mysql_conf_file
-        with open(mysql_conf_file, 'rb') as fh:
-            self._mysql_conf = json.load(fh)
-            self._dba = MinaRepoDBA(self._mysql_conf)
+        self._conf_file = conf_file
+        with open(conf_file, 'rb') as fh:
+            self._conf = json.load(fh)
+            self._dba = MinaRepoDBA(self._conf['mysql_config'])
+            self._api_key = self._conf['google_api_key']
 
         here = os.path.dirname(__file__)
 
@@ -88,7 +89,7 @@ class MinaRepoViewer(object):
         return tpl.render(**kwargs)
 
     def html_index(self):
-        return self._render('index.html.j2')
+        return self._render('index.html.j2', API_KEY=self._api_key)
 
     def _json_response(self, data, status=200):
         status_msg = 'ok' if status == 200 else 'error'
@@ -198,7 +199,7 @@ class MinaRepoViewer(object):
         lon = request.forms.get('longitude', None)
         image = request.forms.get('image', '')
         comment = request.forms.get('comment', '')
-        api_key = 'YOUR_API_KEY'
+        api_key = self._api_key
 
         ret = self._dba.insert_report(report_type, user, lat, lon, image, comment, api_key)
         if not ret:
@@ -234,29 +235,29 @@ class MinaRepoViewer(object):
         @app.route('/new_report', method='GET')
         @auth_basic(check)
         def minarepo_new_report():
-            return self._render('new-report.html.j2')
+            return self._render('new-report.html.j2', API_KEY=self._api_key)
 
         return app
 
 
 # for gunicorn
-def build_wsgi_app(mysql_conf, static_dir, template_dir):
-    app = MinaRepoViewer(mysql_conf, static_dir, template_dir)
+def build_wsgi_app(conf, static_dir, template_dir):
+    app = MinaRepoViewer(conf, static_dir, template_dir)
     return app.create_wsgi_app()
 
 
 @click.command()
-@click.option('-m', '--mysql-conf', help='MySQL conf file(json)')
+@click.option('-c', '--config', help='Config file(json)')
 @click.option('-s', '--static-dir', default=None)
 @click.option('-t', '--template-dir', default=None)
 @click.option('-p', '--port', type=int, default=DEFAULT_PORT)
-def main(mysql_conf, static_dir, template_dir, port):
+def main(config, static_dir, template_dir, port):
     from wsgiref.simple_server import make_server
 
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)
 
-    app = MinaRepoViewer(mysql_conf, static_dir, template_dir)
+    app = MinaRepoViewer(config, static_dir, template_dir)
     wsgi_app = app.create_wsgi_app()
 
     server = make_server('', port, wsgi_app)
