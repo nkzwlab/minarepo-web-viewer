@@ -8,8 +8,9 @@
     <link rel="icon" href="/favicon.ico" type="image/vnd.microsoft.icon">
     <link rel="stylesheet" href="/static/css/foundation.min.css">
     <link rel="stylesheet" href="/static/css/mrv.css">
+    <link rel="stylesheet" href="/static/css/jquery.toast.css">
 
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAl3DZGMBOgy2LsVWhXd2Y2fjv4VnQD73k"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB4LQwBHswi7DWgRhkIQQ4M0UVQI-qDFPo&libraries=places"></script>
 
     <script src="/static/js/vendor/jquery-2.1.4.min.js"></script>
     <script src="/static/js/vendor/foundation.min.js"></script>
@@ -19,14 +20,31 @@
     <script src="/static/js/vendor/fluxxor.js"></script>
     <script src="/static/js/vendor/underscore-min.js"></script>
     <script src="/static/js/vendor/classnames.js"></script>
-    <script src="/static/js/mrv.js"></script>
+    <script src="/static/js/vendor/jquery.toast.js"></script>
+    <script src="/static/js/vendor/load-image.all.min.js"></script>
+    <!--
+    <script src="/static/js/SoxJS/lib/jquery.dropotron.min.js"></script>
+    <script src="/static/js/SoxJS/lib/config.js"></script>
+    <script src="/static/js/SoxJS/lib/backbone.js"></script>
+    <script src="/static/js/SoxJS/lib/strophe.js"></script>
+    <script src="/static/js/SoxJS/lib/sox.strophe.pubsub.js"></script>
+    <script src="/static/js/SoxJS/lib/strophe.x.js"></script>
+    <script src="/static/js/SoxJS/lib/jscron.js"></script>
+ 
+    <script src="/static/js/SoxJS/sox/SoxClient.js"></script>
+    <script src="/static/js/SoxJS/sox/SoxEventListener.js"></script>
+    <script src="/static/js/SoxJS/sox/Device.js"></script>
+    <script src="/static/js/SoxJS/sox/Transducer.js"></script>
+    <script src="/static/js/SoxJS/sox/SensorData.js"></script>
+    //-->
+
+    <script src="/static/js/new-report.js"></script>
   </head>
   <body>
     <div class="mrv-hidden">
       <!-- theese image will not show up, just let browser preload them to make better ux -->
       <img src="/static/img/loading2.gif">
       <img src="/static/img/loading-image.gif">
-      <img src="/static/img/no-image.png">
       <img src="/static/img/minarepo-icons/ps_animal-unselected.png">
       <img src="/static/img/minarepo-icons/ps_damage-unselected.png">
       <img src="/static/img/minarepo-icons/ps_garbageStation-unselected.png">

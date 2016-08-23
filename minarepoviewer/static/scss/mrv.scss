@@ -7,7 +7,7 @@ $sp-map-height: 300px;
 
 $btn-size: 45px;
 
-$sp-btn-size: 65px;
+$sp-btn-size: 55px;
 
 $rtype-mini-icon-size: 20px;
 
@@ -55,18 +55,26 @@ $table-font-size-smartphone: 12px;
 
 .mrv-btn-row {
     margin-bottom: 15px;
-
 }
 
 .mrv-btn-container {
     text-align: center;
+    margin: 0 auto;
+}
 
+.mrv-select-all-btn {
+    margin-top: 1rem;
+    text-align: center;
 }
 
 .mrv-btn-inner-container {
     margin-left: auto;
     margin-right: auto;
     width: auto;
+}
+
+.mrv-filter-btn {
+    background-color: #ec5840;
 }
 
 .mrv-report-table-container {
@@ -177,6 +185,16 @@ DIV.mrv-detail {
     margin: 26px 0 26px 0;
 }
 
+.info-img-vertical {
+    width: 72px;
+    height: 96px;
+}
+
+.info-img-horizontal {
+    width: 96px;
+    height: 72px;
+}
+
 .mrv-btn-close-table {
 
 }
@@ -207,6 +225,7 @@ DIV.mrv-detail {
     // height: auto;
     margin-left: auto;
     margin-right: auto;
+    margin-bottom: 1rem;
 }
 
 
@@ -214,4 +233,53 @@ DIV.mrv-detail {
     text-align: center;
     font-size: 14px;
     color: #666666;
+}
+
+.file-upload-btn {
+    width: 300px;
+    margin-left: 1rem;
+}
+
+.btn-set {
+    width: 70px;
+    margin: 0 auto;
+}
+
+.controls {
+    margin-top: 10px;
+    border: 1px solid transparent;
+    border-radius: 2px 0 0 2px;
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    height: 32px;
+    outline: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+#pac-input {
+    background-color: #fff;
+    font-family: Roboto;
+    font-size: 15px;
+    font-weight: 300;
+    margin-left: 1rem;
+    padding: 0 11px 0 13px;
+    text-overflow: ellipsis;
+    @media screen and (min-width: 641px) {
+        width: 300px;
+    }
+    @media screen and (max-width: 640px) {
+        width: 200px;
+    }
+}
+
+#pac-input:focus {
+    border-color: #4d90fe;
+}
+
+.toast-msg {
+    font-size: 18px;
+}
+
+.hidden-area {
+    display: none;
 }

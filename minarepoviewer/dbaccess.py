@@ -4,7 +4,8 @@ import time
 import MySQLdb
 
 
-from util import parse_geo_point
+from time import strftime
+from util import parse_geo_point, geo2addr
 
 
 class MinaRepoDBA(object):
@@ -110,6 +111,25 @@ class MinaRepoDBA(object):
             cursor.close()
 
         return ret
+
+    def insert_report(self, repo_type, user, lat, lon, img, comm, key):
+        timestamp = strftime('%Y-%m-%d %H:%M:%S')
+        addr = geo2addr(lat, lon, key)
+        sql = "INSERT INTO minarepo (type, user, geo, timestamp, image, comment, address) " \
+            "VALUES (%s, %s, ST_GeomFromText('POINT(%s %s)'), %s, %s, %s, %s)"
+        args = (repo_type, user, float(lat), float(lon), timestamp, img, comm, addr)
+
+        cursor = self._conn.cursor()
+        try:
+            cursor.execute(sql, args)
+            self._conn.commit()
+        except MySQLdb.Error as error:
+            print error
+            return False
+        finally:
+            cursor.close()
+
+        return True
 
     def _close(self):
         if self._conn is None:
