@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import time
+import datetime
 from contextlib import contextmanager
 
 import MySQLdb
@@ -127,6 +128,59 @@ class MinaRepoDBA(object):
             cursor.close()
 
         return True
+
+    def get_comments(self, report_id, time_start=None, time_end=None):
+        sql_params = []
+        sql_conds = []
+
+        if time_start:
+            sql_conds.append('(%s <= timestamp)')
+            sql_params.append(time_start)
+
+        if time_end:
+            sql_conds.append('(timestamp < %s)')
+            sql_params.append(time_end)
+
+        sql_conds.append('(report_id = %s)')
+        sql_params.append(report_id)
+
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            try:
+                cols = ('id', 'report_id', 'user', 'comment', 'timestamp')
+                cond = ' AND '.join(sql_conds)
+                sql = 'SELECT %s FROM comment WHERE %s ORDER BY timestamp ASC;' % (','.join(cols), cond)
+                cursor.execute(sql, sql_params)
+                ret = []
+                for row in cursor.fetchall():
+                    item = dict()
+                    for i, col in enumerate(cols):
+                        item[col] = row[i]
+                    ret.append(item)
+                return ret
+
+            finally:
+                cursor.close()
+
+    def insert_comment(self, report_id, comment, user='', timestamp=None):
+        if timestamp is None:
+            timestamp = datetime.datetime.now()
+
+        with self.connection() as conn:
+            sql = 'INSERT INTO comment(report_id, user, comment, timestamp) VALUES (%s, %s, %s, %s);'
+            sql_params = (report_id, user, comment, timestamp)
+
+            cursor = conn.cursor()
+            try:
+                cursor.execute(sql, sql_params)
+                conn.commit()
+            except MySQLdb.Error as error:
+                print error
+                return False
+            finally:
+                cursor.close()
+
+            return True
 
     def _close(self):
         if self._conn is None:

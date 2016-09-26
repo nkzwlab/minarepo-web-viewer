@@ -211,6 +211,40 @@ class MinaRepoViewer(object):
         result = dict(report=report)
         return self._json_response(result)
 
+    def api_report_comments(self, report_id):
+        time_start = request.params.get('time_start', None)
+        time_end = request.params.get('time_end', None)
+
+        if time_start:
+            time_start = parse_time(time_start)
+
+        if time_end:
+            time_end = parse_time(time_end)
+
+        try:
+            report_id = int(report_id)
+            comments = self._dba.get_comments(report_id, time_start, time_end)
+            for comment in comments:
+                comment['timestamp'] = comment['timestamp'].strftime('%Y-%m-%d %H:%M:%S')
+        except:
+            return self._json_response(None, 500)
+
+        return self._json_response(comments)
+
+    def api_comment_new(self, report_id):
+        user = request.params.get('user', '')
+        comment = request.params.get('comment', '')
+        try:
+            report_id = int(report_id)
+            ret = self._dba.insert_comment(report_id, comment, user)
+        except:
+            logging.exception('error')
+            return self._json_response(None, 500)
+
+        if not ret:
+            return self._json_response(None, 500)
+        return self._json_response(ret)
+
     def static(self, file_name):
         return static_file(file_name, root=self._static_dir)
 
@@ -223,6 +257,8 @@ class MinaRepoViewer(object):
         # app.route('/', ['GET'], self.html_index)
         app.route('/api/reports', ['GET', 'POST'], self.api_reports)
         app.route('/api/detail/<report_id>', ['GET'], self.api_detail)
+        app.route('/api/report/<report_id>/comments', ['GET'], self.api_report_comments)
+        app.route('/api/report/<report_id>/comments/new', ['GET', 'POST'], self.api_comment_new)
         app.route('/export/reports', ['GET', 'POST'], self.export_reports)
         app.route('/post/new_report', ['POST'], self.insert_report)
 
