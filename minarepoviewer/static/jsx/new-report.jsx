@@ -7,7 +7,8 @@ var reportValues = {
   latitude: null,
   longitude: null,
   comment: '',
-  image: ''
+  image: '',
+  level: 0
 };
 
 var INIT_MAP_CENTER = {
@@ -129,7 +130,7 @@ var constants = {
   TOGGLE_VIEWER_PAGE_BUTTON: 'TOGGLE_VIEWER_PAGE_BUTTON',
   TOGGLE_TYPE_BUTTON: 'TOGGLE_TYPE_BUTTON',
   TOGGLE_PUBLISH_BUTTON: 'TOGGLE_PUBLISH_BUTTON',
-  TOGGLE_POST_BUTTON: 'TOGGLE_POST_BUTTON',
+  TOGGLE_POST_BUTTON: 'TOGGLE_POST_BUTTON'
 };
 
 var MinaRepoStore = Fluxxor.createStore({
@@ -171,6 +172,7 @@ var MinaRepoStore = Fluxxor.createStore({
     var rName = reportValues.user;
     var rLat = reportValues.latitude;
     var rLng = reportValues.longitude;
+    var rLevel = reportValues.level;
 
     if (!rName || !rLat || !rLng) {
       var toastMsg = '<p class="toast-msg">未記入の項目があります</p>';
@@ -270,6 +272,26 @@ var TypeButtons = React.createClass({
   }
 });
 
+var ReportLevel = React.createClass({
+  onLevelSelected: function(level) {
+      console.log(level.target.value);
+      reportValues.level = level.target.value;
+  },
+  render: function() {
+    return <div className="row">
+      <div className="small-10 small-centered columns">
+        <p>(3) 対応レベルを選択してください [<font color="red">必須</font>]
+          <select className="short-size" id="report-level" onChange={this.onLevelSelected}>
+            <option value="0" defaultValue>0: 対応必要なし</option>
+            <option value="1">1: 対応必要</option>
+            <option value="2">2: 緊急，通知する</option>
+          </select>
+        </p>
+      </div>
+    </div>;
+  }
+});
+
 var ReportMap = React.createClass({
   componentDidMount: function() {
     // GoogleMaps初期化
@@ -350,7 +372,7 @@ var ReportMap = React.createClass({
   render: function() {
     var descRow = <div className="row"> 
       <div className="small-10 small-centered columns">
-        <p>(3) 場所を指定してください [<font color="red">必須</font>]</p>
+        <p>(4) 場所を指定してください [<font color="red">必須</font>]</p>
       </div>
     </div>;
     var mapRow = <div className="row">
@@ -374,7 +396,7 @@ var ReportComment = React.createClass({
   render: function() {
     var descRow = <div className="row">
       <div className="small-10 small-centered columns">
-        <p>(4) コメントを記入してください [<font color="blue">任意</font>]</p>
+        <p>(5) コメントを記入してください [<font color="blue">任意</font>]</p>
       </div>
     </div>;
     var commentRow = <div className="row">
@@ -418,8 +440,8 @@ var ReportImage = React.createClass({
     return <div className="row">
       <div className="small-10 small-centered columns">
         <p>
-          (5) 画像を登録してください [<font color="blue">任意</font>]:
-          <input className="file-upload-btn" type="file" onChange={this.onUploadImage} accept="image/*" />
+          (6) 画像を登録してください [<font color="blue">任意</font>]:
+          <input className="short-size" type="file" onChange={this.onUploadImage} accept="image/*" />
         </p>
       </div>
     </div>
@@ -526,6 +548,7 @@ var MinaRepoViewer = React.createClass({
     var reportMap = <ReportMap/>;
     var reportComment = <ReportComment/>;
     var reportImage = <ReportImage/>;
+    var reportLevel = <ReportLevel/>;
     var publishButton = <PublishButton/>;
 
     var footer = <div className="row">
@@ -541,6 +564,7 @@ var MinaRepoViewer = React.createClass({
       {viewerPageButton}
       {user}
       {buttons}
+      {reportLevel}
       {reportMap}
       {reportComment}
       {reportImage}
