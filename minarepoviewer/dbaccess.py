@@ -117,17 +117,18 @@ class MinaRepoDBA(object):
             "VALUES (%s, %s, ST_GeomFromText('POINT(%s %s)'), %s, %s, %s, %s)"
         args = (repo_type, user, float(lat), float(lon), timestamp, img, comm, addr)
 
-        cursor = self._conn.cursor()
-        try:
-            cursor.execute(sql, args)
-            self._conn.commit()
-        except MySQLdb.Error as error:
-            print error
-            return False
-        finally:
-            cursor.close()
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            try:
+                cursor.execute(sql, args)
+                conn.commit()
+            except MySQLdb.Error as error:
+                print error
+                return False
+            finally:
+                cursor.close()
 
-        return True
+            return True
 
     def get_comments(self, report_id, time_start=None, time_end=None):
         sql_params = []
