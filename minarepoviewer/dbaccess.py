@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import time
+from contextlib import contextmanager
 
 import MySQLdb
 
@@ -69,25 +70,23 @@ class MinaRepoDBA(object):
             cond = ' AND '.join(conditions)
             sql = 'SELECT %s FROM minarepo WHERE %s ORDER BY timestamp DESC;' % (cols, cond)
 
-        if self._last_comm + self._timeout < time.time():
-            self._reconnect()
+        with self.connection() as conn:
+            print 'sql=%s' % sql
+            print 'sql-args=%s' % args
+            cursor = conn.cursor()
+            try:
+                cursor.execute(sql, args)
+                result = cursor.fetchall()
+                for row in result:
+                    r_obj = dict()
+                    for i, col in enumerate(col_keys):
+                        r_obj[col] = row[i]
+                        if col == 'geo':
+                            r_obj[col] = parse_geo_point(r_obj[col])
+                    yield r_obj
 
-        print 'sql=%s' % sql
-        print 'sql-args=%s' % args
-        cursor = self._conn.cursor()
-        try:
-            cursor.execute(sql, args)
-            result = cursor.fetchall()
-            for row in result:
-                r_obj = dict()
-                for i, col in enumerate(col_keys):
-                    r_obj[col] = row[i]
-                    if col == 'geo':
-                        r_obj[col] = parse_geo_point(r_obj[col])
-                yield r_obj
-
-        finally:
-            cursor.close()
+            finally:
+                cursor.close()
 
     def get_report(self, report_id):
         cols = 'id, type, user, astext(geo), timestamp, image, comment, address'
@@ -96,19 +95,17 @@ class MinaRepoDBA(object):
         ]
         sql = 'SELECT %s FROM minarepo WHERE id = %%s;' % cols
 
-        if self._last_comm + self._timeout < time.time():
-            self._reconnect()
-
-        ret = dict()
-        cursor = self._conn.cursor()
-        try:
-            cursor.execute(sql, (report_id,))
-            result = list(cursor.fetchall())[0]
-            for i, col in enumerate(col_keys):
-                ret[col] = result[i]
-            ret['geo'] = parse_geo_point(ret['geo'])
-        finally:
-            cursor.close()
+        with self.connection() as conn:
+            ret = dict()
+            cursor = conn.cursor()
+            try:
+                cursor.execute(sql, (report_id,))
+                result = list(cursor.fetchall())[0]
+                for i, col in enumerate(col_keys):
+                    ret[col] = result[i]
+                ret['geo'] = parse_geo_point(ret['geo'])
+            finally:
+                cursor.close()
 
         return ret
 
@@ -153,3 +150,13 @@ class MinaRepoDBA(object):
     def _reconnect(self):
         self._close()
         self._connect()
+
+    @contextmanager
+    def connection(self):
+        if self._last_comm + self._timeout < time.time():
+            self._reconnect()
+
+        try:
+            yield self._conn
+        finally:
+            self._last_comm = time.time()
