@@ -23,19 +23,27 @@
     margin: 0 7px 0 7px; } }
 @media screen and (max-width: 640px) {
   .mrv-btn-image {
-    width: 65px;
-    height: 65px; } }
+    width: 55px;
+    height: 55px; } }
 
 .mrv-btn-row {
   margin-bottom: 15px; }
 
 .mrv-btn-container {
+  text-align: center;
+  margin: 0 auto; }
+
+.mrv-select-all-btn {
+  margin-top: 1rem;
   text-align: center; }
 
 .mrv-btn-inner-container {
   margin-left: auto;
   margin-right: auto;
   width: auto; }
+
+.mrv-filter-btn {
+  background-color: #ec5840; }
 
 .mrv-report-table-container .pager1 {
   margin-top: 12px;
@@ -90,16 +98,25 @@ DIV.mrv-detail {
   text-align: center;
   margin: 26px 0 26px 0; }
 
+.info-img-vertical {
+  width: 72px;
+  height: 96px; }
+
+.info-img-horizontal {
+  width: 96px;
+  height: 72px; }
+
 .mrv-btn-open-table {
   margin-top: 20px; }
 
 #report-map {
   margin-left: auto;
-  margin-right: auto; }
+  margin-right: auto;
+  margin-bottom: 1rem; }
   @media screen and (min-width: 641px) {
     #report-map {
       width: 95%;
-      height: 70%; } }
+      height: 450px; } }
   @media screen and (max-width: 640px) {
     #report-map {
       width: 95%;
