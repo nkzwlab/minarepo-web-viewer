@@ -130,21 +130,25 @@ var constants = {
   TOGGLE_VIEWER_PAGE_BUTTON: 'TOGGLE_VIEWER_PAGE_BUTTON',
   TOGGLE_TYPE_BUTTON: 'TOGGLE_TYPE_BUTTON',
   TOGGLE_PUBLISH_BUTTON: 'TOGGLE_PUBLISH_BUTTON',
-  TOGGLE_POST_BUTTON: 'TOGGLE_POST_BUTTON'
+  TOGGLE_POST_BUTTON: 'TOGGLE_POST_BUTTON',
+  TOGGLE_LEVEL_BUTTON: 'TOGGLE_LEVEL_BUTTON'
 };
 
 var MinaRepoStore = Fluxxor.createStore({
   initialize: function() {
     this.selectedType = '';
+    this.selectedLevel = 0;
 
     this.bindActions(constants.TOGGLE_VIEWER_PAGE_BUTTON, this.onToggleViewerPageButton);
     this.bindActions(constants.TOGGLE_TYPE_BUTTON, this.onToggleTypeButton);
     this.bindActions(constants.TOGGLE_PUBLISH_BUTTON, this.onTogglePublishButton);
     this.bindActions(constants.TOGGLE_POST_BUTTON, this.onTogglePostButton);
+    this.bindActions(constants.TOGGLE_LEVEL_BUTTON, this.onToggleLevelButton);
   },
   getState: function() {
     return {
-      selectedType: this.selectedType
+      selectedType: this.selectedType,
+      selectedLevel: this.selectedLevel
     }
   },
   onToggleViewerPageButton: function(data) {
@@ -181,6 +185,11 @@ var MinaRepoStore = Fluxxor.createStore({
     }
     postReport(this.selectedType);
     this.emit('change');
+  },
+  onToggleLevelButton: function(data) {
+    this.selectedLevel = data.level;
+    reportValues.level = this.selectedLevel;
+    this.emit('change');
   }
 });
 
@@ -196,6 +205,9 @@ var actions = {
   },
   onTogglePostButton: function() {
     this.dispatch(constants.TOGGLE_POST_BUTTON);
+  },
+  onToggleLevelButton: function(data) {
+    this.dispatch(constants.TOGGLE_LEVEL_BUTTON, {level: data.level});
   }
 };
 
@@ -268,26 +280,6 @@ var TypeButtons = React.createClass({
     return <div>
       {descRow}
       {buttonRow}
-    </div>;
-  }
-});
-
-var ReportLevel = React.createClass({
-  onLevelSelected: function(level) {
-      console.log(level.target.value);
-      reportValues.level = level.target.value;
-  },
-  render: function() {
-    return <div className="row">
-      <div className="small-10 small-centered columns">
-        <p>(3) 対応レベルを選択してください [<font color="red">必須</font>]
-          <select className="short-size" id="report-level" onChange={this.onLevelSelected}>
-            <option value="0" defaultValue>0: 対応必要なし</option>
-            <option value="1">1: 対応必要</option>
-            <option value="2">2: 緊急，通知する</option>
-          </select>
-        </p>
-      </div>
     </div>;
   }
 });
@@ -372,7 +364,7 @@ var ReportMap = React.createClass({
   render: function() {
     var descRow = <div className="row"> 
       <div className="small-10 small-centered columns">
-        <p>(4) 場所を指定してください [<font color="red">必須</font>]</p>
+        <p>(3) 場所を指定してください [<font color="red">必須</font>]</p>
       </div>
     </div>;
     var mapRow = <div className="row">
@@ -385,6 +377,35 @@ var ReportMap = React.createClass({
     return <div>
       {descRow}
       {mapRow}
+    </div>;
+  }
+});
+
+var ReportLevel = React.createClass({
+  onLevelSelected: function(level) {
+    return function(event) {
+      flux.actions.onToggleLevelButton({ level: level });
+    };
+  },
+  render: function() {
+    var selectedLevel = this.props.selectedLevel;
+
+    var descRow = <div className="row"> 
+      <div className="small-10 small-centered columns">
+        <p>(4) 対応レベルを選択してください [<font color="blue">任意</font>]</p>
+      </div>
+    </div>;
+    var radioButtonRow = <div className="row mrv-btn-row">
+      <div className="small-11 medium-4 small-centered medium-centered columns">
+        <input type="radio" name="level" value="0" onChange={this.onLevelSelected(0)} checked={selectedLevel === 0} /><label>対応必要なし</label>
+        <input type="radio" name="level" value="1" onChange={this.onLevelSelected(1)} checked={selectedLevel === 1} /><label>対応必要</label>
+        <input type="radio" name="level" value="2" onChange={this.onLevelSelected(2)} checked={selectedLevel === 2} /><label>緊急(通知込)</label>
+      </div>
+    </div>;
+
+    return <div>
+      {descRow}
+      {radioButtonRow}
     </div>;
   }
 });
@@ -548,7 +569,9 @@ var MinaRepoViewer = React.createClass({
     var reportMap = <ReportMap/>;
     var reportComment = <ReportComment/>;
     var reportImage = <ReportImage/>;
-    var reportLevel = <ReportLevel/>;
+    var reportLevel = <ReportLevel
+      selectedLevel={this.props.selectedLevel}
+    />;
     var publishButton = <PublishButton/>;
 
     var footer = <div className="row">
@@ -564,8 +587,8 @@ var MinaRepoViewer = React.createClass({
       {viewerPageButton}
       {user}
       {buttons}
-      {reportLevel}
       {reportMap}
+      {reportLevel}
       {reportComment}
       {reportImage}
       {publishButton}
@@ -587,6 +610,7 @@ var MinaRepoViewerApp = React.createClass({
     var s = this.state;
     return <MinaRepoViewer
       selectedType={s.selectedType}
+      selectedLevel={s.selectedLevel}
     />;
   }
 });
