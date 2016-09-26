@@ -3,6 +3,8 @@ var reportMap = null;
 var placedReportIds = {};  // id => marker
 var infoWindow = null;
 
+var reportHashPattern = /^\#report=([0-9]+)$/;
+
 var INIT_MAP_CENTER = {
   lat: 35.339193,  // 藤沢市役所(緯度)
   lng: 139.490016  // 藤沢市役所(経度)
@@ -493,6 +495,7 @@ var MinaRepoStore = Fluxxor.createStore({
   },
   onClickPin: function(data) {
     this.clickedPinReportId = data.reportId;
+    window.location.hash = "report=" + data.reportId;
     // console.debug('updated clickedPinReportId! ' + data.reportId);
     this.emit('change');
   },
@@ -1247,6 +1250,12 @@ var main  = function() {
   );
 
   $(document).foundation();
+
+  var hashMatch = window.location.hash.match(reportHashPattern);
+  if (hashMatch) {
+    var reportId = parseInt(hashMatch[1]);
+    flux.actions.onClickPin({ reportId: reportId });
+  }
 };
 
 $(main);
