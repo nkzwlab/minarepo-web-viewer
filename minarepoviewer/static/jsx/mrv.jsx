@@ -85,6 +85,17 @@ var type2img = function(type, isSelected) {
   return '/static/img/minarepo-icons/' + type + suffix +'.png';
 };
 
+var level2text = [
+  '必要無',
+  '必要',
+  '緊急'
+];
+
+var finished2img = function(isFinished) {
+  var suffix = (isFinished) ? 'finished' : 'unfinished';
+  return '/static/img/' + suffix + '.png';
+}
+
 var getMarkerUrl = function(type) {
   var pinInfo = type2pinInfo[type];
   var label = encodeURI(pinInfo.label);
@@ -904,11 +915,18 @@ var ReportTable = React.createClass({
       var reportTypeImg = <img src={reportTypeImg} className="mrv-report-table-report-type-image" />;
       var reportType = <span>{reportTypeImg} {reportTypeStr}</span>;
 
+      var reportLevelColor = 'level-' + report.level;
+      var reportLevelStr = level2text[report.level];
+      var reportFinishedImg = finished2img(report.finished);
+      var reportFinishedImg = <img src={reportFinishedImg} className="mrv-report-table-report-type-image" />;
+
       return <tr className="mrv-report-table-show-detail-link" key={key} onClick={showHandler}>
         <td><span>{reportId}</span></td>
         <td><span>{reportType}</span></td>
         <td><span>{report.user}</span></td>
         <td><span>{report.timestamp}</span></td>
+        <td><span className={reportLevelColor}>{reportLevelStr}</span></td>
+        <td><span>{reportFinishedImg}</span></td>
       </tr>;
     });
 
@@ -986,6 +1004,8 @@ var ReportTable = React.createClass({
             <th>レポ種類</th>
             <th>投稿者</th>
             <th>投稿時刻</th>
+            <th>対応レベル</th>
+            <th>完了</th>
           </tr>
         </thead>
 
