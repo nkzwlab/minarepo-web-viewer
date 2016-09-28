@@ -7,7 +7,8 @@ var reportValues = {
   latitude: null,
   longitude: null,
   comment: '',
-  image: ''
+  image: '',
+  level: 0
 };
 
 var INIT_MAP_CENTER = {
@@ -60,6 +61,12 @@ var type2textShort = {
   'ps_kaisyuwasure': '回収忘れ',
   'ps_others': '他'
 };
+
+var level2text = [
+  '対応必要なし',
+  '対応必要(通知なし)',
+  '緊急(通知あり)'
+]
 
 var type2img = function(type, isSelected) {
   var suffix = (isSelected) ? '' : '-unselected';
@@ -130,20 +137,24 @@ var constants = {
   TOGGLE_TYPE_BUTTON: 'TOGGLE_TYPE_BUTTON',
   TOGGLE_PUBLISH_BUTTON: 'TOGGLE_PUBLISH_BUTTON',
   TOGGLE_POST_BUTTON: 'TOGGLE_POST_BUTTON',
+  TOGGLE_LEVEL_BUTTON: 'TOGGLE_LEVEL_BUTTON'
 };
 
 var MinaRepoStore = Fluxxor.createStore({
   initialize: function() {
     this.selectedType = '';
+    this.selectedLevel = 0;
 
     this.bindActions(constants.TOGGLE_VIEWER_PAGE_BUTTON, this.onToggleViewerPageButton);
     this.bindActions(constants.TOGGLE_TYPE_BUTTON, this.onToggleTypeButton);
     this.bindActions(constants.TOGGLE_PUBLISH_BUTTON, this.onTogglePublishButton);
     this.bindActions(constants.TOGGLE_POST_BUTTON, this.onTogglePostButton);
+    this.bindActions(constants.TOGGLE_LEVEL_BUTTON, this.onToggleLevelButton);
   },
   getState: function() {
     return {
-      selectedType: this.selectedType
+      selectedType: this.selectedType,
+      selectedLevel: this.selectedLevel
     }
   },
   onToggleViewerPageButton: function(data) {
@@ -171,6 +182,7 @@ var MinaRepoStore = Fluxxor.createStore({
     var rName = reportValues.user;
     var rLat = reportValues.latitude;
     var rLng = reportValues.longitude;
+    var rLevel = reportValues.level;
 
     if (!rName || !rLat || !rLng) {
       var toastMsg = '<p class="toast-msg">未記入の項目があります</p>';
@@ -178,6 +190,11 @@ var MinaRepoStore = Fluxxor.createStore({
       return;
     }
     postReport(this.selectedType);
+    this.emit('change');
+  },
+  onToggleLevelButton: function(data) {
+    this.selectedLevel = data.level;
+    reportValues.level = this.selectedLevel;
     this.emit('change');
   }
 });
@@ -194,6 +211,9 @@ var actions = {
   },
   onTogglePostButton: function() {
     this.dispatch(constants.TOGGLE_POST_BUTTON);
+  },
+  onToggleLevelButton: function(data) {
+    this.dispatch(constants.TOGGLE_LEVEL_BUTTON, {level: data.level});
   }
 };
 
@@ -367,6 +387,39 @@ var ReportMap = React.createClass({
   }
 });
 
+var ReportLevel = React.createClass({
+  onLevelSelected: function(level) {
+    return function(event) {
+      flux.actions.onToggleLevelButton({ level: level });
+    };
+  },
+  render: function() {
+    var selectedLevel = this.props.selectedLevel;
+
+    var descRow = <div className="row"> 
+      <div className="small-10 small-centered columns">
+        <p>(4) 対応レベルを選択してください [<font color="blue">任意</font>]</p>
+      </div>
+    </div>;
+
+    var radioButtonRow = <div className="row mrv-btn-row">
+      <div className="small-11 medium-5 small-centered medium-centered columns">
+        <input type="radio" name="level" value="0" onChange={this.onLevelSelected(0)} checked={selectedLevel === 0} />
+        <label>{level2text[0]}</label>
+        <input type="radio" name="level" value="1" onChange={this.onLevelSelected(1)} checked={selectedLevel === 1} />
+        <label>{level2text[1]}</label>
+        <input type="radio" name="level" value="2" onChange={this.onLevelSelected(2)} checked={selectedLevel === 2} />
+        <label>{level2text[2]}</label>
+      </div>
+    </div>;
+
+    return <div>
+      {descRow}
+      {radioButtonRow}
+    </div>;
+  }
+});
+
 var ReportComment = React.createClass({
   onChangeComment: function(text) {
     reportValues.comment = text.target.value;
@@ -374,7 +427,7 @@ var ReportComment = React.createClass({
   render: function() {
     var descRow = <div className="row">
       <div className="small-10 small-centered columns">
-        <p>(4) コメントを記入してください [<font color="blue">任意</font>]</p>
+        <p>(5) コメントを記入してください [<font color="blue">任意</font>]</p>
       </div>
     </div>;
     var commentRow = <div className="row">
@@ -418,8 +471,8 @@ var ReportImage = React.createClass({
     return <div className="row">
       <div className="small-10 small-centered columns">
         <p>
-          (5) 画像を登録してください [<font color="blue">任意</font>]:
-          <input className="file-upload-btn" type="file" onChange={this.onUploadImage} accept="image/*" />
+          (6) 画像を登録してください [<font color="blue">任意</font>]:
+          <input className="short-size" type="file" onChange={this.onUploadImage} accept="image/*" />
         </p>
       </div>
     </div>
@@ -526,6 +579,9 @@ var MinaRepoViewer = React.createClass({
     var reportMap = <ReportMap/>;
     var reportComment = <ReportComment/>;
     var reportImage = <ReportImage/>;
+    var reportLevel = <ReportLevel
+      selectedLevel={this.props.selectedLevel}
+    />;
     var publishButton = <PublishButton/>;
 
     var footer = <div className="row">
@@ -542,6 +598,7 @@ var MinaRepoViewer = React.createClass({
       {user}
       {buttons}
       {reportMap}
+      {reportLevel}
       {reportComment}
       {reportImage}
       {publishButton}
@@ -563,6 +620,7 @@ var MinaRepoViewerApp = React.createClass({
     var s = this.state;
     return <MinaRepoViewer
       selectedType={s.selectedType}
+      selectedLevel={s.selectedLevel}
     />;
   }
 });
