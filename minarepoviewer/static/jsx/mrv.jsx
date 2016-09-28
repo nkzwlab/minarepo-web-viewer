@@ -80,6 +80,12 @@ var type2textShort = {
   'ps_others': '他'
 };
 
+var reportLevel = [
+  '対応必要なし',
+  '対応必要(通知なし)',
+  '緊急(通知あり)'
+]
+
 var type2img = function(type, isSelected) {
   var suffix = (isSelected) ? '' : '-unselected';
   return '/static/img/minarepo-icons/' + type + suffix +'.png';
@@ -709,6 +715,8 @@ var ReportDetail = React.createClass({
     var detailImage;
     var detailLocation;
     var detailTimestamp;
+    var detailLevel;
+    var detailFinished;
     var centerButtonDom = '';
 
     if (!isFetchingDetail && !isFetchingDetailFailed && detailExists) {
@@ -721,6 +729,8 @@ var ReportDetail = React.createClass({
       detailComment = detail.comment;
       detailUser = detail.user;
       detailImage = detail.image;
+      detailLevel = reportLevel[detail.level];
+      detailFinished = (detail.finished) ? '対応完了' : '未対応';
       if (detailImage == '' || detailImage == 'data:,') {
         detailImage = '/static/img/no-image.png';
       }
@@ -731,6 +741,9 @@ var ReportDetail = React.createClass({
       var address = detail.address;
       if (address === null) {
         address = <span className="mrv-detail-no-address">(取得されていません)</span>;
+      }
+      if (detail.level == 0) {
+        detailFinished = reportLevel[0];
       }
       detailLocation = <div>
         住所: {address}<br/>
@@ -781,6 +794,8 @@ var ReportDetail = React.createClass({
       detailType = '読み込み中...';
       detailComment = '読み込み中...';
       detailLocation = '読み込み中...';
+      detailLevel = '読み込み中...';
+      detailFinished = '読み込み中...';
       detailImage = '/static/img/loading-image.gif';  // FIXME: 権利？
     } else if (!isFetchingDetail && isFetchingDetailFailed) {
       // console.debug('detail pattern 3: fetch failed');
@@ -789,6 +804,8 @@ var ReportDetail = React.createClass({
       detailType = <span className="mrv-detail-error">読み込みに失敗しました</span>;
       detailComment = <span className="mrv-detail-error">読み込みに失敗しました</span>;
       detailLocation = <span className="mrv-detail-error">読み込みに失敗しました</span>;
+      detailLevel = <span className="mrv-detail-error">読み込みに失敗しました</span>;
+      detailFinished = <span className="mrv-detail-error">読み込みに失敗しました</span>;
       detailImage = '/static/img/loading-image.gif';  // FIXME: もっとエラーっぽい画像にしたい
     }
 
@@ -815,6 +832,12 @@ var ReportDetail = React.createClass({
 
           <dt>レポートユーザー</dt>
           <dd>{detailUser}</dd>
+
+          <dt>レポート対応レベル</dt>
+          <dd>{detailLevel}</dd>
+
+          <dt>レポート対応状況</dt>
+          <dd>{detailFinished}</dd>
 
           <dt>コメント</dt>
           <dd>{detailComment}</dd>
