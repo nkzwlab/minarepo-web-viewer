@@ -149,6 +149,19 @@ var changeAllTypes = function(selectedTypes, bool) {
   return selectedTypes;
 };
 
+var showToast = function(type, message) {
+  $.toast({
+    heading: type,
+    icon: type,
+    text: message,
+    hideAfter: 2000,
+    allowToastClose: true,
+    position: 'mid-center',
+    loader: false
+  });
+  return;
+};
+
 // for DEBUG
 // function gen(ln) {
 //   var ret = [];
@@ -1277,7 +1290,6 @@ var ReportCommentEntry = React.createClass({
         user: that.props.commentUser,
         comment: that.props.newComment
       };
-      /*
       if (that.props.checkFinished) {
         $.ajax({
           method: 'GET',
@@ -1294,13 +1306,12 @@ var ReportCommentEntry = React.createClass({
         data: data,
         dataType: 'json',
         success: function(data) {
-          console.log(data);
+          showToast('success', 'メッセージが投稿されました');
         },
         error: function(data) {
-          console.log(data);
+          showToast('error', 'メッセージが投稿できませんでした．もう一度お試しください');
         }
       });
-      */
     }
   },
   onCheckFinished: function(event) {
@@ -1339,7 +1350,7 @@ var ReportCommentEntry = React.createClass({
         // hide checkbox
         buttonRow = <div className="row">
           <div className="small-3 small-centered columns text-center">
-            <button className="button success text-center" onClick={this.onPushSubmitButton()}>コメント投稿</button>
+            <button className="button success text-center" onClick={this.onPushSubmitButton()}>メッセージ投稿</button>
           </div>
         </div>;
       } else if (detail.finished == true) {
