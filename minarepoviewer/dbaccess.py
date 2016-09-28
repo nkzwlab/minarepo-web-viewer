@@ -90,9 +90,9 @@ class MinaRepoDBA(object):
                 cursor.close()
 
     def get_report(self, report_id):
-        cols = 'id, type, user, astext(geo), timestamp, image, comment, address'
+        cols = 'id, type, user, astext(geo), timestamp, image, comment, address, level, finished'
         col_keys = [
-            'id', 'type', 'user', 'geo', 'timestamp', 'image', 'comment', 'address'
+            'id', 'type', 'user', 'geo', 'timestamp', 'image', 'comment', 'address', 'level', 'finished'
         ]
         sql = 'SELECT %s FROM minarepo WHERE id = %%s;' % cols
 
