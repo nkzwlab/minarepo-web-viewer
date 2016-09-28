@@ -402,7 +402,11 @@ var constants = {
   TABLE_NEXT_PAGE_CLICKED: 'TABLE_NEXT_PAGE_CLICKED',
   TABLE_SET_PAGE: 'TABLE_SET_PAGE',
   TOGGLE_SHOWING_TABLE: 'TOGGLE_SHOWING_TABLE',
-  TOGGLE_SHOWING_FILTER: 'TOGGLE_SHOWING_FILTER'
+  TOGGLE_SHOWING_FILTER: 'TOGGLE_SHOWING_FILTER',
+  TOGGLE_NEW_REPORT: 'TOGGLE_NEW_REPORT',
+  UPDATE_COMMENT_USER: 'UPDATE_COMMENT_USER',
+  UPDATE_NEW_COMMENT: 'UPDATE_NEW_COMMENT',
+  CHECK_FINISHED: 'CHECK_FINISHED'
 };
 
 var MinaRepoStore = Fluxxor.createStore({
@@ -430,6 +434,9 @@ var MinaRepoStore = Fluxxor.createStore({
     this.tableSelectedPage = 1;
     this.isShowingTable = true; // shinny modifyied to show from beginning [false -> true]
     this.isShowingFilter = false;
+    this.commentUser = '';
+    this.newComment = '';
+    this.checkFinished = false;
 
     this.bindActions(constants.START_FETCHING_REPORTS, this.onStartFetchingReports);
     this.bindActions(constants.FETCHING_REPORTS_SUCCESS, this.onFetchingReportsSuccess);
@@ -453,6 +460,10 @@ var MinaRepoStore = Fluxxor.createStore({
     this.bindActions(constants.TABLE_SET_PAGE, this.onTableSetPage);
     this.bindActions(constants.TOGGLE_SHOWING_TABLE, this.onToggleShowingTable);
     this.bindActions(constants.TOGGLE_SHOWING_FILTER, this.onToggleShowingFilter);
+    this.bindActions(constants.TOGGLE_NEW_REPORT, this.onToggleNewReport);
+    this.bindActions(constants.UPDATE_COMMENT_USER, this.onUpdateCommentUser);
+    this.bindActions(constants.UPDATE_NEW_COMMENT, this.onUpdateNewComment);
+    this.bindActions(constants.CHECK_FINISHED, this.onCheckFinished);
   },
   getState: function() {
     return {
@@ -475,6 +486,9 @@ var MinaRepoStore = Fluxxor.createStore({
       tableSelectedPage: this.tableSelectedPage,
       isShowingTable: this.isShowingTable,
       isShowingFilter: this.isShowingFilter,
+      commentUser: this.commentUser,
+      newComment: this.newComment,
+      checkFinished: this.checkFinished
     }
   },
   onStartFetchingReports: function(data) {
@@ -608,6 +622,18 @@ var MinaRepoStore = Fluxxor.createStore({
   },
   onToggleNewReport: function() {
     return;
+  },
+  onUpdateCommentUser: function(data) {
+    this.commentUser = data.commentUser;
+    this.emit('change');
+  },
+  onUpdateNewComment: function(data) {
+    this.newComment = data.newComment;
+    this.emit('change');
+  },
+  onCheckFinished: function(data) {
+    this.checkFinished = data.checked;
+    this.emit('change');
   }
 });
 
@@ -690,6 +716,15 @@ var actions = {
   },
   onToggleNewReport: function() {
     window.location.href = '/new_report';
+  },
+  onUpdateCommentUser: function(data) {
+    this.dispatch(constants.UPDATE_COMMENT_USER, {commentUser: data.commentUser});
+  },
+  onUpdateNewComment: function(data) {
+    this.dispatch(constants.UPDATE_NEW_COMMENT, {newComment: data.newComment});
+  },
+  onCheckFinished: function(data) {
+    this.dispatch(constants.CHECK_FINISHED, {checked: data.checked});
   }
 };
 
@@ -1198,6 +1233,121 @@ var ReportCommentPanel = React.createClass({
   }
 });
 
+var ReportCommentEntry = React.createClass({
+  onUpdateCommentUser: function(event) {
+    var commentUser = event.target.value;
+    flux.actions.onUpdateCommentUser({ commentUser: commentUser });
+  },
+  onUpdateNewComment: function(event) {
+    var newComment = event.target.value;
+    flux.actions.onUpdateNewComment({ newComment: newComment });
+  },
+  onPushSubmitButton: function() {
+    if (!this.props.commentUser || !this.props.newComment) {
+      return;
+    }
+    var that = this;
+    return function() {
+      var hashMatch = window.location.hash.match(reportHashPattern);
+      if (hashMatch) {
+        var reportId = parseInt(hashMatch[1]);
+      }
+
+      var data = {
+        user: that.props.commentUser,
+        comment: that.props.newComment
+      };
+      /*
+      if (that.props.checkFinished) {
+        $.ajax({
+          method: 'GET',
+          url: '/api/report/' + reportId + '/finished',
+          dataType: 'json',
+          error: function(data) {
+            console.log(data);
+          }
+        });
+      }
+      $.ajax({
+        method: 'GET',
+        url: '/api/report/' + reportId + '/comments/new',
+        data: data,
+        dataType: 'json',
+        success: function(data) {
+          console.log(data);
+        },
+        error: function(data) {
+          console.log(data);
+        }
+      });
+      */
+    }
+  },
+  onCheckFinished: function(event) {
+    var val = event.target.checked;
+    flux.actions.onCheckFinished({ checked: val });
+  },
+  render: function() {
+    var commentUser = this.props.commentUser;
+    var newComment = this.props.newComment;
+    var checkFinished = this.props.checkFinished;
+    var isFetchingDetail = this.props.isFetchingDetail;
+    var isFetchingDetailFailed = this.props.isFetchingDetailFailed;
+    var detail = this.props.selectedReport;
+    var detailExists = (
+      (detail !== undefined && detail !== null) && (
+        (detail.id !== null) && (detail.id !== undefined)
+      )
+    );
+
+    var usernameRow = '';
+    var textAreaRow = '';
+    var buttonRow = '';
+    if (!isFetchingDetail && !isFetchingDetailFailed && detailExists) {
+      usernameRow = <div className="row">
+        <div className="medium-8 medium-centered columns">
+          <input type="text" className="comment-user" onChange={this.onUpdateCommentUser} value={this.props.commentUser} placeholder="名前" />
+        </div>
+      </div>;
+      textAreaRow = <div className="row">
+        <div className="medium-8 medium-centered columns">
+          <textarea onChange={this.onUpdateNewComment} value={this.props.newComment} placeholder="メッセージを入力" />
+        </div>
+      </div>;
+
+      if (detail.level == 0) {
+        // hide checkbox
+        buttonRow = <div className="row">
+          <div className="small-3 small-centered columns text-center">
+            <button className="button success text-center" onClick={this.onPushSubmitButton()}>コメント投稿</button>
+          </div>
+        </div>;
+      } else if (detail.finished == true) {
+        // checkbox for finished task
+        buttonRow = <div className="row">
+          <div className="small-12 small-centered medium-8 medium-centered columns">
+            <input type="checkbox" onChange={this.onCheckFinished} checked={this.props.checkFinished} /><label>メッセージを書き込んで対応を未完了に戻す</label>
+            <button className="button float-right success" onClick={this.onPushSubmitButton()}>コメント投稿</button>
+          </div>
+        </div>;
+      } else {
+        buttonRow = <div className="row">
+          <div className="small-12 small-centered medium-8 medium-centered columns">
+            <input type="checkbox" onChange={this.onCheckFinished} checked={this.props.checkFinished} /><label>メッセージを書き込んで対応を完了する</label>
+            <button className="button float-right success" onClick={this.onPushSubmitButton()}>コメント投稿</button>
+          </div>
+        </div>;
+      }
+    }
+
+    return <div>
+      {usernameRow}
+      {textAreaRow}
+      {buttonRow}
+    </div>;
+  }
+});
+
 var MinaRepoViewer = React.createClass({
   render: function() {
     var header = <div className="row">
@@ -1313,6 +1463,15 @@ var MinaRepoViewer = React.createClass({
       comments={this.props.comments}
     />;
 
+    var reportCommentEntry = <ReportCommentEntry
+      isFetchingDetail={this.props.isFetchingDetail}
+      isFetchingDetailFailed={this.props.isFetchingDetailFailed}
+      selectedReport={this.props.selectedReport}
+      newComment={this.props.newComment}
+      checkFinished={this.props.checkFinished}
+      commentUser={this.props.commentUser}
+    />;
+
     var footer = <div className="row">
       <div className="large-12 columns mrv-footer">
         Powered by <a href="https://www.city.fujisawa.kanagawa.jp/">藤沢市</a> and <a href="https://www.ht.sfc.keio.ac.jp/">htlab</a>
@@ -1335,6 +1494,7 @@ var MinaRepoViewer = React.createClass({
       {reportView}
       {reportDetail}
       {reportCommentPanel}
+      {reportCommentEntry}
       <hr/>
       {footer}
     </div>;
@@ -1380,6 +1540,9 @@ var MinaRepoViewerApp = React.createClass({
       tableSelectedPage={s.tableSelectedPage}
       isShowingTable={s.isShowingTable}
       isShowingFilter={s.isShowingFilter}
+      commentUser={s.commentUser}
+      newComment={s.newComment}
+      checkFinished={s.checkFinished}
     />;
   }
 });
