@@ -62,6 +62,12 @@ var type2textShort = {
   'ps_others': '他'
 };
 
+var level2text = [
+  '対応必要なし',
+  '対応必要(通知なし)',
+  '緊急(通知あり)'
+]
+
 var type2img = function(type, isSelected) {
   var suffix = (isSelected) ? '' : '-unselected';
   return '/static/img/minarepo-icons/' + type + suffix +'.png';
@@ -395,11 +401,15 @@ var ReportLevel = React.createClass({
         <p>(4) 対応レベルを選択してください [<font color="blue">任意</font>]</p>
       </div>
     </div>;
+
     var radioButtonRow = <div className="row mrv-btn-row">
-      <div className="small-11 medium-4 small-centered medium-centered columns">
-        <input type="radio" name="level" value="0" onChange={this.onLevelSelected(0)} checked={selectedLevel === 0} /><label>対応必要なし</label>
-        <input type="radio" name="level" value="1" onChange={this.onLevelSelected(1)} checked={selectedLevel === 1} /><label>対応必要</label>
-        <input type="radio" name="level" value="2" onChange={this.onLevelSelected(2)} checked={selectedLevel === 2} /><label>緊急(通知込)</label>
+      <div className="small-11 medium-5 small-centered medium-centered columns">
+        <input type="radio" name="level" value="0" onChange={this.onLevelSelected(0)} checked={selectedLevel === 0} />
+        <label>{level2text[0]}</label>
+        <input type="radio" name="level" value="1" onChange={this.onLevelSelected(1)} checked={selectedLevel === 1} />
+        <label>{level2text[1]}</label>
+        <input type="radio" name="level" value="2" onChange={this.onLevelSelected(2)} checked={selectedLevel === 2} />
+        <label>{level2text[2]}</label>
       </div>
     </div>;
 
