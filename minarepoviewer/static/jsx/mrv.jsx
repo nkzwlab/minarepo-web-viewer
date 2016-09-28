@@ -76,7 +76,7 @@ var type2textShort = {
   'ps_kyun': '♡♡',
   'ps_disaster': '災害',
   'ps_zansa': '残渣',
-  'ps_kaisyuwasure': '回収忘',
+  'ps_kaisyuwasure': '拾忘',
   'ps_others': '他'
 };
 
