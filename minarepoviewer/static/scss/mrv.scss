@@ -234,3 +234,29 @@ DIV.mrv-detail {
     font-size: 14px;
     color: #666666;
 }
+
+.panel {
+    border-radius: 6px;
+    border-style: solid;
+    border-width: 1px;
+    border-color: #d8d8d8;
+    margin-bottom: 1.11111rem;
+    padding: 1.11111rem;
+    background: #f2f2f2;
+    color: #333333;
+}
+
+.comment {
+    border-radius: 6px;
+    border-style: solid;
+    border-width: 1px;
+    border-color: #d8d8d8;
+    margin-bottom: 1.11111rem;
+    padding: 1.11111rem;
+    background: #ecfaff;
+    color: #333333;
+}
+
+.no-margin-btm {
+    margin-bottom: 0px;
+}

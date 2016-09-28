@@ -387,6 +387,9 @@ var constants = {
   START_FETCHING_DETAIL: 'START_FETCHING_DETAIL',
   FETCHING_DETAIL_SUCCESS: 'FETCHING_DETAIL_SUCCESS',
   FETCHING_DETAIL_FAILED: 'FETCHING_DETAIL_FAILED',
+  START_FETCHING_COMMENTS: 'START_FETCHING_COMMENTS',
+  FETCHING_COMMENTS_SUCCESS: 'FETCHING_COMMENTS_SUCCESS',
+  FETCHING_COMMENTS_FAILED: 'FETCHING_COMMENTS_FAILED',
   CLICK_PIN: 'CLICK_PIN',
   UPDATE_START_DATE: 'UPDATE_START_DATE',
   UPDATE_END_DATE: 'UPDATE_END_DATE',
@@ -399,13 +402,13 @@ var constants = {
   TABLE_NEXT_PAGE_CLICKED: 'TABLE_NEXT_PAGE_CLICKED',
   TABLE_SET_PAGE: 'TABLE_SET_PAGE',
   TOGGLE_SHOWING_TABLE: 'TOGGLE_SHOWING_TABLE',
-  TOGGLE_SHOWING_FILTER: 'TOGGLE_SHOWING_FILTER',
-  TOGGLE_NEW_REPORT: 'TOGGLE_NEW_REPORT'
+  TOGGLE_SHOWING_FILTER: 'TOGGLE_SHOWING_FILTER'
 };
 
 var MinaRepoStore = Fluxxor.createStore({
   initialize: function() {
     this.reports = [];
+    this.comments = [];
     this.selectedReport = null;
     var selectedTypes = {};
     _.each(reportTypes, function(rt) {
@@ -420,6 +423,8 @@ var MinaRepoStore = Fluxxor.createStore({
     this.isFetchingReportsFailed = false;
     this.isFetchingDetail = false;
     this.isFetchingDetailFailed = false;
+    this.isFetchingComments = false;
+    this.isFetchingCommentsFailed = false;
     this.mapTopLeft = null;
     this.mapBottomRight = null;
     this.tableSelectedPage = 1;
@@ -432,6 +437,9 @@ var MinaRepoStore = Fluxxor.createStore({
     this.bindActions(constants.START_FETCHING_DETAIL, this.onStartFetchingDetail);
     this.bindActions(constants.FETCHING_DETAIL_SUCCESS, this.onFetchingDetailSuccess);
     this.bindActions(constants.FETCHING_DETAIL_FAILED, this.onFetchingDetailFailed);
+    this.bindActions(constants.START_FETCHING_COMMENTS, this.onStartFetchingComments);
+    this.bindActions(constants.FETCHING_COMMENTS_SUCCESS, this.onFetchingCommentsSuccess);
+    this.bindActions(constants.FETCHING_COMMENTS_FAILED, this.onFetchingCommentsFailed);
     this.bindActions(constants.CLICK_PIN, this.onClickPin);
     this.bindActions(constants.UPDATE_START_DATE, this.onUpdateStartDate);
     this.bindActions(constants.UPDATE_END_DATE, this.onUpdateEndDate);
@@ -445,11 +453,11 @@ var MinaRepoStore = Fluxxor.createStore({
     this.bindActions(constants.TABLE_SET_PAGE, this.onTableSetPage);
     this.bindActions(constants.TOGGLE_SHOWING_TABLE, this.onToggleShowingTable);
     this.bindActions(constants.TOGGLE_SHOWING_FILTER, this.onToggleShowingFilter);
-    this.bindActions(constants.TOGGLE_NEW_REPORT, this.onToggleNewReport);
   },
   getState: function() {
     return {
       reports: this.reports,
+      comments: this.comments,
       selectedReport: this.selectedReport,
       selectedTypes: this.selectedTypes,
       clickedPinReportId: this.clickedPinReportId,
@@ -460,11 +468,13 @@ var MinaRepoStore = Fluxxor.createStore({
       isFetchingReportsFailed: this.isFetchingReportsFailed,
       isFetchingDetail: this.isFetchingDetail,
       isFetchingDetailFailed: this.isFetchingDetailFailed,
+      isFetchingComments: this.isFetchingComments,
+      isFetchingCommentsFailed: this.isFetchingCommentsFailed,
       mapTopLeft: this.mapTopLeft,
       mapBottomRight: this.mapBottomRight,
       tableSelectedPage: this.tableSelectedPage,
       isShowingTable: this.isShowingTable,
-      isShowingFilter: this.isShowingFilter
+      isShowingFilter: this.isShowingFilter,
     }
   },
   onStartFetchingReports: function(data) {
@@ -497,6 +507,22 @@ var MinaRepoStore = Fluxxor.createStore({
   onFetchingDetailFailed: function(data) {
     this.isFetchingDetail = false;
     this.isFetchingDetailFailed = true;
+    this.emit('change');
+  },
+  onStartFetchingComments: function(data) {
+    this.isFetchingComments = true;
+    this.isFetchingCommentsFailed = false;
+    this.emit('change');
+  },
+  onFetchingCommentsSuccess: function(data) {
+    this.comments = data.comments;
+    this.isFetchingComments = false;
+    this.isFetchingCommentsFailed = false;
+    this.emit('change');
+  },
+  onFetchingCommentsFailed: function(data) {
+    this.isFetchingComments = false;
+    this.isFetchingCommentsFailed = true;
     this.emit('change');
   },
   onClickPin: function(data) {
@@ -604,6 +630,16 @@ var actions = {
     this.dispatch(constants.FETCHING_DETAIL_SUCCESS, { selectedReport: selectedReport });
   },
   onFetchingDetailFailed: function(data) {
+    this.dispatch(constants.FETCHING_DETAIL_FAILED);
+  },
+  onStartFetchingComments: function(data) {
+    this.dispatch(constants.START_FETCHING_COMMENTS);
+  },
+  onFetchingCommentsSuccess: function(data) {
+    var comments = data.comments;
+    this.dispatch(constants.FETCHING_COMMENTS_SUCCESS, { comments: comments });
+  },
+  onFetchingCommentsFailed: function(data) {
     this.dispatch(constants.FETCHING_DETAIL_FAILED);
   },
   onClickPin: function(data) {
@@ -1092,6 +1128,76 @@ var TypeButtons = React.createClass({
   }
 });
 
+var ReportCommentPanel = React.createClass({
+  componentWillReceiveProps: function(newProps) {
+    var that = this;
+    var newReportId = newProps.clickedPinReportId;
+    var currentReportId = this.props.clickedPinReportId;
+    if (currentReportId !== newReportId) {
+      // fetch comments
+      setTimeout(function() {
+        var url = '/api/report/' + newReportId + '/comments';
+        $.ajax({
+          url: url,
+          method: 'GET',
+          success: function(data, status, jqxhr) {
+            var comments = data.result;
+            flux.actions.onFetchingCommentsSuccess({ comments: comments });
+          },
+          error: function() {
+            flux.actions.onFetchingCommentsFailed();
+          }
+        });
+        flux.actions.onStartFetchingComments();
+      }, 0);
+    }
+  },
+  render: function() {
+    var selectedReport = this.props.selectedReport;
+    var comments = this.props.comments;
+    var isFetchingComments = this.props.isFetchingComments;
+    var isFetchingCommentsFailed = this.props.isFetchingCommentsFailed;
+    var fetchingComments = (isFetchingComments || isFetchingCommentsFailed);
+    var commentsExists = (comments !== undefined && comments !== null);
+    var reportExists = (
+      (selectedReport !== undefined && selectedReport !== null) && (
+        (selectedReport.id !== null) && (selectedReport.id !== undefined)
+      )
+    );
+
+    var headerRow = '';
+    var commentPanel = '';
+    var commentLists = '';
+    if (!fetchingComments && commentsExists && reportExists) {
+      if (comments.length) {
+        commentLists = _.map(comments, function(comment) {
+          return <div className="row" key={comment.id}>
+            <div className="small-10 small-centered columns comment no-margin-btm">
+              <span>{comment.user} [{comment.timestamp}] : {comment.comment}</span>
+            </div>
+          </div>;
+        });
+      } else {
+        commentLists = <p className="no-margin-btm text-center">現在メッセージはありません</p>;
+      }
+
+      headerRow = <div className="row comment-editor">
+        <h3 className="text-center">ディスカッション</h3>
+      </div>;
+      commentPanel = <div className="row comment-editor">
+        <div className="medium-9 medium-centered columns">
+          <div className="panel">{commentLists}</div>
+        </div>
+      </div>;
+    }
+
+    return <div>
+      {headerRow}
+      {commentPanel}
+    </div>;
+  }
+});
+
 var MinaRepoViewer = React.createClass({
   render: function() {
     var header = <div className="row">
@@ -1199,6 +1305,14 @@ var MinaRepoViewer = React.createClass({
       clickedPinReportId={this.props.clickedPinReportId}
     />;
 
+    var reportCommentPanel = <ReportCommentPanel
+      isFetchingComments={this.props.isFetchingComments}
+      isFetchingCommentsFailed={this.props.isFetchingCommentsFailed}
+      selectedReport={this.props.selectedReport}
+      clickedPinReportId={this.props.clickedPinReportId}
+      comments={this.props.comments}
+    />;
+
     var footer = <div className="row">
       <div className="large-12 columns mrv-footer">
         Powered by <a href="https://www.city.fujisawa.kanagawa.jp/">藤沢市</a> and <a href="https://www.ht.sfc.keio.ac.jp/">htlab</a>
@@ -1220,6 +1334,7 @@ var MinaRepoViewer = React.createClass({
       */}
       {reportView}
       {reportDetail}
+      {reportCommentPanel}
       <hr/>
       {footer}
     </div>;
@@ -1246,6 +1361,7 @@ var MinaRepoViewerApp = React.createClass({
     var s = this.state;
     return <MinaRepoViewer
       reports={s.reports}
+      comments={s.comments}
       selectedTypes={s.selectedTypes}
       clickedPinReportId={s.clickedPinReportId}
       detail={s.detail}
@@ -1257,6 +1373,8 @@ var MinaRepoViewerApp = React.createClass({
       isFetchingReportsFailed={s.isFetchingReportsFailed}
       isFetchingDetail={s.isFetchingDetail}
       isFetchingDetailFailed={s.isFetchingDetailFailed}
+      isFetchingComments={s.isFetchingComments}
+      isFetchingCommentsFailed={s.isFetchingCommentsFailed}
       mapTopLeft={s.mapTopLeft}
       mapBottomRight={s.mapBottomRight}
       tableSelectedPage={s.tableSelectedPage}
