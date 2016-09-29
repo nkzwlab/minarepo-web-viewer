@@ -60,9 +60,9 @@ class MinaRepoDBA(object):
             geo_cond = 'MBRWithin(geo, GeomFromText(%s, 4326)' % linestring
             conditions.append(geo_cond)
 
-        cols = 'id, type, user, astext(geo), timestamp, image, comment, address'
+        cols = 'id, type, user, astext(geo), timestamp, image, comment, address, level, finished'
         col_keys = [
-            'id', 'type', 'user', 'geo', 'timestamp', 'image', 'comment', 'address'
+            'id', 'type', 'user', 'geo', 'timestamp', 'image', 'comment', 'address', 'level', 'finished'
         ]
 
         if len(conditions) == 0:
@@ -174,6 +174,38 @@ class MinaRepoDBA(object):
             cursor = conn.cursor()
             try:
                 cursor.execute(sql, sql_params)
+                conn.commit()
+            except MySQLdb.Error as error:
+                print error
+                return False
+            finally:
+                cursor.close()
+
+            return True
+
+    def finish_report_correspondence(self, report_id):
+        with self.connection() as conn:
+            sql = 'UPDATE minarepo SET finished=1 WHERE id=%s;' % report_id
+
+            cursor = conn.cursor()
+            try:
+                cursor.execute(sql)
+                conn.commit()
+            except MySQLdb.Error as error:
+                print error
+                return False
+            finally:
+                cursor.close()
+
+            return True
+
+    def revert_report_correspondence(self, report_id):
+        with self.connection() as conn:
+            sql = 'UPDATE minarepo SET finished=0 WHERE id=%s;' % report_id
+
+            cursor = conn.cursor()
+            try:
+                cursor.execute(sql)
                 conn.commit()
             except MySQLdb.Error as error:
                 print error

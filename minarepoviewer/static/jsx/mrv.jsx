@@ -99,6 +99,7 @@ var level2text = [
 
 var finished2img = function(isFinished) {
   var suffix = (isFinished) ? 'finished' : 'unfinished';
+  console.log(suffix);
   return '/static/img/' + suffix + '.png';
 }
 
@@ -430,7 +431,8 @@ var constants = {
   TOGGLE_NEW_REPORT: 'TOGGLE_NEW_REPORT',
   UPDATE_COMMENT_USER: 'UPDATE_COMMENT_USER',
   UPDATE_NEW_COMMENT: 'UPDATE_NEW_COMMENT',
-  CHECK_FINISHED: 'CHECK_FINISHED'
+  CHECK_FINISHED: 'CHECK_FINISHED',
+  REVERT_FINISHED: 'REVERT_FINISHED'
 };
 
 var MinaRepoStore = Fluxxor.createStore({
@@ -461,6 +463,7 @@ var MinaRepoStore = Fluxxor.createStore({
     this.commentUser = '';
     this.newComment = '';
     this.checkFinished = false;
+    this.revertFinished = false;
 
     this.bindActions(constants.START_FETCHING_REPORTS, this.onStartFetchingReports);
     this.bindActions(constants.FETCHING_REPORTS_SUCCESS, this.onFetchingReportsSuccess);
@@ -488,6 +491,7 @@ var MinaRepoStore = Fluxxor.createStore({
     this.bindActions(constants.UPDATE_COMMENT_USER, this.onUpdateCommentUser);
     this.bindActions(constants.UPDATE_NEW_COMMENT, this.onUpdateNewComment);
     this.bindActions(constants.CHECK_FINISHED, this.onCheckFinished);
+    this.bindActions(constants.REVERT_FINISHED, this.onRevertFinished);
   },
   getState: function() {
     return {
@@ -512,7 +516,8 @@ var MinaRepoStore = Fluxxor.createStore({
       isShowingFilter: this.isShowingFilter,
       commentUser: this.commentUser,
       newComment: this.newComment,
-      checkFinished: this.checkFinished
+      checkFinished: this.checkFinished,
+      revertFinished: this.revertFinished
     }
   },
   onStartFetchingReports: function(data) {
@@ -658,6 +663,10 @@ var MinaRepoStore = Fluxxor.createStore({
   onCheckFinished: function(data) {
     this.checkFinished = data.checked;
     this.emit('change');
+  },
+  onRevertFinished: function(data) {
+    this.revertFinished = data.revert;
+    this.emit('change');
   }
 });
 
@@ -749,6 +758,9 @@ var actions = {
   },
   onCheckFinished: function(data) {
     this.dispatch(constants.CHECK_FINISHED, {checked: data.checked});
+  },
+  onRevertFinished: function(data) {
+    this.dispatch(constants.REVERT_FINISHED, {revert: data.revert});
   }
 };
 
@@ -1111,7 +1123,7 @@ var ReportTable = React.createClass({
             <th>レポ種類</th>
             <th>投稿者</th>
             <th>投稿時刻</th>
-            <th>対応レベル</th>
+            <th>対応</th>
             <th>完了</th>
           </tr>
         </thead>
@@ -1278,6 +1290,7 @@ var ReportCommentEntry = React.createClass({
   onPushSubmitButton: function() {
     if (!this.props.commentUser || !this.props.newComment) {
       return;
+      showToast('error', '名前またはメッセージを入力してください');
     }
     var that = this;
     return function() {
@@ -1291,15 +1304,11 @@ var ReportCommentEntry = React.createClass({
         comment: that.props.newComment
       };
       if (that.props.checkFinished) {
-        $.ajax({
-          method: 'GET',
-          url: '/api/report/' + reportId + '/finished',
-          dataType: 'json',
-          error: function(data) {
-            console.log(data);
-          }
-        });
+        data.finished = true;
+      } else if (that.props.revertFinished) {
+        data.revert = true;
       }
+
       $.ajax({
         method: 'GET',
         url: '/api/report/' + reportId + '/comments/new',
@@ -1318,10 +1327,15 @@ var ReportCommentEntry = React.createClass({
     var val = event.target.checked;
     flux.actions.onCheckFinished({ checked: val });
   },
+  onRevertFinished: function(event) {
+    var val = event.target.checked;
+    flux.actions.onRevertFinished({ revert: val });
+  },
   render: function() {
     var commentUser = this.props.commentUser;
     var newComment = this.props.newComment;
     var checkFinished = this.props.checkFinished;
+    var revertFinished = this.props.revertFinished;
     var isFetchingDetail = this.props.isFetchingDetail;
     var isFetchingDetailFailed = this.props.isFetchingDetailFailed;
     var detail = this.props.selectedReport;
@@ -1357,7 +1371,7 @@ var ReportCommentEntry = React.createClass({
         // checkbox for finished task
         buttonRow = <div className="row">
           <div className="small-12 small-centered medium-8 medium-centered columns">
-            <input type="checkbox" onChange={this.onCheckFinished} checked={this.props.checkFinished} /><label>メッセージを書き込んで対応を未完了に戻す</label>
+            <input type="checkbox" onChange={this.onRevertFinished} checked={this.props.revertFinished} /><label>メッセージを書き込んで対応を未完了に戻す</label>
             <button className="button float-right success" onClick={this.onPushSubmitButton()}>コメント投稿</button>
           </div>
         </div>;
@@ -1500,6 +1514,7 @@ var MinaRepoViewer = React.createClass({
       selectedReport={this.props.selectedReport}
       newComment={this.props.newComment}
       checkFinished={this.props.checkFinished}
+      revertFinished={this.props.revertFinished}
       commentUser={this.props.commentUser}
     />;
 
@@ -1574,6 +1589,7 @@ var MinaRepoViewerApp = React.createClass({
       commentUser={s.commentUser}
       newComment={s.newComment}
       checkFinished={s.checkFinished}
+      revertFinished={s.revertFinished}
     />;
   }
 });

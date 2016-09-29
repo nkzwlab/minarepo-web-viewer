@@ -234,9 +234,15 @@ class MinaRepoViewer(object):
     def api_comment_new(self, report_id):
         user = request.params.get('user', '')
         comment = request.params.get('comment', '')
+        finished = request.params.get('finished', '')
+        revert = request.params.get('revert', '')
         try:
             report_id = int(report_id)
             ret = self._dba.insert_comment(report_id, comment, user)
+            if finished:
+                self._dba.finish_report_correspondence(report_id)
+            elif revert:
+                self._dba.revert_report_correspondence(report_id)
         except:
             logging.exception('error')
             return self._json_response(None, 500)
