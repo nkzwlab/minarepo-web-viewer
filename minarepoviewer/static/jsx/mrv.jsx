@@ -1334,6 +1334,7 @@ var ReportCommentEntry = React.createClass({
         dataType: 'json',
         success: function(data) {
           showToast('success', 'メッセージが投稿されました');
+          setTimeout("location.reload()",1500);
         },
         error: function(data) {
           showToast('error', 'メッセージが投稿できませんでした．もう一度お試しください');
