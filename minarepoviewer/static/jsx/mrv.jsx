@@ -1307,12 +1307,12 @@ var ReportCommentEntry = React.createClass({
     flux.actions.onUpdateNewComment({ newComment: newComment });
   },
   onPushSubmitButton: function() {
-    if (!this.props.commentUser || !this.props.newComment) {
-      return;
-      showToast('error', '名前またはメッセージを入力してください');
-    }
     var that = this;
     return function() {
+      if (!that.props.commentUser || !that.props.newComment) {
+        showToast('error', '名前またはメッセージを入力してください');
+        return;
+      }
       var hashMatch = window.location.hash.match(reportHashPattern);
       if (hashMatch) {
         var reportId = parseInt(hashMatch[1]);
