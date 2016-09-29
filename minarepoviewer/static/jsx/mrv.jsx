@@ -163,9 +163,10 @@ var showToast = function(type, message) {
 };
 
 var timestampShaper = function(timestamp) {
+    var parsedTimestamp = timestamp.replace(/-/g, '/');
     var shapedTime = null;
     var date = new Date();
-    var reportDate = new Date(timestamp);
+    var reportDate = new Date(parsedTimestamp);
     var dateDiff = date.getDate() - reportDate.getDate();
 
     if (dateDiff > 0) {
@@ -1382,7 +1383,7 @@ var ReportCommentEntry = React.createClass({
       if (detail.level == 0) {
         // hide checkbox
         buttonRow = <div className="row">
-          <div className="small-3 small-centered columns text-center">
+          <div className="small-6 small-centered columns text-center">
             <button className="button success text-center" onClick={this.onPushSubmitButton()}>メッセージ投稿</button>
           </div>
         </div>;
@@ -1390,15 +1391,15 @@ var ReportCommentEntry = React.createClass({
         // checkbox for finished task
         buttonRow = <div className="row">
           <div className="small-12 small-centered medium-8 medium-centered columns">
-            <input type="checkbox" onChange={this.onRevertFinished} checked={this.props.revertFinished} /><label>メッセージを書き込んで対応を未完了に戻す</label>
-            <button className="button float-right success" onClick={this.onPushSubmitButton()}>コメント投稿</button>
+            <input type="checkbox" onChange={this.onRevertFinished} checked={this.props.revertFinished} /><label className="checkbox-label">メッセージを書き込んで対応を未完了に戻す</label>
+            <button className="button float-right success" onClick={this.onPushSubmitButton()}>メッセージ投稿</button>
           </div>
         </div>;
       } else {
         buttonRow = <div className="row">
           <div className="small-12 small-centered medium-8 medium-centered columns">
-            <input type="checkbox" onChange={this.onCheckFinished} checked={this.props.checkFinished} /><label>メッセージを書き込んで対応を完了する</label>
-            <button className="button float-right success" onClick={this.onPushSubmitButton()}>コメント投稿</button>
+            <input type="checkbox" onChange={this.onCheckFinished} checked={this.props.checkFinished} /><label className="checkbox-label">メッセージを書き込んで対応を完了する</label>
+            <button className="button float-right success" onClick={this.onPushSubmitButton()}>メッセージ投稿</button>
           </div>
         </div>;
       }

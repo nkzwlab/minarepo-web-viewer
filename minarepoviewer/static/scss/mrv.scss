@@ -265,6 +265,12 @@ DIV.mrv-detail {
     color: #333333;
 }
 
+.checkbox-label {
+    @media screen and (max-width: 640px) {
+        width: 160px;
+    }
+}
+
 .level-0 {
     color: #2BA6CB;
 }
