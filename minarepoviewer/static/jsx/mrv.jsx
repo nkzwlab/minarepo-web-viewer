@@ -1390,16 +1390,26 @@ var ReportCommentEntry = React.createClass({
       } else if (detail.finished == true) {
         // checkbox for finished task
         buttonRow = <div className="row">
-          <div className="small-12 small-centered medium-8 medium-centered columns">
-            <input type="checkbox" onChange={this.onRevertFinished} checked={this.props.revertFinished} /><label className="checkbox-label">メッセージを書き込んで対応を未完了に戻す</label>
-            <button className="button float-right success" onClick={this.onPushSubmitButton()}>メッセージ投稿</button>
+          <div className="small-6 medium-8 columns text-center">
+            <label className="checkbox-label">
+              <input type="checkbox" onChange={this.onRevertFinished} checked={this.props.revertFinished} />
+              メッセージを書き込んで対応を未完了に戻す
+            </label>
+          </div>
+          <div className="small-6 small-centered medium-4 columns">
+            <button className="button text-center success msg-pub-btn" onClick={this.onPushSubmitButton()}>メッセージ投稿</button>
           </div>
         </div>;
       } else {
         buttonRow = <div className="row">
-          <div className="small-12 small-centered medium-8 medium-centered columns">
-            <input type="checkbox" onChange={this.onCheckFinished} checked={this.props.checkFinished} /><label className="checkbox-label">メッセージを書き込んで対応を完了する</label>
-            <button className="button float-right success" onClick={this.onPushSubmitButton()}>メッセージ投稿</button>
+          <div className="small-6 medium-8 columns text-center">
+            <label className="checkbox-label">
+              <input type="checkbox" onChange={this.onCheckFinished} checked={this.props.checkFinished} />
+              メッセージを書き込んで対応を完了する
+            </label>
+          </div>
+          <div className="small-6 small-centered medium-4 columns">
+            <button className="button text-center success msg-pub-btn" onClick={this.onPushSubmitButton()}>メッセージ投稿</button>
           </div>
         </div>;
       }

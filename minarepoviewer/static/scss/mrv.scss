@@ -271,6 +271,12 @@ DIV.mrv-detail {
     }
 }
 
+.msg-pub-btn {
+    @media screen and (max-width: 640px) {
+        float: right!important;
+    }
+}
+
 .level-0 {
     color: #2BA6CB;
 }
