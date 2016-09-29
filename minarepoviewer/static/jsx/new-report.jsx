@@ -1,5 +1,5 @@
-// var BOSHSERVICE = 'http://soxfujisawa.ht.sfc.keio.ac.jp:5280/http-bind/';
-// var XMPPSERVER = 'soxfujisawa.ht.sfc.keio.ac.jp';
+var BOSHSERVICE = 'http://133.27.171.93/http-bind/';
+var XMPPSERVER = 'soxfujisawa.ht.sfc.keio.ac.jp';
 
 var reportMap = null;
 var reportValues = {
@@ -189,7 +189,7 @@ var MinaRepoStore = Fluxxor.createStore({
       showToast('Error', toastMsg, '2500');
       return;
     }
-    postReport(this.selectedType);
+    // postReport(this.selectedType);
     this.emit('change');
   },
   onToggleLevelButton: function(data) {
@@ -481,7 +481,6 @@ var ReportImage = React.createClass({
 
 var PublishButton = React.createClass({
   componentDidMount: function() {
-    /*
     client = new SoxClient(BOSHSERVICE, XMPPSERVER);
 
     var soxEventListener = new SoxEventListener();
@@ -526,12 +525,11 @@ var PublishButton = React.createClass({
 
     client.setSoxEventListener(soxEventListener);
     client.connect();
-    */
   },
   onButtonClick: function() {
     return function(event) {
-      // flux.actions.onTogglePublishButton();
-      flux.actions.onTogglePostButton();
+      flux.actions.onTogglePublishButton();
+      // flux.actions.onTogglePostButton();
     };
   },
   render: function() {
