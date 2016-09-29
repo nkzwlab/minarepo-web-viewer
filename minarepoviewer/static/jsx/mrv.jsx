@@ -162,6 +162,23 @@ var showToast = function(type, message) {
   return;
 };
 
+var timestampShaper = function(timestamp) {
+    var shapedTime = null;
+    var date = new Date();
+    var reportDate = new Date(timestamp);
+    var dateDiff = date.getDate() - reportDate.getDate();
+
+    if (dateDiff > 0) {
+      shapedTime = dateDiff + '日前';
+    } else {
+      var hour = reportDate.getHours();
+      var minute = reportDate.getMinutes();
+      shapedTime = hour + ':' + minute;
+    }
+
+    return shapedTime;
+};
+
 // for DEBUG
 // function gen(ln) {
 //   var ret = [];
@@ -1038,11 +1055,13 @@ var ReportTable = React.createClass({
       var reportFinishedImg = finished2img(report.finished);
       var reportFinishedImg = <img src={reportFinishedImg} className="mrv-report-table-report-type-image" />;
 
+      var reportTime = timestampShaper(report.timestamp);
+
       return <tr className="mrv-report-table-show-detail-link" key={key} onClick={showHandler}>
         <td><span>{reportId}</span></td>
         <td><span>{reportType}</span></td>
         <td><span>{report.user}</span></td>
-        <td><span>{report.timestamp}</span></td>
+        <td><span>{reportTime}</span></td>
         <td><span className={reportLevelColor}>{reportLevelStr}</span></td>
         <td><span>{reportFinishedImg}</span></td>
       </tr>;
