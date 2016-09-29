@@ -84,22 +84,21 @@ var reportLevel = [
   '対応必要なし',
   '対応必要(通知なし)',
   '緊急(通知あり)'
-]
+];
+
+var reportLevelShort = [
+  '無',
+  '必要',
+  '緊急'
+];
 
 var type2img = function(type, isSelected) {
   var suffix = (isSelected) ? '' : '-unselected';
   return '/static/img/minarepo-icons/' + type + suffix +'.png';
 };
 
-var level2text = [
-  '必要無',
-  '必要',
-  '緊急'
-];
-
 var finished2img = function(isFinished) {
   var suffix = (isFinished) ? 'finished' : 'unfinished';
-  console.log(suffix);
   return '/static/img/' + suffix + '.png';
 }
 
@@ -1035,7 +1034,7 @@ var ReportTable = React.createClass({
       var reportType = <span>{reportTypeImg} {reportTypeStr}</span>;
 
       var reportLevelColor = 'level-' + report.level;
-      var reportLevelStr = level2text[report.level];
+      var reportLevelStr = reportLevelShort[report.level];
       var reportFinishedImg = finished2img(report.finished);
       var reportFinishedImg = <img src={reportFinishedImg} className="mrv-report-table-report-type-image" />;
 
