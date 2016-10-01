@@ -966,8 +966,6 @@ var ReportDetail = React.createClass({
           <dt>コメント</dt>
           <dd>{detailComment}</dd>
         </dl>
-
-        {centerButtonDom}
       </div>
     </div>;
   }
