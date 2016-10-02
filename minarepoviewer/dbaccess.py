@@ -18,13 +18,13 @@ class MinaRepoDBA(object):
 
     def get_reports(
             self, t_start=None, t_end=None, nodes=None,
-            top_left=None, bottom_right=None):
-        result = self._get_reports(t_start, t_end, nodes, top_left, bottom_right)
+            finished=None, top_left=None, bottom_right=None):
+        result = self._get_reports(t_start, t_end, nodes, finished, top_left, bottom_right)
         return list(result)
 
     def _get_reports(
             self, t_start=None, t_end=None, nodes=None,
-            top_left=None, bottom_right=None):
+            finished=None, top_left=None, bottom_right=None):
         args = []
         conditions = []
 
@@ -47,6 +47,9 @@ class MinaRepoDBA(object):
                 args.append(n)
         elif nodes is not None and len(nodes) == 0:
             conditions.append('1 = 0')  # nodes = [] means no match
+
+        if finished is not None and 0 < len(finished):
+            conditions.append('finished = %s' % finished)
 
         # TODO: top_left, bottom_right のcondition組み立てる
         if top_left and bottom_right:
@@ -148,7 +151,7 @@ class MinaRepoDBA(object):
         with self.connection() as conn:
             cursor = conn.cursor()
             try:
-                cols = ('id', 'report_id', 'user', 'comment', 'timestamp')
+                cols = ('id', 'report_id', 'user', 'comment', 'image', 'timestamp')
                 cond = ' AND '.join(sql_conds)
                 sql = 'SELECT %s FROM comment WHERE %s ORDER BY timestamp ASC;' % (','.join(cols), cond)
                 cursor.execute(sql, sql_params)
@@ -163,13 +166,13 @@ class MinaRepoDBA(object):
             finally:
                 cursor.close()
 
-    def insert_comment(self, report_id, comment, user='', timestamp=None):
+    def insert_comment(self, report_id, comment, image, user='', timestamp=None):
         if timestamp is None:
             timestamp = datetime.datetime.now()
 
         with self.connection() as conn:
-            sql = 'INSERT INTO comment(report_id, user, comment, timestamp) VALUES (%s, %s, %s, %s);'
-            sql_params = (report_id, user, comment, timestamp)
+            sql = 'INSERT INTO comment(report_id, user, comment, image, timestamp) VALUES (%s, %s, %s, %s, %s);'
+            sql_params = (report_id, user, comment, image, timestamp)
 
             cursor = conn.cursor()
             try:
