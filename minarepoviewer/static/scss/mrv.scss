@@ -265,6 +265,16 @@ DIV.mrv-detail {
     color: #333333;
 }
 
+.comment-img {
+    max-width: 150px;
+    max-height: 200px;
+}
+
+.short-size {
+    width: 300px;
+    margin-left: 1rem;
+}
+
 .checkbox-label {
     @media screen and (max-width: 640px) {
         width: 160px;

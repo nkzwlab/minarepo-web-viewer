@@ -336,7 +336,6 @@ var updatePins = function(reports) {
     var removingMarker = placedReportIds[rid];
     removingMarker.setMap(null);  // causes disappearance
     delete placedReportIds[rid];
-    console.debug('removed marker: report.id=' + rid);
   });
 
   // addedなreportsのみをえらぶ
@@ -448,6 +447,8 @@ var constants = {
   TOGGLE_NEW_REPORT: 'TOGGLE_NEW_REPORT',
   UPDATE_COMMENT_USER: 'UPDATE_COMMENT_USER',
   UPDATE_NEW_COMMENT: 'UPDATE_NEW_COMMENT',
+  UPDATE_COMMENT_PANEL: 'UPDATE_COMMENT_PANEL',
+  UPLOAD_COMMENT_IMAGE: 'UPLOAD_COMMENT_IMAGE',
   CHECK_FINISHED: 'CHECK_FINISHED',
   REVERT_FINISHED: 'REVERT_FINISHED'
 };
@@ -479,6 +480,7 @@ var MinaRepoStore = Fluxxor.createStore({
     this.isShowingFilter = false;
     this.commentUser = '';
     this.newComment = '';
+    this.cmntImage = '';
     this.checkFinished = false;
     this.revertFinished = false;
 
@@ -507,8 +509,10 @@ var MinaRepoStore = Fluxxor.createStore({
     this.bindActions(constants.TOGGLE_NEW_REPORT, this.onToggleNewReport);
     this.bindActions(constants.UPDATE_COMMENT_USER, this.onUpdateCommentUser);
     this.bindActions(constants.UPDATE_NEW_COMMENT, this.onUpdateNewComment);
+    this.bindActions(constants.UPLOAD_COMMENT_IMAGE, this.onUploadImage);
     this.bindActions(constants.CHECK_FINISHED, this.onCheckFinished);
     this.bindActions(constants.REVERT_FINISHED, this.onRevertFinished);
+    this.bindActions(constants.UPDATE_COMMENT_PANEL, this.onUpdateCommentPanel);
   },
   getState: function() {
     return {
@@ -533,6 +537,7 @@ var MinaRepoStore = Fluxxor.createStore({
       isShowingFilter: this.isShowingFilter,
       commentUser: this.commentUser,
       newComment: this.newComment,
+      cmntImage: this.cmntImage,
       checkFinished: this.checkFinished,
       revertFinished: this.revertFinished
     }
@@ -677,12 +682,31 @@ var MinaRepoStore = Fluxxor.createStore({
     this.newComment = data.newComment;
     this.emit('change');
   },
+  onUploadImage: function(data) {
+    this.cmntImage = data.image;
+    this.emit('change');
+  },
   onCheckFinished: function(data) {
     this.checkFinished = data.checked;
     this.emit('change');
   },
   onRevertFinished: function(data) {
     this.revertFinished = data.revert;
+    this.emit('change');
+  },
+  onUpdateCommentPanel: function(data) {
+    var reportId = data.reportId;
+    var url = '/api/report/' + reportId + '/comments';
+    $.ajax({
+      method: 'GET',
+      url: url,
+      success: function(data, status, jqxhr) {
+        this.comments = data.result;
+      },
+      error: function() {
+        this.onFetchingCommentsFailed();
+      }
+    });
     this.emit('change');
   }
 });
@@ -768,16 +792,22 @@ var actions = {
     window.location.href = '/new_report';
   },
   onUpdateCommentUser: function(data) {
-    this.dispatch(constants.UPDATE_COMMENT_USER, {commentUser: data.commentUser});
+    this.dispatch(constants.UPDATE_COMMENT_USER, { commentUser: data.commentUser });
   },
   onUpdateNewComment: function(data) {
-    this.dispatch(constants.UPDATE_NEW_COMMENT, {newComment: data.newComment});
+    this.dispatch(constants.UPDATE_NEW_COMMENT, { newComment: data.newComment });
+  },
+  onUpdateCommentPanel: function(data) {
+    this.dispatch(constants.UPDATE_COMMENT_PANEL, { reportId: data.reportId });
+  },
+  onUploadImage: function(data) {
+    this.dispatch(constants.UPLOAD_COMMENT_IMAGE, { image: data.image });
   },
   onCheckFinished: function(data) {
-    this.dispatch(constants.CHECK_FINISHED, {checked: data.checked});
+    this.dispatch(constants.CHECK_FINISHED, { checked: data.checked });
   },
   onRevertFinished: function(data) {
-    this.dispatch(constants.REVERT_FINISHED, {revert: data.revert});
+    this.dispatch(constants.REVERT_FINISHED, { revert: data.revert });
   }
 };
 
@@ -1226,6 +1256,106 @@ var TypeButtons = React.createClass({
 });
 
 var ReportCommentPanel = React.createClass({
+  updateCommentPanel: function(reportId) {
+    var that = this;
+    $.ajax({
+      method: 'GET',
+      url: '/api/report/' + reportId + '/comments',
+      success: function(data, status, jqxhr) {
+        var comments = data.result;
+        flux.actions.onFetchingCommentsSuccess({ comments: comments });
+      },
+      error: function() {
+        flux.actions.onFetchingCommentsFailed();
+      }
+    });
+    flux.actions.onStartFetchingComments();
+  },
+  clearInput: function() {
+    flux.actions.onUpdateCommentUser({ commentUser: '' });
+    flux.actions.onUpdateNewComment({ newComment: '' });
+    flux.actions.onUploadImage({ image: '' });
+    if (this.props.checkFinished) {
+      flux.actions.onCheckFinished({ checked: false });
+    } else if (this.props.revertFinished) {
+      flux.actions.onRevertFinished({ checked: false });
+    }
+  },
+  onUpdateCommentUser: function(event) {
+    var commentUser = event.target.value;
+    flux.actions.onUpdateCommentUser({ commentUser: commentUser });
+  },
+  onUpdateNewComment: function(event) {
+    var newComment = event.target.value;
+    flux.actions.onUpdateNewComment({ newComment: newComment });
+  },
+  onUploadImage: function(event) {
+    var imgFile = event.target.files;
+    if (!imgFile.length) {
+      return;
+    }
+
+    var image =  imgFile[0];
+    var options = {canvas: true};
+    loadImage.parseMetaData(image, function(data) {
+      if (data.exif) {
+        options.orientation = data.exif.get('Orientation');
+      }
+      options.maxHeight = 550;
+      options.maxWidth = 550;
+    });
+    loadImage(
+      image,
+      function(canvas) {
+        var dataURI = canvas.toDataURL('image/png');
+        flux.actions.onUploadImage({ image: dataURI });
+      },
+      options
+    );
+  },
+  onPushSubmitButton: function() {
+    var that = this;
+    return function() {
+      if (!that.props.commentUser || !that.props.newComment) {
+        showToast('error', '名前またはメッセージを入力してください');
+        return;
+      }
+      var reportId = that.props.selectedReport.id;
+      var data = {
+        user: that.props.commentUser,
+        comment: that.props.newComment,
+        image: that.props.cmntImage
+      };
+      if (that.props.checkFinished) {
+        data.finished = true;
+      } else if (that.props.revertFinished) {
+        data.revert = true;
+      }
+
+      $.ajax({
+        method: 'GET',
+        url: '/api/report/' + reportId + '/comments/new',
+        data: data,
+        dataType: 'json',
+        success: function(data) {
+          showToast('success', 'メッセージが投稿されました');
+          that.clearInput();
+          that.updateCommentPanel(reportId);
+        },
+        error: function(data) {
+          showToast('error', 'メッセージが投稿できませんでした．もう一度お試しください');
+        }
+      });
+    }
+  },
+  onCheckFinished: function(event) {
+    var val = event.target.checked;
+    flux.actions.onCheckFinished({ checked: val });
+  },
+  onRevertFinished: function(event) {
+    var val = event.target.checked;
+    flux.actions.onRevertFinished({ revert: val });
+  },
   componentWillReceiveProps: function(newProps) {
     var that = this;
     var newReportId = newProps.clickedPinReportId;
@@ -1250,27 +1380,44 @@ var ReportCommentPanel = React.createClass({
     }
   },
   render: function() {
-    var selectedReport = this.props.selectedReport;
+    var commentUser = this.props.commentUser;
+    var newComment = this.props.newComment;
+    var cmntImage = this.props.cmntImage;
+    var checkFinished = this.props.checkFinished;
+    var revertFinished = this.props.revertFinished;
+    var detail = this.props.selectedReport;
+    var isFetchingDetail = this.props.isFetchingDetail;
+    var isFetchingDetailFailed = this.props.isFetchingDetailFailed;
     var comments = this.props.comments;
     var isFetchingComments = this.props.isFetchingComments;
     var isFetchingCommentsFailed = this.props.isFetchingCommentsFailed;
+
     var fetchingComments = (isFetchingComments || isFetchingCommentsFailed);
     var commentsExists = (comments !== undefined && comments !== null);
-    var reportExists = (
-      (selectedReport !== undefined && selectedReport !== null) && (
-        (selectedReport.id !== null) && (selectedReport.id !== undefined)
+    var detailExists = (
+      (detail !== undefined && detail !== null) && (
+        (detail.id !== null) && (detail.id !== undefined)
       )
     );
 
     var headerRow = '';
     var commentPanel = '';
     var commentLists = '';
-    if (!fetchingComments && commentsExists && reportExists) {
+    var usernameRow = '';
+    var textAreaRow = '';
+    var imageRow = '';
+    var buttonRow = '';
+    if (!fetchingComments && commentsExists && detailExists) {
       if (comments.length) {
         commentLists = _.map(comments, function(comment) {
+          var image = '';
+          if (comment.image) {
+            image = <div className="text-center"><img className="comment-img" src={comment.image}/></div>;
+          }
           return <div className="row" key={comment.id}>
             <div className="small-10 small-centered columns comment no-margin-btm">
               <span>{comment.user} [{comment.timestamp}] : {comment.comment}</span>
+              {image}
             </div>
           </div>;
         });
@@ -1281,92 +1428,12 @@ var ReportCommentPanel = React.createClass({
       headerRow = <div className="row comment-editor">
         <h3 className="text-center">ディスカッション</h3>
       </div>;
-      commentPanel = <div className="row comment-editor">
+      commentPanel = <div id="comment-panel" className="row comment-editor">
         <div className="medium-9 medium-centered columns">
           <div className="panel">{commentLists}</div>
         </div>
       </div>;
-    }
 
-    return <div>
-      {headerRow}
-      {commentPanel}
-    </div>;
-  }
-});
-
-var ReportCommentEntry = React.createClass({
-  onUpdateCommentUser: function(event) {
-    var commentUser = event.target.value;
-    flux.actions.onUpdateCommentUser({ commentUser: commentUser });
-  },
-  onUpdateNewComment: function(event) {
-    var newComment = event.target.value;
-    flux.actions.onUpdateNewComment({ newComment: newComment });
-  },
-  onPushSubmitButton: function() {
-    var that = this;
-    return function() {
-      if (!that.props.commentUser || !that.props.newComment) {
-        showToast('error', '名前またはメッセージを入力してください');
-        return;
-      }
-      var hashMatch = window.location.hash.match(reportHashPattern);
-      if (hashMatch) {
-        var reportId = parseInt(hashMatch[1]);
-      }
-
-      var data = {
-        user: that.props.commentUser,
-        comment: that.props.newComment
-      };
-      if (that.props.checkFinished) {
-        data.finished = true;
-      } else if (that.props.revertFinished) {
-        data.revert = true;
-      }
-
-      $.ajax({
-        method: 'GET',
-        url: '/api/report/' + reportId + '/comments/new',
-        data: data,
-        dataType: 'json',
-        success: function(data) {
-          showToast('success', 'メッセージが投稿されました');
-          setTimeout("location.reload()",1500);
-        },
-        error: function(data) {
-          showToast('error', 'メッセージが投稿できませんでした．もう一度お試しください');
-        }
-      });
-    }
-  },
-  onCheckFinished: function(event) {
-    var val = event.target.checked;
-    flux.actions.onCheckFinished({ checked: val });
-  },
-  onRevertFinished: function(event) {
-    var val = event.target.checked;
-    flux.actions.onRevertFinished({ revert: val });
-  },
-  render: function() {
-    var commentUser = this.props.commentUser;
-    var newComment = this.props.newComment;
-    var checkFinished = this.props.checkFinished;
-    var revertFinished = this.props.revertFinished;
-    var isFetchingDetail = this.props.isFetchingDetail;
-    var isFetchingDetailFailed = this.props.isFetchingDetailFailed;
-    var detail = this.props.selectedReport;
-    var detailExists = (
-      (detail !== undefined && detail !== null) && (
-        (detail.id !== null) && (detail.id !== undefined)
-      )
-    );
-
-    var usernameRow = '';
-    var textAreaRow = '';
-    var buttonRow = '';
-    if (!isFetchingDetail && !isFetchingDetailFailed && detailExists) {
       usernameRow = <div className="row">
         <div className="medium-8 medium-centered columns">
           <input type="text" className="comment-user" onChange={this.onUpdateCommentUser} value={this.props.commentUser} placeholder="名前" />
@@ -1375,6 +1442,14 @@ var ReportCommentEntry = React.createClass({
       textAreaRow = <div className="row">
         <div className="medium-8 medium-centered columns">
           <textarea onChange={this.onUpdateNewComment} value={this.props.newComment} placeholder="メッセージを入力" />
+        </div>
+      </div>;
+      imageRow = <div className="row">
+        <div className="small-8 small-centered columns">
+          <p>
+            画像を登録:
+            <input className="short-size" type="file" onChange={this.onUploadImage} accept="image/*" />
+          </p>
         </div>
       </div>;
 
@@ -1390,7 +1465,7 @@ var ReportCommentEntry = React.createClass({
         buttonRow = <div className="row">
           <div className="small-6 medium-8 columns text-center">
             <label className="checkbox-label">
-              <input type="checkbox" onChange={this.onRevertFinished} checked={this.props.revertFinished} />
+              <input id="checkbox-finished" type="checkbox" onChange={this.onRevertFinished} checked={this.props.revertFinished} />
               メッセージを書き込んで対応を未完了に戻す
             </label>
           </div>
@@ -1402,7 +1477,7 @@ var ReportCommentEntry = React.createClass({
         buttonRow = <div className="row">
           <div className="small-6 medium-8 columns text-center">
             <label className="checkbox-label">
-              <input type="checkbox" onChange={this.onCheckFinished} checked={this.props.checkFinished} />
+              <input id="checkbox-finished" type="checkbox" onChange={this.onCheckFinished} checked={this.props.checkFinished} />
               メッセージを書き込んで対応を完了する
             </label>
           </div>
@@ -1414,8 +1489,11 @@ var ReportCommentEntry = React.createClass({
     }
 
     return <div>
+      {headerRow}
+      {commentPanel}
       {usernameRow}
       {textAreaRow}
+      {imageRow}
       {buttonRow}
     </div>;
   }
@@ -1531,21 +1609,18 @@ var MinaRepoViewer = React.createClass({
     />;
 
     var reportCommentPanel = <ReportCommentPanel
+      comments={this.props.comments}
       isFetchingComments={this.props.isFetchingComments}
       isFetchingCommentsFailed={this.props.isFetchingCommentsFailed}
       selectedReport={this.props.selectedReport}
-      clickedPinReportId={this.props.clickedPinReportId}
-      comments={this.props.comments}
-    />;
-
-    var reportCommentEntry = <ReportCommentEntry
       isFetchingDetail={this.props.isFetchingDetail}
       isFetchingDetailFailed={this.props.isFetchingDetailFailed}
-      selectedReport={this.props.selectedReport}
+      clickedPinReportId={this.props.clickedPinReportId}
+      commentUser={this.props.commentUser}
       newComment={this.props.newComment}
+      cmntImage={this.props.cmntImage}
       checkFinished={this.props.checkFinished}
       revertFinished={this.props.revertFinished}
-      commentUser={this.props.commentUser}
     />;
 
     var footer = <div className="row">
@@ -1570,7 +1645,6 @@ var MinaRepoViewer = React.createClass({
       {reportView}
       {reportDetail}
       {reportCommentPanel}
-      {reportCommentEntry}
       <hr/>
       {footer}
     </div>;
@@ -1618,6 +1692,7 @@ var MinaRepoViewerApp = React.createClass({
       isShowingFilter={s.isShowingFilter}
       commentUser={s.commentUser}
       newComment={s.newComment}
+      cmntImage={s.cmntImage}
       checkFinished={s.checkFinished}
       revertFinished={s.revertFinished}
     />;
