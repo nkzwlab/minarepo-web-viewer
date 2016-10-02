@@ -167,7 +167,8 @@ var timestampShaper = function(timestamp) {
     var shapedTime = null;
     var date = new Date();
     var reportDate = new Date(parsedTimestamp);
-    var dateDiff = date.getDate() - reportDate.getDate();
+    var diff = date.getTime() - reportDate.getTime();
+    var dateDiff = Math.floor(diff/(1000* 60 * 60 * 24)) + 1;
 
     if (dateDiff > 0) {
       shapedTime = dateDiff + '日前';
