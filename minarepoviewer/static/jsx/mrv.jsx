@@ -165,16 +165,22 @@ var showToast = function(type, message) {
 var timestampShaper = function(timestamp) {
     var parsedTimestamp = timestamp.replace(/-/g, '/');
     var shapedTime = null;
-    var date = new Date();
-    var reportDate = new Date(parsedTimestamp);
-    var diff = date.getTime() - reportDate.getTime();
-    var dateDiff = Math.floor(diff/(1000* 60 * 60 * 24)) + 1;
+
+    var currentTime = new Date();
+    var dateString = currentTime.getYear() + '/' + currentTime.getMonth() + '/' + currentTime.getDate();
+    var reportTime = new Date(parsedTimestamp);
+    var reportDateString = reportTime.getYear() + '/' + reportTime.getMonth() + '/' + reportTime.getDate();
+
+    var date = new Date(dateString);
+    var reportDate = new Date(reportDateString);
+    var dateDiff = (date - reportDate) / (1000 * 60 * 60 * 24);
+    console.log(dateDiff);
 
     if (dateDiff > 0) {
       shapedTime = dateDiff + '日前';
     } else {
-      var hour = reportDate.getHours();
-      var minute = reportDate.getMinutes();
+      var hour = reportTime.getHours();
+      var minute = reportTime.getMinutes();
       shapedTime = hour + ':' + minute;
     }
 
@@ -885,19 +891,23 @@ var ReportDetail = React.createClass({
       detailComment = detail.comment;
       detailUser = detail.user;
       detailImage = detail.image;
+      var finished = (detail.finished) ? '対応完了' : '未対応';
       detailFinishedHdr = <dt>レポート対応状況</dt>;
-      detailFinished = (detail.finished) ? '対応完了' : '未対応';
+      detailFinished = <dd>{finished}</dd>;
       if (detailImage == '' || detailImage == 'data:,') {
         detailImage = '/static/img/no-image.png';
       }
       detailTimestamp = detail.timestamp;
       var parsedTimestamp = detailTimestamp.replace(/-/g, '/');
-      var date = new Date();
-      var reportDate = new Date(parsedTimestamp);
-      var diff = date.getTime() - reportDate.getTime();
-      var dateDiff = Math.floor(diff/(1000* 60 * 60 * 24)) + 1;
+      var currentTime = new Date();
+      var dateString  = currentTime.getYear() + '/' + currentTime.getMonth() + '/' + currentTime.getDate();
+      var reportTime = new Date(parsedTimestamp);
+      var reportDateString = reportTime.getYear() + '/' + reportTime.getMonth() + '/' + reportTime.getDate();
+      var date = new Date(dateString);
+      var reportDate = new Date(reportDateString);
+      var dateDiff = (date - reportDate) / (1000 * 60 * 60 * 24);
       if (dateDiff > 0) {
-        shapedTime = dateDiff + '日前';
+        var shapedTime = dateDiff + '日前';
         detailTimestamp += ' (' + shapedTime + ')';
       }
       if (detailComment === '') {
