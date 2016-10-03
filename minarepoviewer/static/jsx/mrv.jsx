@@ -174,7 +174,6 @@ var timestampShaper = function(timestamp) {
     var date = new Date(dateString);
     var reportDate = new Date(reportDateString);
     var dateDiff = (date - reportDate) / (1000 * 60 * 60 * 24);
-    console.log(dateDiff);
 
     if (dateDiff > 0) {
       shapedTime = dateDiff + '日前';
@@ -1285,7 +1284,7 @@ var TypeButtons = React.createClass({
 });
 
 var ReportCommentPanel = React.createClass({
-  updateCommentPanel: function(reportId) {
+  updateCommentPanel: function(reportId, checked) {
     var that = this;
     $.ajax({
       method: 'GET',
@@ -1299,6 +1298,22 @@ var ReportCommentPanel = React.createClass({
       }
     });
     flux.actions.onStartFetchingComments();
+
+    if (checked) {
+      var url = '/api/detail/' + reportId;
+      $.ajax({
+        url: url,
+        method: 'GET',
+        success: function(data, status, jqxhr) {
+          var report = data.result.report;
+          flux.actions.onFetchingDetailSuccess({ selectedReport: report });
+        },
+        error: function() {
+          flux.actions.onFetchingDetailFailed();
+        }
+      });
+      flux.actions.onStartFetchingDetail();
+    }
   },
   clearInput: function() {
     flux.actions.onUpdateCommentUser({ commentUser: '' });
@@ -1355,10 +1370,14 @@ var ReportCommentPanel = React.createClass({
         comment: that.props.newComment,
         image: that.props.cmntImage
       };
+
+      var checked = true;
       if (that.props.checkFinished) {
         data.finished = true;
       } else if (that.props.revertFinished) {
         data.revert = true;
+      } else {
+        checked = false;
       }
 
       $.ajax({
@@ -1369,7 +1388,7 @@ var ReportCommentPanel = React.createClass({
         success: function(data) {
           showToast('success', 'メッセージが投稿されました');
           that.clearInput();
-          that.updateCommentPanel(reportId);
+          that.updateCommentPanel(reportId, checked);
         },
         error: function(data) {
           showToast('error', 'メッセージが投稿できませんでした．もう一度お試しください');
