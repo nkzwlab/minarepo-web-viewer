@@ -80,10 +80,27 @@ var type2textShort = {
   'ps_others': '他'
 };
 
+var reportLevel = [
+  '対応必要なし',
+  '対応必要(通知なし)',
+  '緊急(通知あり)'
+];
+
+var reportLevelShort = [
+  '無',
+  '必要',
+  '緊急'
+];
+
 var type2img = function(type, isSelected) {
   var suffix = (isSelected) ? '' : '-unselected';
   return '/static/img/minarepo-icons/' + type + suffix +'.png';
 };
+
+var finished2img = function(isFinished) {
+  var suffix = (isFinished) ? 'finished' : 'unfinished';
+  return '/static/img/' + suffix + '.png';
+}
 
 var getMarkerUrl = function(type) {
   var pinInfo = type2pinInfo[type];
@@ -130,6 +147,38 @@ var changeAllTypes = function(selectedTypes, bool) {
     selectedTypes[t] = bool;
   }
   return selectedTypes;
+};
+
+var showToast = function(type, message) {
+  $.toast({
+    heading: type,
+    icon: type,
+    text: message,
+    hideAfter: 2000,
+    allowToastClose: true,
+    position: 'mid-center',
+    loader: false
+  });
+  return;
+};
+
+var timestampShaper = function(timestamp) {
+    var parsedTimestamp = timestamp.replace(/-/g, '/');
+    var shapedTime = null;
+    var date = new Date();
+    var reportDate = new Date(parsedTimestamp);
+    var diff = date.getTime() - reportDate.getTime();
+    var dateDiff = Math.floor(diff/(1000* 60 * 60 * 24)) + 1;
+
+    if (dateDiff > 0) {
+      shapedTime = dateDiff + '日前';
+    } else {
+      var hour = reportDate.getHours();
+      var minute = reportDate.getMinutes();
+      shapedTime = hour + ':' + minute;
+    }
+
+    return shapedTime;
 };
 
 // for DEBUG
@@ -288,7 +337,6 @@ var updatePins = function(reports) {
     var removingMarker = placedReportIds[rid];
     removingMarker.setMap(null);  // causes disappearance
     delete placedReportIds[rid];
-    console.debug('removed marker: report.id=' + rid);
   });
 
   // addedなreportsのみをえらぶ
@@ -381,6 +429,9 @@ var constants = {
   START_FETCHING_DETAIL: 'START_FETCHING_DETAIL',
   FETCHING_DETAIL_SUCCESS: 'FETCHING_DETAIL_SUCCESS',
   FETCHING_DETAIL_FAILED: 'FETCHING_DETAIL_FAILED',
+  START_FETCHING_COMMENTS: 'START_FETCHING_COMMENTS',
+  FETCHING_COMMENTS_SUCCESS: 'FETCHING_COMMENTS_SUCCESS',
+  FETCHING_COMMENTS_FAILED: 'FETCHING_COMMENTS_FAILED',
   CLICK_PIN: 'CLICK_PIN',
   UPDATE_START_DATE: 'UPDATE_START_DATE',
   UPDATE_END_DATE: 'UPDATE_END_DATE',
@@ -394,12 +445,19 @@ var constants = {
   TABLE_SET_PAGE: 'TABLE_SET_PAGE',
   TOGGLE_SHOWING_TABLE: 'TOGGLE_SHOWING_TABLE',
   TOGGLE_SHOWING_FILTER: 'TOGGLE_SHOWING_FILTER',
-  TOGGLE_NEW_REPORT: 'TOGGLE_NEW_REPORT'
+  TOGGLE_NEW_REPORT: 'TOGGLE_NEW_REPORT',
+  UPDATE_COMMENT_USER: 'UPDATE_COMMENT_USER',
+  UPDATE_NEW_COMMENT: 'UPDATE_NEW_COMMENT',
+  UPDATE_COMMENT_PANEL: 'UPDATE_COMMENT_PANEL',
+  UPLOAD_COMMENT_IMAGE: 'UPLOAD_COMMENT_IMAGE',
+  CHECK_FINISHED: 'CHECK_FINISHED',
+  REVERT_FINISHED: 'REVERT_FINISHED'
 };
 
 var MinaRepoStore = Fluxxor.createStore({
   initialize: function() {
     this.reports = [];
+    this.comments = [];
     this.selectedReport = null;
     var selectedTypes = {};
     _.each(reportTypes, function(rt) {
@@ -414,11 +472,18 @@ var MinaRepoStore = Fluxxor.createStore({
     this.isFetchingReportsFailed = false;
     this.isFetchingDetail = false;
     this.isFetchingDetailFailed = false;
+    this.isFetchingComments = false;
+    this.isFetchingCommentsFailed = false;
     this.mapTopLeft = null;
     this.mapBottomRight = null;
     this.tableSelectedPage = 1;
     this.isShowingTable = true; // shinny modifyied to show from beginning [false -> true]
     this.isShowingFilter = false;
+    this.commentUser = '';
+    this.newComment = '';
+    this.cmntImage = '';
+    this.checkFinished = false;
+    this.revertFinished = false;
 
     this.bindActions(constants.START_FETCHING_REPORTS, this.onStartFetchingReports);
     this.bindActions(constants.FETCHING_REPORTS_SUCCESS, this.onFetchingReportsSuccess);
@@ -426,6 +491,9 @@ var MinaRepoStore = Fluxxor.createStore({
     this.bindActions(constants.START_FETCHING_DETAIL, this.onStartFetchingDetail);
     this.bindActions(constants.FETCHING_DETAIL_SUCCESS, this.onFetchingDetailSuccess);
     this.bindActions(constants.FETCHING_DETAIL_FAILED, this.onFetchingDetailFailed);
+    this.bindActions(constants.START_FETCHING_COMMENTS, this.onStartFetchingComments);
+    this.bindActions(constants.FETCHING_COMMENTS_SUCCESS, this.onFetchingCommentsSuccess);
+    this.bindActions(constants.FETCHING_COMMENTS_FAILED, this.onFetchingCommentsFailed);
     this.bindActions(constants.CLICK_PIN, this.onClickPin);
     this.bindActions(constants.UPDATE_START_DATE, this.onUpdateStartDate);
     this.bindActions(constants.UPDATE_END_DATE, this.onUpdateEndDate);
@@ -440,10 +508,17 @@ var MinaRepoStore = Fluxxor.createStore({
     this.bindActions(constants.TOGGLE_SHOWING_TABLE, this.onToggleShowingTable);
     this.bindActions(constants.TOGGLE_SHOWING_FILTER, this.onToggleShowingFilter);
     this.bindActions(constants.TOGGLE_NEW_REPORT, this.onToggleNewReport);
+    this.bindActions(constants.UPDATE_COMMENT_USER, this.onUpdateCommentUser);
+    this.bindActions(constants.UPDATE_NEW_COMMENT, this.onUpdateNewComment);
+    this.bindActions(constants.UPLOAD_COMMENT_IMAGE, this.onUploadImage);
+    this.bindActions(constants.CHECK_FINISHED, this.onCheckFinished);
+    this.bindActions(constants.REVERT_FINISHED, this.onRevertFinished);
+    this.bindActions(constants.UPDATE_COMMENT_PANEL, this.onUpdateCommentPanel);
   },
   getState: function() {
     return {
       reports: this.reports,
+      comments: this.comments,
       selectedReport: this.selectedReport,
       selectedTypes: this.selectedTypes,
       clickedPinReportId: this.clickedPinReportId,
@@ -454,11 +529,18 @@ var MinaRepoStore = Fluxxor.createStore({
       isFetchingReportsFailed: this.isFetchingReportsFailed,
       isFetchingDetail: this.isFetchingDetail,
       isFetchingDetailFailed: this.isFetchingDetailFailed,
+      isFetchingComments: this.isFetchingComments,
+      isFetchingCommentsFailed: this.isFetchingCommentsFailed,
       mapTopLeft: this.mapTopLeft,
       mapBottomRight: this.mapBottomRight,
       tableSelectedPage: this.tableSelectedPage,
       isShowingTable: this.isShowingTable,
-      isShowingFilter: this.isShowingFilter
+      isShowingFilter: this.isShowingFilter,
+      commentUser: this.commentUser,
+      newComment: this.newComment,
+      cmntImage: this.cmntImage,
+      checkFinished: this.checkFinished,
+      revertFinished: this.revertFinished
     }
   },
   onStartFetchingReports: function(data) {
@@ -491,6 +573,22 @@ var MinaRepoStore = Fluxxor.createStore({
   onFetchingDetailFailed: function(data) {
     this.isFetchingDetail = false;
     this.isFetchingDetailFailed = true;
+    this.emit('change');
+  },
+  onStartFetchingComments: function(data) {
+    this.isFetchingComments = true;
+    this.isFetchingCommentsFailed = false;
+    this.emit('change');
+  },
+  onFetchingCommentsSuccess: function(data) {
+    this.comments = data.comments;
+    this.isFetchingComments = false;
+    this.isFetchingCommentsFailed = false;
+    this.emit('change');
+  },
+  onFetchingCommentsFailed: function(data) {
+    this.isFetchingComments = false;
+    this.isFetchingCommentsFailed = true;
     this.emit('change');
   },
   onClickPin: function(data) {
@@ -576,6 +674,41 @@ var MinaRepoStore = Fluxxor.createStore({
   },
   onToggleNewReport: function() {
     return;
+  },
+  onUpdateCommentUser: function(data) {
+    this.commentUser = data.commentUser;
+    this.emit('change');
+  },
+  onUpdateNewComment: function(data) {
+    this.newComment = data.newComment;
+    this.emit('change');
+  },
+  onUploadImage: function(data) {
+    this.cmntImage = data.image;
+    this.emit('change');
+  },
+  onCheckFinished: function(data) {
+    this.checkFinished = data.checked;
+    this.emit('change');
+  },
+  onRevertFinished: function(data) {
+    this.revertFinished = data.revert;
+    this.emit('change');
+  },
+  onUpdateCommentPanel: function(data) {
+    var reportId = data.reportId;
+    var url = '/api/report/' + reportId + '/comments';
+    $.ajax({
+      method: 'GET',
+      url: url,
+      success: function(data, status, jqxhr) {
+        this.comments = data.result;
+      },
+      error: function() {
+        this.onFetchingCommentsFailed();
+      }
+    });
+    this.emit('change');
   }
 });
 
@@ -598,6 +731,16 @@ var actions = {
     this.dispatch(constants.FETCHING_DETAIL_SUCCESS, { selectedReport: selectedReport });
   },
   onFetchingDetailFailed: function(data) {
+    this.dispatch(constants.FETCHING_DETAIL_FAILED);
+  },
+  onStartFetchingComments: function(data) {
+    this.dispatch(constants.START_FETCHING_COMMENTS);
+  },
+  onFetchingCommentsSuccess: function(data) {
+    var comments = data.comments;
+    this.dispatch(constants.FETCHING_COMMENTS_SUCCESS, { comments: comments });
+  },
+  onFetchingCommentsFailed: function(data) {
     this.dispatch(constants.FETCHING_DETAIL_FAILED);
   },
   onClickPin: function(data) {
@@ -648,6 +791,24 @@ var actions = {
   },
   onToggleNewReport: function() {
     window.location.href = '/new_report';
+  },
+  onUpdateCommentUser: function(data) {
+    this.dispatch(constants.UPDATE_COMMENT_USER, { commentUser: data.commentUser });
+  },
+  onUpdateNewComment: function(data) {
+    this.dispatch(constants.UPDATE_NEW_COMMENT, { newComment: data.newComment });
+  },
+  onUpdateCommentPanel: function(data) {
+    this.dispatch(constants.UPDATE_COMMENT_PANEL, { reportId: data.reportId });
+  },
+  onUploadImage: function(data) {
+    this.dispatch(constants.UPLOAD_COMMENT_IMAGE, { image: data.image });
+  },
+  onCheckFinished: function(data) {
+    this.dispatch(constants.CHECK_FINISHED, { checked: data.checked });
+  },
+  onRevertFinished: function(data) {
+    this.dispatch(constants.REVERT_FINISHED, { revert: data.revert });
   }
 };
 
@@ -709,6 +870,9 @@ var ReportDetail = React.createClass({
     var detailImage;
     var detailLocation;
     var detailTimestamp;
+    var detailLevel;
+    var detailFinishedHdr;
+    var detailFinished;
     var centerButtonDom = '';
 
     if (!isFetchingDetail && !isFetchingDetailFailed && detailExists) {
@@ -721,10 +885,21 @@ var ReportDetail = React.createClass({
       detailComment = detail.comment;
       detailUser = detail.user;
       detailImage = detail.image;
+      detailFinishedHdr = <dt>レポート対応状況</dt>;
+      detailFinished = (detail.finished) ? '対応完了' : '未対応';
       if (detailImage == '' || detailImage == 'data:,') {
         detailImage = '/static/img/no-image.png';
       }
       detailTimestamp = detail.timestamp;
+      var parsedTimestamp = detailTimestamp.replace(/-/g, '/');
+      var date = new Date();
+      var reportDate = new Date(parsedTimestamp);
+      var diff = date.getTime() - reportDate.getTime();
+      var dateDiff = Math.floor(diff/(1000* 60 * 60 * 24)) + 1;
+      if (dateDiff > 0) {
+        shapedTime = dateDiff + '日前';
+        detailTimestamp += ' (' + shapedTime + ')';
+      }
       if (detailComment === '') {
         detailComment = <span className="mrv-detail-no-comment">(コメントなし)</span>
       }
@@ -732,6 +907,13 @@ var ReportDetail = React.createClass({
       if (address === null) {
         address = <span className="mrv-detail-no-address">(取得されていません)</span>;
       }
+
+      if (detail.level == 0) {
+        detailFinishedHdr = '';
+        detailFinished = '';
+      }
+      var reportLevelClass = 'level-' + detail.level;
+      detailLevel = <span className={reportLevelClass}>{reportLevel[detail.level]}</span>;
       detailLocation = <div>
         住所: {address}<br/>
         GPS座標: 緯度={detail.geo[0]}, 経度={detail.geo[1]}
@@ -781,6 +963,8 @@ var ReportDetail = React.createClass({
       detailType = '読み込み中...';
       detailComment = '読み込み中...';
       detailLocation = '読み込み中...';
+      detailLevel = '読み込み中...';
+      detailFinished = '読み込み中...';
       detailImage = '/static/img/loading-image.gif';  // FIXME: 権利？
     } else if (!isFetchingDetail && isFetchingDetailFailed) {
       // console.debug('detail pattern 3: fetch failed');
@@ -789,6 +973,8 @@ var ReportDetail = React.createClass({
       detailType = <span className="mrv-detail-error">読み込みに失敗しました</span>;
       detailComment = <span className="mrv-detail-error">読み込みに失敗しました</span>;
       detailLocation = <span className="mrv-detail-error">読み込みに失敗しました</span>;
+      detailLevel = <span className="mrv-detail-error">読み込みに失敗しました</span>;
+      detailFinished = <span className="mrv-detail-error">読み込みに失敗しました</span>;
       detailImage = '/static/img/loading-image.gif';  // FIXME: もっとエラーっぽい画像にしたい
     }
 
@@ -816,11 +1002,15 @@ var ReportDetail = React.createClass({
           <dt>レポートユーザー</dt>
           <dd>{detailUser}</dd>
 
+          <dt>レポート対応レベル</dt>
+          <dd>{detailLevel}</dd>
+
+          {detailFinishedHdr}
+          {detailFinished}
+
           <dt>コメント</dt>
           <dd>{detailComment}</dd>
         </dl>
-
-        {centerButtonDom}
       </div>
     </div>;
   }
@@ -904,11 +1094,24 @@ var ReportTable = React.createClass({
       var reportTypeImg = <img src={reportTypeImg} className="mrv-report-table-report-type-image" />;
       var reportType = <span>{reportTypeImg} {reportTypeStr}</span>;
 
+      var reportLevelColor = 'level-' + report.level;
+      var reportLevelStr = reportLevelShort[report.level];
+
+      var reportFinishedImg = '-';
+      if (report.level) {
+        reportFinishedImg = finished2img(report.finished);
+        reportFinishedImg = <img src={reportFinishedImg} className="mrv-report-table-report-type-image" />;
+      }
+
+      var reportTime = timestampShaper(report.timestamp);
+
       return <tr className="mrv-report-table-show-detail-link" key={key} onClick={showHandler}>
         <td><span>{reportId}</span></td>
         <td><span>{reportType}</span></td>
         <td><span>{report.user}</span></td>
-        <td><span>{report.timestamp}</span></td>
+        <td><span>{reportTime}</span></td>
+        <td><span className={reportLevelColor}>{reportLevelStr}</span></td>
+        <td><span className="text-center">{reportFinishedImg}</span></td>
       </tr>;
     });
 
@@ -986,6 +1189,8 @@ var ReportTable = React.createClass({
             <th>レポ種類</th>
             <th>投稿者</th>
             <th>投稿時刻</th>
+            <th>対応</th>
+            <th>完了</th>
           </tr>
         </thead>
 
@@ -1069,11 +1274,257 @@ var TypeButtons = React.createClass({
   }
 });
 
+var ReportCommentPanel = React.createClass({
+  updateCommentPanel: function(reportId) {
+    var that = this;
+    $.ajax({
+      method: 'GET',
+      url: '/api/report/' + reportId + '/comments',
+      success: function(data, status, jqxhr) {
+        var comments = data.result;
+        flux.actions.onFetchingCommentsSuccess({ comments: comments });
+      },
+      error: function() {
+        flux.actions.onFetchingCommentsFailed();
+      }
+    });
+    flux.actions.onStartFetchingComments();
+  },
+  clearInput: function() {
+    flux.actions.onUpdateCommentUser({ commentUser: '' });
+    flux.actions.onUpdateNewComment({ newComment: '' });
+    flux.actions.onUploadImage({ image: '' });
+    if (this.props.checkFinished) {
+      flux.actions.onCheckFinished({ checked: false });
+    } else if (this.props.revertFinished) {
+      flux.actions.onRevertFinished({ checked: false });
+    }
+  },
+  onUpdateCommentUser: function(event) {
+    var commentUser = event.target.value;
+    flux.actions.onUpdateCommentUser({ commentUser: commentUser });
+  },
+  onUpdateNewComment: function(event) {
+    var newComment = event.target.value;
+    flux.actions.onUpdateNewComment({ newComment: newComment });
+  },
+  onUploadImage: function(event) {
+    var imgFile = event.target.files;
+    if (!imgFile.length) {
+      return;
+    }
+
+    var image =  imgFile[0];
+    var options = {canvas: true};
+    loadImage.parseMetaData(image, function(data) {
+      if (data.exif) {
+        options.orientation = data.exif.get('Orientation');
+      }
+      options.maxHeight = 550;
+      options.maxWidth = 550;
+    });
+    loadImage(
+      image,
+      function(canvas) {
+        var dataURI = canvas.toDataURL('image/png');
+        flux.actions.onUploadImage({ image: dataURI });
+      },
+      options
+    );
+  },
+  onPushSubmitButton: function() {
+    var that = this;
+    return function() {
+      if (!that.props.commentUser || !that.props.newComment) {
+        showToast('error', '名前またはメッセージを入力してください');
+        return;
+      }
+      var reportId = that.props.selectedReport.id;
+      var data = {
+        user: that.props.commentUser,
+        comment: that.props.newComment,
+        image: that.props.cmntImage
+      };
+      if (that.props.checkFinished) {
+        data.finished = true;
+      } else if (that.props.revertFinished) {
+        data.revert = true;
+      }
+
+      $.ajax({
+        method: 'GET',
+        url: '/api/report/' + reportId + '/comments/new',
+        data: data,
+        dataType: 'json',
+        success: function(data) {
+          showToast('success', 'メッセージが投稿されました');
+          that.clearInput();
+          that.updateCommentPanel(reportId);
+        },
+        error: function(data) {
+          showToast('error', 'メッセージが投稿できませんでした．もう一度お試しください');
+        }
+      });
+    }
+  },
+  onCheckFinished: function(event) {
+    var val = event.target.checked;
+    flux.actions.onCheckFinished({ checked: val });
+  },
+  onRevertFinished: function(event) {
+    var val = event.target.checked;
+    flux.actions.onRevertFinished({ revert: val });
+  },
+  componentWillReceiveProps: function(newProps) {
+    var that = this;
+    var newReportId = newProps.clickedPinReportId;
+    var currentReportId = this.props.clickedPinReportId;
+    if (currentReportId !== newReportId) {
+      // fetch comments
+      setTimeout(function() {
+        var url = '/api/report/' + newReportId + '/comments';
+        $.ajax({
+          url: url,
+          method: 'GET',
+          success: function(data, status, jqxhr) {
+            var comments = data.result;
+            flux.actions.onFetchingCommentsSuccess({ comments: comments });
+          },
+          error: function() {
+            flux.actions.onFetchingCommentsFailed();
+          }
+        });
+        flux.actions.onStartFetchingComments();
+      }, 0);
+    }
+  },
+  render: function() {
+    var commentUser = this.props.commentUser;
+    var newComment = this.props.newComment;
+    var cmntImage = this.props.cmntImage;
+    var checkFinished = this.props.checkFinished;
+    var revertFinished = this.props.revertFinished;
+    var detail = this.props.selectedReport;
+    var isFetchingDetail = this.props.isFetchingDetail;
+    var isFetchingDetailFailed = this.props.isFetchingDetailFailed;
+    var comments = this.props.comments;
+    var isFetchingComments = this.props.isFetchingComments;
+    var isFetchingCommentsFailed = this.props.isFetchingCommentsFailed;
+
+    var fetchingComments = (isFetchingComments || isFetchingCommentsFailed);
+    var commentsExists = (comments !== undefined && comments !== null);
+    var detailExists = (
+      (detail !== undefined && detail !== null) && (
+        (detail.id !== null) && (detail.id !== undefined)
+      )
+    );
+
+    var headerRow = '';
+    var commentPanel = '';
+    var commentLists = '';
+    var usernameRow = '';
+    var textAreaRow = '';
+    var imageRow = '';
+    var buttonRow = '';
+    if (!fetchingComments && commentsExists && detailExists) {
+      if (comments.length) {
+        commentLists = _.map(comments, function(comment) {
+          var image = '';
+          if (comment.image) {
+            image = <div className="text-center"><img className="comment-img" src={comment.image}/></div>;
+          }
+          return <div className="row" key={comment.id}>
+            <div className="small-10 small-centered columns comment no-margin-btm">
+              <span>{comment.user} [{comment.timestamp}] : {comment.comment}</span>
+              {image}
+            </div>
+          </div>;
+        });
+      } else {
+        commentLists = <p className="no-margin-btm text-center">現在メッセージはありません</p>;
+      }
+
+      headerRow = <div className="row comment-editor">
+        <h3 className="text-center">ディスカッション</h3>
+      </div>;
+      commentPanel = <div id="comment-panel" className="row comment-editor">
+        <div className="medium-9 medium-centered columns">
+          <div className="panel">{commentLists}</div>
+        </div>
+      </div>;
+
+      usernameRow = <div className="row">
+        <div className="medium-8 medium-centered columns">
+          <input type="text" className="comment-user" onChange={this.onUpdateCommentUser} value={this.props.commentUser} placeholder="名前" />
+        </div>
+      </div>;
+      textAreaRow = <div className="row">
+        <div className="medium-8 medium-centered columns">
+          <textarea onChange={this.onUpdateNewComment} value={this.props.newComment} placeholder="メッセージを入力" />
+        </div>
+      </div>;
+      imageRow = <div className="row">
+        <div className="small-8 small-centered columns">
+          <p>
+            画像を登録:
+            <input className="short-size" type="file" onChange={this.onUploadImage} accept="image/*" />
+          </p>
+        </div>
+      </div>;
+
+      if (detail.level == 0) {
+        // hide checkbox
+        buttonRow = <div className="row">
+          <div className="small-6 small-centered columns text-center">
+            <button className="button success text-center" onClick={this.onPushSubmitButton()}>メッセージ投稿</button>
+          </div>
+        </div>;
+      } else if (detail.finished == true) {
+        // checkbox for finished task
+        buttonRow = <div className="row">
+          <div className="small-6 medium-8 columns text-center">
+            <label className="checkbox-label">
+              <input id="checkbox-finished" type="checkbox" onChange={this.onRevertFinished} checked={this.props.revertFinished} />
+              メッセージを書き込んで対応を未完了に戻す
+            </label>
+          </div>
+          <div className="small-6 small-centered medium-4 columns">
+            <button className="button text-center success msg-pub-btn" onClick={this.onPushSubmitButton()}>メッセージ投稿</button>
+          </div>
+        </div>;
+      } else {
+        buttonRow = <div className="row">
+          <div className="small-6 medium-8 columns text-center">
+            <label className="checkbox-label">
+              <input id="checkbox-finished" type="checkbox" onChange={this.onCheckFinished} checked={this.props.checkFinished} />
+              メッセージを書き込んで対応を完了する
+            </label>
+          </div>
+          <div className="small-6 small-centered medium-4 columns">
+            <button className="button text-center success msg-pub-btn" onClick={this.onPushSubmitButton()}>メッセージ投稿</button>
+          </div>
+        </div>;
+      }
+    }
+
+    return <div>
+      {headerRow}
+      {commentPanel}
+      {usernameRow}
+      {textAreaRow}
+      {imageRow}
+      {buttonRow}
+    </div>;
+  }
+});
+
 var MinaRepoViewer = React.createClass({
   render: function() {
     var header = <div className="row">
       <div className="large-12 columns mrv-title-container">
-        <img src="/static/img/minarepo-title.png" className="mrv-title-image" />
+        <a href="/">
+          <img src="/static/img/minarepo-title.png" className="mrv-title-image" />
+        </a>
       </div>
     </div>;
 
@@ -1176,6 +1627,21 @@ var MinaRepoViewer = React.createClass({
       clickedPinReportId={this.props.clickedPinReportId}
     />;
 
+    var reportCommentPanel = <ReportCommentPanel
+      comments={this.props.comments}
+      isFetchingComments={this.props.isFetchingComments}
+      isFetchingCommentsFailed={this.props.isFetchingCommentsFailed}
+      selectedReport={this.props.selectedReport}
+      isFetchingDetail={this.props.isFetchingDetail}
+      isFetchingDetailFailed={this.props.isFetchingDetailFailed}
+      clickedPinReportId={this.props.clickedPinReportId}
+      commentUser={this.props.commentUser}
+      newComment={this.props.newComment}
+      cmntImage={this.props.cmntImage}
+      checkFinished={this.props.checkFinished}
+      revertFinished={this.props.revertFinished}
+    />;
+
     var footer = <div className="row">
       <div className="large-12 columns mrv-footer">
         Powered by <a href="https://www.city.fujisawa.kanagawa.jp/">藤沢市</a> and <a href="https://www.ht.sfc.keio.ac.jp/">htlab</a>
@@ -1197,6 +1663,7 @@ var MinaRepoViewer = React.createClass({
       */}
       {reportView}
       {reportDetail}
+      {reportCommentPanel}
       <hr/>
       {footer}
     </div>;
@@ -1223,6 +1690,7 @@ var MinaRepoViewerApp = React.createClass({
     var s = this.state;
     return <MinaRepoViewer
       reports={s.reports}
+      comments={s.comments}
       selectedTypes={s.selectedTypes}
       clickedPinReportId={s.clickedPinReportId}
       detail={s.detail}
@@ -1234,11 +1702,18 @@ var MinaRepoViewerApp = React.createClass({
       isFetchingReportsFailed={s.isFetchingReportsFailed}
       isFetchingDetail={s.isFetchingDetail}
       isFetchingDetailFailed={s.isFetchingDetailFailed}
+      isFetchingComments={s.isFetchingComments}
+      isFetchingCommentsFailed={s.isFetchingCommentsFailed}
       mapTopLeft={s.mapTopLeft}
       mapBottomRight={s.mapBottomRight}
       tableSelectedPage={s.tableSelectedPage}
       isShowingTable={s.isShowingTable}
       isShowingFilter={s.isShowingFilter}
+      commentUser={s.commentUser}
+      newComment={s.newComment}
+      cmntImage={s.cmntImage}
+      checkFinished={s.checkFinished}
+      revertFinished={s.revertFinished}
     />;
   }
 });

@@ -18,13 +18,13 @@ class MinaRepoDBA(object):
 
     def get_reports(
             self, t_start=None, t_end=None, nodes=None,
-            top_left=None, bottom_right=None):
-        result = self._get_reports(t_start, t_end, nodes, top_left, bottom_right)
+            finished=None, top_left=None, bottom_right=None):
+        result = self._get_reports(t_start, t_end, nodes, finished, top_left, bottom_right)
         return list(result)
 
     def _get_reports(
             self, t_start=None, t_end=None, nodes=None,
-            top_left=None, bottom_right=None):
+            finished=None, top_left=None, bottom_right=None):
         args = []
         conditions = []
 
@@ -48,6 +48,9 @@ class MinaRepoDBA(object):
         elif nodes is not None and len(nodes) == 0:
             conditions.append('1 = 0')  # nodes = [] means no match
 
+        if finished is not None and 0 < len(finished):
+            conditions.append('finished = %s' % finished)
+
         # TODO: top_left, bottom_right のcondition組み立てる
         if top_left and bottom_right:
             # WHERE MBRWithin(geom_field, GeomFromText('LineString(130.00 30.00, 140.00 40.00)', 4326));
@@ -60,9 +63,9 @@ class MinaRepoDBA(object):
             geo_cond = 'MBRWithin(geo, GeomFromText(%s, 4326)' % linestring
             conditions.append(geo_cond)
 
-        cols = 'id, type, user, astext(geo), timestamp, image, comment, address'
+        cols = 'id, type, user, astext(geo), timestamp, image, comment, address, level, finished'
         col_keys = [
-            'id', 'type', 'user', 'geo', 'timestamp', 'image', 'comment', 'address'
+            'id', 'type', 'user', 'geo', 'timestamp', 'image', 'comment', 'address', 'level', 'finished'
         ]
 
         if len(conditions) == 0:
@@ -90,9 +93,9 @@ class MinaRepoDBA(object):
                 cursor.close()
 
     def get_report(self, report_id):
-        cols = 'id, type, user, astext(geo), timestamp, image, comment, address'
+        cols = 'id, type, user, astext(geo), timestamp, image, comment, address, level, finished'
         col_keys = [
-            'id', 'type', 'user', 'geo', 'timestamp', 'image', 'comment', 'address'
+            'id', 'type', 'user', 'geo', 'timestamp', 'image', 'comment', 'address', 'level', 'finished'
         ]
         sql = 'SELECT %s FROM minarepo WHERE id = %%s;' % cols
 
@@ -148,7 +151,7 @@ class MinaRepoDBA(object):
         with self.connection() as conn:
             cursor = conn.cursor()
             try:
-                cols = ('id', 'report_id', 'user', 'comment', 'timestamp')
+                cols = ('id', 'report_id', 'user', 'comment', 'image', 'timestamp')
                 cond = ' AND '.join(sql_conds)
                 sql = 'SELECT %s FROM comment WHERE %s ORDER BY timestamp ASC;' % (','.join(cols), cond)
                 cursor.execute(sql, sql_params)
@@ -163,17 +166,49 @@ class MinaRepoDBA(object):
             finally:
                 cursor.close()
 
-    def insert_comment(self, report_id, comment, user='', timestamp=None):
+    def insert_comment(self, report_id, comment, image, user='', timestamp=None):
         if timestamp is None:
             timestamp = datetime.datetime.now()
 
         with self.connection() as conn:
-            sql = 'INSERT INTO comment(report_id, user, comment, timestamp) VALUES (%s, %s, %s, %s);'
-            sql_params = (report_id, user, comment, timestamp)
+            sql = 'INSERT INTO comment(report_id, user, comment, image, timestamp) VALUES (%s, %s, %s, %s, %s);'
+            sql_params = (report_id, user, comment, image, timestamp)
 
             cursor = conn.cursor()
             try:
                 cursor.execute(sql, sql_params)
+                conn.commit()
+            except MySQLdb.Error as error:
+                print error
+                return False
+            finally:
+                cursor.close()
+
+            return True
+
+    def finish_report_correspondence(self, report_id):
+        with self.connection() as conn:
+            sql = 'UPDATE minarepo SET finished=1 WHERE id=%s;' % report_id
+
+            cursor = conn.cursor()
+            try:
+                cursor.execute(sql)
+                conn.commit()
+            except MySQLdb.Error as error:
+                print error
+                return False
+            finally:
+                cursor.close()
+
+            return True
+
+    def revert_report_correspondence(self, report_id):
+        with self.connection() as conn:
+            sql = 'UPDATE minarepo SET finished=0 WHERE id=%s;' % report_id
+
+            cursor = conn.cursor()
+            try:
+                cursor.execute(sql)
                 conn.commit()
             except MySQLdb.Error as error:
                 print error

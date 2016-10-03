@@ -116,6 +116,7 @@ class MinaRepoViewer(object):
         time_end = request.params.get('time_end', None)
         top_left = request.params.get('top_left', None)
         bottom_right = request.params.get('bottom_right', None)
+        finished = request.params.get('finished', None)
         include_image = request.params.get('include_image', 'false')
         include_image = (include_image == 'true')
 
@@ -132,7 +133,7 @@ class MinaRepoViewer(object):
             # print 'nodes was None'
             nodes = None
 
-        reports = self._dba.get_reports(time_start, time_end, nodes)
+        reports = self._dba.get_reports(time_start, time_end, nodes, finished)
         # print '------------------'
         # print 'nodes=%s' % nodes
         # print 'len(reports)=%d' % len(reports)
@@ -234,9 +235,16 @@ class MinaRepoViewer(object):
     def api_comment_new(self, report_id):
         user = request.params.get('user', '')
         comment = request.params.get('comment', '')
+        finished = request.params.get('finished', '')
+        revert = request.params.get('revert', '')
+        image = request.params.get('image', '')
         try:
             report_id = int(report_id)
-            ret = self._dba.insert_comment(report_id, comment, user)
+            ret = self._dba.insert_comment(report_id, comment, image, user)
+            if finished:
+                self._dba.finish_report_correspondence(report_id)
+            elif revert:
+                self._dba.revert_report_correspondence(report_id)
         except:
             logging.exception('error')
             return self._json_response(None, 500)

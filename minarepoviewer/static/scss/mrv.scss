@@ -234,3 +234,67 @@ DIV.mrv-detail {
     font-size: 14px;
     color: #666666;
 }
+
+.comment-user {
+    width: 300px;
+}
+
+.comment-editor {
+    margin-top: 1.5rem;
+}
+
+.panel {
+    border-radius: 6px;
+    border-style: solid;
+    border-width: 1px;
+    border-color: #d8d8d8;
+    margin-bottom: 1.11111rem;
+    padding: 1.11111rem;
+    background: #f2f2f2;
+    color: #333333;
+}
+
+.comment {
+    border-radius: 6px;
+    border-style: solid;
+    border-width: 1px;
+    border-color: #d8d8d8;
+    margin-bottom: 1.11111rem;
+    padding: 1.11111rem;
+    background: #ffffff;
+    color: #333333;
+}
+
+.comment-img {
+    max-width: 150px;
+    max-height: 200px;
+}
+
+.short-size {
+    width: 300px;
+    margin-left: 1rem;
+}
+
+.checkbox-label {
+    @media screen and (max-width: 640px) {
+        width: 160px;
+    }
+}
+
+.msg-pub-btn {
+    @media screen and (max-width: 640px) {
+        float: right!important;
+    }
+}
+
+.level-1 {
+    color: #2BA6CB;
+}
+
+.level-2 {
+    color: #FE2E2E;
+}
+
+.no-margin-btm {
+    margin-bottom: 0px;
+}
