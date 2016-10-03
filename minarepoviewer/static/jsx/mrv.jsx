@@ -871,6 +871,7 @@ var ReportDetail = React.createClass({
     var detailLocation;
     var detailTimestamp;
     var detailLevel;
+    var detailFinishedHdr;
     var detailFinished;
     var centerButtonDom = '';
 
@@ -884,6 +885,7 @@ var ReportDetail = React.createClass({
       detailComment = detail.comment;
       detailUser = detail.user;
       detailImage = detail.image;
+      detailFinishedHdr = <dt>レポート対応状況</dt>;
       detailFinished = (detail.finished) ? '対応完了' : '未対応';
       if (detailImage == '' || detailImage == 'data:,') {
         detailImage = '/static/img/no-image.png';
@@ -905,8 +907,10 @@ var ReportDetail = React.createClass({
       if (address === null) {
         address = <span className="mrv-detail-no-address">(取得されていません)</span>;
       }
+
       if (detail.level == 0) {
-        detailFinished = '-';
+        detailFinishedHdr = '';
+        detailFinished = '';
       }
       var reportLevelClass = 'level-' + detail.level;
       detailLevel = <span className={reportLevelClass}>{reportLevel[detail.level]}</span>;
@@ -1001,8 +1005,8 @@ var ReportDetail = React.createClass({
           <dt>レポート対応レベル</dt>
           <dd>{detailLevel}</dd>
 
-          <dt>レポート対応状況</dt>
-          <dd>{detailFinished}</dd>
+          {detailFinishedHdr}
+          {detailFinished}
 
           <dt>コメント</dt>
           <dd>{detailComment}</dd>
