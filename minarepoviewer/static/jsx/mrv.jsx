@@ -884,12 +884,20 @@ var ReportDetail = React.createClass({
       detailComment = detail.comment;
       detailUser = detail.user;
       detailImage = detail.image;
-      detailLevel = reportLevel[detail.level];
       detailFinished = (detail.finished) ? '対応完了' : '未対応';
       if (detailImage == '' || detailImage == 'data:,') {
         detailImage = '/static/img/no-image.png';
       }
       detailTimestamp = detail.timestamp;
+      var parsedTimestamp = detailTimestamp.replace(/-/g, '/');
+      var date = new Date();
+      var reportDate = new Date(parsedTimestamp);
+      var diff = date.getTime() - reportDate.getTime();
+      var dateDiff = Math.floor(diff/(1000* 60 * 60 * 24)) + 1;
+      if (dateDiff > 0) {
+        shapedTime = dateDiff + '日前';
+        detailTimestamp += ' (' + shapedTime + ')';
+      }
       if (detailComment === '') {
         detailComment = <span className="mrv-detail-no-comment">(コメントなし)</span>
       }
@@ -898,8 +906,10 @@ var ReportDetail = React.createClass({
         address = <span className="mrv-detail-no-address">(取得されていません)</span>;
       }
       if (detail.level == 0) {
-        detailFinished = reportLevel[0];
+        detailFinished = '-';
       }
+      var reportLevelClass = 'level-' + detail.level;
+      detailLevel = <span className={reportLevelClass}>{reportLevel[detail.level]}</span>;
       detailLocation = <div>
         住所: {address}<br/>
         GPS座標: 緯度={detail.geo[0]}, 経度={detail.geo[1]}
@@ -1082,8 +1092,12 @@ var ReportTable = React.createClass({
 
       var reportLevelColor = 'level-' + report.level;
       var reportLevelStr = reportLevelShort[report.level];
-      var reportFinishedImg = finished2img(report.finished);
-      var reportFinishedImg = <img src={reportFinishedImg} className="mrv-report-table-report-type-image" />;
+
+      var reportFinishedImg = '-';
+      if (report.level) {
+        reportFinishedImg = finished2img(report.finished);
+        reportFinishedImg = <img src={reportFinishedImg} className="mrv-report-table-report-type-image" />;
+      }
 
       var reportTime = timestampShaper(report.timestamp);
 
@@ -1093,7 +1107,7 @@ var ReportTable = React.createClass({
         <td><span>{report.user}</span></td>
         <td><span>{reportTime}</span></td>
         <td><span className={reportLevelColor}>{reportLevelStr}</span></td>
-        <td><span>{reportFinishedImg}</span></td>
+        <td><span className="text-center">{reportFinishedImg}</span></td>
       </tr>;
     });
 
