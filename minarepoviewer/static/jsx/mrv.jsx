@@ -1381,7 +1381,7 @@ var ReportCommentPanel = React.createClass({
       }
 
       $.ajax({
-        method: 'GET',
+        method: 'POST',
         url: '/api/report/' + reportId + '/comments/new',
         data: data,
         dataType: 'json',
