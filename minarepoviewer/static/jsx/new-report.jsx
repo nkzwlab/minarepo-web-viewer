@@ -30,7 +30,7 @@ var reportTypes = [
   'ps_kyun',           // キュン
   'ps_disaster',       // 災害
   'ps_zansa',          // 残渣
-  'ps_kaisyuwasure',  // 回収忘れ
+  'ps_forgetGarbage',  // 回収忘れ
   'ps_others'          // その他
 ];
 
@@ -44,7 +44,7 @@ var type2text = {
   'ps_kyun': 'キュン',
   'ps_disaster': '災害の発生',
   'ps_zansa': 'ゴミの出し間違い',
-  'ps_kaisyuwasure': 'ゴミの回収し忘れ',
+  'ps_forgetGarbage': 'ゴミの回収し忘れ',
   'ps_others': 'その他'
 };
 
@@ -58,7 +58,7 @@ var type2textShort = {
   'ps_kyun': '♡♡',
   'ps_disaster': '災害',
   'ps_zansa': '残渣',
-  'ps_kaisyuwasure': '回収忘れ',
+  'ps_forgetGarbage': '回収忘れ',
   'ps_others': '他'
 };
 

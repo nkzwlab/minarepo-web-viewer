@@ -33,7 +33,7 @@ var reportTypes = [
   'ps_kyun',           // キュン
   'ps_disaster',       // 災害
   'ps_zansa',          // 残渣
-  'ps_kaisyuwasure',  // 回収忘れ
+  'ps_forgetGarbage',  // 回収忘れ
   'ps_others'          // その他
 ];
 
@@ -48,7 +48,7 @@ var type2pinInfo = {
   'ps_kyun':           { label: '幸', color: '#e8212d', textColor: '#000000' },  // キュン
   'ps_disaster':       { label: '災', color: '#031435', textColor: '#ffffff' },  // 災害
   'ps_zansa':          { label: '別', color: '#ff8dd0', textColor: '#000000' },  // 残渣
-  'ps_kaisyuwasure':   { label: '忘', color: '#ee82ee', textColor: '#000000' },  // 回収忘れ
+  'ps_forgetGarbage':   { label: '忘', color: '#ee82ee', textColor: '#000000' },  // 回収忘れ
   'ps_others':         { label: '他', color: '#ffffff', textColor: '#000000' }  // その他
 };
 
@@ -62,7 +62,7 @@ var type2text = {
   'ps_kyun': 'キュン',
   'ps_disaster': '災害の発生',
   'ps_zansa': 'ゴミの出し間違い',
-  'ps_kaisyuwasure': 'ゴミの回収し忘れ',
+  'ps_forgetGarbage': 'ゴミの回収し忘れ',
   'ps_others': 'その他'
 };
 
@@ -76,7 +76,7 @@ var type2textShort = {
   'ps_kyun': '♡♡',
   'ps_disaster': '災害',
   'ps_zansa': '残渣',
-  'ps_kaisyuwasure': '拾忘',
+  'ps_forgetGarbage': '拾忘',
   'ps_others': '他'
 };
 
