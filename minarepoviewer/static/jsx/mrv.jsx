@@ -102,6 +102,21 @@ var finished2img = function(isFinished) {
   return '/static/img/' + suffix + '.png';
 }
 
+var progress2class = function(progress, selected) {
+  var classList = 'button side-margin';
+  if (progress == selected) {
+    if (progress == 'finished') {
+      classList += ' success';
+    } else if (progress == 'unfinished') {
+      classList += ' alert';
+    }
+  } else {
+    classList += ' secondary';
+  }
+
+  return classList;
+};
+
 var getMarkerUrl = function(type) {
   var pinInfo = type2pinInfo[type];
   var label = encodeURI(pinInfo.label);
@@ -374,8 +389,8 @@ var updatePins = function(reports) {
   });
 };
 
-var fetchReports = function(types, startDate, endDate, isUsingDate, topLeft, bottomRight) {
-  var url = '/api/reports'
+var fetchReports = function(types, startDate, endDate, isUsingDate, topLeft, bottomRight, progress) {
+  var url = '/api/reports';
 
   // console.debug('fetchReports: types=' + types);
 
@@ -383,6 +398,7 @@ var fetchReports = function(types, startDate, endDate, isUsingDate, topLeft, bot
     nodes: JSON.stringify(types),
     top_left: topLeft,
     bottom_right: bottomRight,
+    progress: progress,
     include_image: 'false'
   };
 
@@ -443,6 +459,7 @@ var constants = {
   TOGGLE_USE_DATE: 'TOGGLE_USE_DATE',
   DRAG_MAP: 'DRAG_MAP',
   TOGGLE_TYPE_BUTTON: 'TOGGLE_TYPE_BUTTON',
+  TOGGLE_PROGRESS_BUTTON: 'TOGGLE_PROGRESS_BUTTON',
   TOGGLE_SELECT_ALL_TYPE_BUTTON: 'TOGGLE_SELECT_ALL_TYPE_BUTTON',
   SET_REPORTS: 'SET_REPORTS',
   TABLE_PREV_PAGE_CLICKED: 'TABLE_PREV_PAGE_CLICKED',
@@ -469,6 +486,7 @@ var MinaRepoStore = Fluxxor.createStore({
       selectedTypes[rt] = true;  // デフォルトで全部選択
     });
     this.selectedTypes = selectedTypes;
+    this.selectedProgress = 'none';
     this.clickedPinReportId = null;
     this.startDate = null;
     this.endDate = null;
@@ -505,6 +523,7 @@ var MinaRepoStore = Fluxxor.createStore({
     this.bindActions(constants.TOGGLE_USE_DATE, this.onToggleUseDate);
     this.bindActions(constants.DRAG_MAP, this.onDragMap);
     this.bindActions(constants.TOGGLE_TYPE_BUTTON, this.onToggleTypeButton);
+    this.bindActions(constants.TOGGLE_PROGRESS_BUTTON, this.onToggleProgressButton);
     this.bindActions(constants.TOGGLE_SELECT_ALL_TYPE_BUTTON, this.onToggleSelectAllTypeButton);
     this.bindActions(constants.SET_REPORTS, this.onSetReports);
     this.bindActions(constants.TABLE_PREV_PAGE_CLICKED, this.onTablePrevPageClicked);
@@ -545,7 +564,8 @@ var MinaRepoStore = Fluxxor.createStore({
       newComment: this.newComment,
       cmntImage: this.cmntImage,
       checkFinished: this.checkFinished,
-      revertFinished: this.revertFinished
+      revertFinished: this.revertFinished,
+      selectedProgress: this.selectedProgress
     }
   },
   onStartFetchingReports: function(data) {
@@ -635,6 +655,16 @@ var MinaRepoStore = Fluxxor.createStore({
     } else {
       this.selectedTypes[type] = !this.selectedTypes[type]; // just add filter type
     }
+    this.emit('change');
+  },
+  onToggleProgressButton: function(data) {
+    var progress = data.selectedProgress;
+    if (this.selectedProgress == progress) {
+      this.selectedProgress = 'none';
+    } else {
+      this.selectedProgress = progress;
+    }
+
     this.emit('change');
   },
   onToggleSelectAllTypeButton: function() {
@@ -772,6 +802,9 @@ var actions = {
   },
   onToggleTypeButton: function(data) {
     this.dispatch(constants.TOGGLE_TYPE_BUTTON, { type: data.type });
+  },
+  onToggleProgressButton: function(data) {
+    this.dispatch(constants.TOGGLE_PROGRESS_BUTTON, { selectedProgress: data.selectedProgress });
   },
   onToggleSelectAllTypeButton: function() {
     this.dispatch(constants.TOGGLE_SELECT_ALL_TYPE_BUTTON);
@@ -1229,7 +1262,8 @@ var TypeButtons = React.createClass({
         that.props.endDate,
         that.props.isUsingDate,
         that.props.mapTopLeft,
-        that.props.mapBottomRight
+        that.props.mapBottomRight,
+        that.props.selectedProgress
       );
       flux.actions.onTableSetPage({ page: 1 });
     };
@@ -1247,7 +1281,8 @@ var TypeButtons = React.createClass({
         that.props.endDate,
         that.props.isUsingDate,
         that.props.mapTopLeft,
-        that.props.mapBottomRight
+        that.props.mapBottomRight,
+        that.props.selectedProgress
       );
       flux.actions.onTableSetPage({ page: 1 });
     };
@@ -1278,6 +1313,47 @@ var TypeButtons = React.createClass({
       </div>
       <div className="small-12 columns mrv-select-all-btn">
         {selectAllButton}
+      </div>
+    </div>;
+  }
+});
+
+var ProgressButtons = React.createClass({
+  onButtonClick: function(selectedProgress) {
+    var that = this;
+    return function() {
+      flux.actions.onToggleProgressButton({ selectedProgress: selectedProgress });
+
+      // 新しくクエリする => マーカーの差分が表示される
+      setTimeout(function() {
+        fetchReports(
+          selectSelected(that.props.selectedTypes),
+          that.props.startDate,
+          that.props.endDate,
+          that.props.isUsingDate,
+          that.props.mapTopLeft,
+          that.props.mapBottomRight,
+          that.props.selectedProgress
+        );
+      }, 0);
+      flux.actions.onTableSetPage({ page: 1 });
+    };
+  },
+  render: function() {
+    var selectedProgress = this.props.selectedProgress;
+    var selectedTypes = this.props.selectedTypes;
+    var class4finish = progress2class('finished', selectedProgress);
+    var class4unfinish = progress2class('unfinished', selectedProgress);
+
+    return <div className="row mrv-btn-row">
+      <div className="small-12 columns">
+        レポート完了フィルタ
+      </div>
+      <div className="row">
+        <div className="medium-12 medium-center columns mrv-btn-container">
+          <button key='finished' className={class4finish} onClick={this.onButtonClick('finished')}>完了のみ</button>
+          <button key='unfinished' className={class4unfinish} onClick={this.onButtonClick('unfinished')}>未完了のみ</button>
+        </div>
       </div>
     </div>;
   }
@@ -1564,6 +1640,12 @@ var MinaRepoViewer = React.createClass({
       isUsingDate={this.props.isUsingDate}
       mapTopLeft={this.props.mapTopLeft}
       mapBottomRight={this.props.mapBottomRight}
+      selectedProgress={this.props.selectedProgress}
+    />;
+
+    var progressButtons = <ProgressButtons
+      selectedTypes={this.props.selectedTypes}
+      selectedProgress={this.props.selectedProgress}
     />;
 
     var dateController = <dateController
@@ -1577,6 +1659,7 @@ var MinaRepoViewer = React.createClass({
     if (isShowingFilter) {
       reportFilter = <div>
         {buttons}
+        {progressButtons}
       </div>;
     }
 
@@ -1712,7 +1795,8 @@ var MinaRepoViewerApp = React.createClass({
       this.state.endDate,
       this.state.isUsingDate,
       this.state.mapTopLeft,
-      this.state.mapBottomRight
+      this.state.mapBottomRight,
+      this.state.selectedProgress
     );
   },
   render: function() {
@@ -1721,6 +1805,7 @@ var MinaRepoViewerApp = React.createClass({
       reports={s.reports}
       comments={s.comments}
       selectedTypes={s.selectedTypes}
+      selectedProgress={s.selectedProgress}
       clickedPinReportId={s.clickedPinReportId}
       detail={s.detail}
       startDate={s.startDate}

@@ -116,7 +116,7 @@ class MinaRepoViewer(object):
         time_end = request.params.get('time_end', None)
         top_left = request.params.get('top_left', None)
         bottom_right = request.params.get('bottom_right', None)
-        finished = request.params.get('finished', None)
+        progress = request.params.get('progress', None)
         include_image = request.params.get('include_image', 'false')
         include_image = (include_image == 'true')
 
@@ -133,7 +133,7 @@ class MinaRepoViewer(object):
             # print 'nodes was None'
             nodes = None
 
-        reports = self._dba.get_reports(time_start, time_end, nodes, finished)
+        reports = self._dba.get_reports(time_start, time_end, nodes, progress)
         # print '------------------'
         # print 'nodes=%s' % nodes
         # print 'len(reports)=%d' % len(reports)

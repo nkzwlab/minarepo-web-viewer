@@ -18,13 +18,13 @@ class MinaRepoDBA(object):
 
     def get_reports(
             self, t_start=None, t_end=None, nodes=None,
-            finished=None, top_left=None, bottom_right=None):
-        result = self._get_reports(t_start, t_end, nodes, finished, top_left, bottom_right)
+            progress=None, top_left=None, bottom_right=None):
+        result = self._get_reports(t_start, t_end, nodes, progress, top_left, bottom_right)
         return list(result)
 
     def _get_reports(
             self, t_start=None, t_end=None, nodes=None,
-            finished=None, top_left=None, bottom_right=None):
+            progress=None, top_left=None, bottom_right=None):
         args = []
         conditions = []
 
@@ -48,8 +48,13 @@ class MinaRepoDBA(object):
         elif nodes is not None and len(nodes) == 0:
             conditions.append('1 = 0')  # nodes = [] means no match
 
-        if finished is not None and 0 < len(finished):
-            conditions.append('finished = %s' % finished)
+        if progress is not None and 0 < len(progress):
+            if progress == 'finished':
+                conditions.append('finished = 1')
+                conditions.append('level > 0')
+            elif progress == 'unfinished':
+                conditions.append('finished = 0')
+                conditions.append('level > 0')
 
         # TODO: top_left, bottom_right のcondition組み立てる
         if top_left and bottom_right:
