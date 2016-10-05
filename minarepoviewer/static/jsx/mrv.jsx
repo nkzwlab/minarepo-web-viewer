@@ -193,8 +193,15 @@ var timestampShaper = function(timestamp) {
     if (dateDiff > 0) {
       shapedTime = dateDiff + '日前';
     } else {
-      var hour = reportTime.getHours();
-      var minute = reportTime.getMinutes();
+      var hour = String(reportTime.getHours());
+      var minute = String(reportTime.getMinutes());
+
+      if (hour.length < 2) {
+        hour = '0' + hour;
+      }
+      if (minute.length < 2) {
+        minute = '0' + minute;
+      }
       shapedTime = hour + ':' + minute;
     }
 
