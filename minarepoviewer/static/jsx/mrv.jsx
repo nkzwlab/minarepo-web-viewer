@@ -1397,6 +1397,16 @@ var ReportCommentPanel = React.createClass({
       });
       flux.actions.onStartFetchingDetail();
     }
+
+    fetchReports(
+      selectSelected(that.props.selectedTypes),
+      that.props.startDate,
+      that.props.endDate,
+      that.props.isUsingDate,
+      that.props.mapTopLeft,
+      that.props.mapBottomRight,
+      that.props.selectedProgress
+    );
   },
   clearInput: function() {
     flux.actions.onUpdateCommentUser({ commentUser: '' });
@@ -1511,6 +1521,8 @@ var ReportCommentPanel = React.createClass({
     }
   },
   render: function() {
+    var selectedTypes = this.props.selectedTypes;
+    var selectedProgress = this.props.selectedProgress;
     var commentUser = this.props.commentUser;
     var newComment = this.props.newComment;
     var cmntImage = this.props.cmntImage;
@@ -1759,6 +1771,8 @@ var MinaRepoViewer = React.createClass({
       cmntImage={this.props.cmntImage}
       checkFinished={this.props.checkFinished}
       revertFinished={this.props.revertFinished}
+      selectedProgress={this.props.selectedProgress}
+      selectedTypes={this.props.selectedTypes}
     />;
 
     var footer = <div className="row">
