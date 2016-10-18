@@ -1121,6 +1121,7 @@ var ReportTable = React.createClass({
   render: function() {
     var reports = this.props.reports;
     var selectedPage = this.props.tableSelectedPage;
+    var selectedReport = this.props.selectedReport;
 
     var showingReports = TableUtil.getPageReports(reports, selectedPage);
     // console.debug('%% showingReports.length=' + showingReports.length + ', sp=' + selectedPage + ', n-reports=' + reports.length);
@@ -1154,7 +1155,15 @@ var ReportTable = React.createClass({
 
       var reportTime = timestampShaper(report.timestamp);
 
-      return <tr className="mrv-report-table-show-detail-link" key={key} onClick={showHandler}>
+      var rowClass = "mrv-report-table-show-detail-link";
+      var hashId = location.hash.split('report=')[1];
+      if (( hashId !== undefined && hashId !== null)
+        && hashId == reportId) {
+        console.log(reportId + ', ' + hashId);
+        rowClass += " selected";
+      }
+
+      return <tr className={rowClass} key={key} onClick={showHandler}>
         <td><span>{reportId}</span></td>
         <td><span>{reportType}</span></td>
         <td><span>{report.user}</span></td>
@@ -1724,6 +1733,7 @@ var MinaRepoViewer = React.createClass({
       reportTable = <ReportTable
         reports={this.props.reports}
         tableSelectedPage={this.props.tableSelectedPage}
+        selectedReport={this.props.selectedReport}
       />;
     }
 
