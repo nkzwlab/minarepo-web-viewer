@@ -1164,7 +1164,6 @@ var ReportTable = React.createClass({
       var hashId = location.hash.split('report=')[1];
       if (( hashId !== undefined && hashId !== null)
         && hashId == reportId) {
-        console.log(reportId + ', ' + hashId);
         rowClass += " selected";
       }
 
@@ -1172,7 +1171,6 @@ var ReportTable = React.createClass({
       var reporterClass = "";
       if (reporter.length > 10) {
         reporterClass = "report-user-abbr";
-        console.log("hoge");
       }
 
       return <tr className={rowClass} key={key} onClick={showHandler}>
