@@ -88,7 +88,10 @@ class MinaRepoViewer(object):
         return tpl.render(**kwargs)
 
     def html_index(self):
-        return self._render('index.html.j2')
+        dtime = datetime.datetime.now()
+        dtime_str = dtime.strftime('%Y-%m-%d-%H-%M-%S')
+        print dtime_str
+        return self._render('index.html.j2', timestamp=dtime_str)
 
     def _json_response(self, data, status=200):
         status_msg = 'ok' if status == 200 else 'error'
