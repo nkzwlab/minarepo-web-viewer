@@ -119,6 +119,9 @@ TABLE.mrv-report-table {
             @media screen and (max-width: 640px) {
                 font-size: $table-font-size-smartphone;
             }
+            SPAN.report-user-abbr {
+                    font-size: 12px;
+            }
         }
     }
 }
@@ -134,7 +137,7 @@ DIV.mrv-detail {
             margin-right: auto;
             width: auto;
             IMG.mrv-detail-image {
-                @media screen and (max-width: 640px) {
+                @media screen and (max-width: 1024px) {
                     // width: $btn-size;
                     // height: $btn-size;
                     margin-bottom: 25px;
