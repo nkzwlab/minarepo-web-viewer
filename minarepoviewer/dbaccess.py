@@ -238,7 +238,7 @@ class MinaRepoDBA(object):
             host=self._cfg['host'],
             user=self._cfg['user'],
             passwd=self._cfg['pass'],
-            charset='utf8'
+            charset='utf8mb4'
         )
         self._last_comm = time.time()
 
