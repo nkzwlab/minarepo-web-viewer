@@ -1168,10 +1168,17 @@ var ReportTable = React.createClass({
         rowClass += " selected";
       }
 
+      var reporter = report.user;
+      var reporterClass = "";
+      if (reporter.length > 10) {
+        reporterClass = "report-user-abbr";
+        console.log("hoge");
+      }
+
       return <tr className={rowClass} key={key} onClick={showHandler}>
         <td><span>{reportId}</span></td>
         <td><span>{reportType}</span></td>
-        <td><span>{report.user}</span></td>
+        <td><span className={reporterClass}>{report.user}</span></td>
         <td><span>{reportTime}</span></td>
         <td><span className={reportLevelColor}>{reportLevelStr}</span></td>
         <td><span className="text-center">{reportFinishedImg}</span></td>
