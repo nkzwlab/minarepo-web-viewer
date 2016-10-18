@@ -1007,6 +1007,7 @@ var ReportDetail = React.createClass({
       openInfoWindow(detailImage, detail.geo[0], detail.geo[1]);
     } else if (isFetchingDetail) {
       // console.debug('detail pattern 2: fetching');
+      detailReportId = '読み込み中...';
       detailTimestamp = '読み込み中...';
       detailUser = '読み込み中...';
       detailType = '読み込み中...';
@@ -1017,6 +1018,7 @@ var ReportDetail = React.createClass({
       detailImage = '/static/img/loading-image.gif';  // FIXME: 権利？
     } else if (!isFetchingDetail && isFetchingDetailFailed) {
       // console.debug('detail pattern 3: fetch failed');
+      detailReportId = <span className="mrv-detail-error">読み込みに失敗しました</span>;
       detailTimestamp = <span className="mrv-detail-error">読み込みに失敗しました</span>;
       detailUser = <span className="mrv-detail-error">読み込みに失敗しました</span>;
       detailType = <span className="mrv-detail-error">読み込みに失敗しました</span>;
@@ -1039,6 +1041,9 @@ var ReportDetail = React.createClass({
           <h3>レポート内容</h3>
         </div>
         <dl className="mrv-detail-info">
+          <dt>レポートID</dt>
+          <dd>{detailReportId}</dd>
+
           <dt>レポート種別</dt>
           <dd>{detailType}</dd>
 
@@ -1356,11 +1361,9 @@ var ProgressButtons = React.createClass({
       <div className="small-12 columns">
         レポート完了フィルタ
       </div>
-      <div className="row">
-        <div className="medium-12 medium-center columns mrv-btn-container">
-          <button key='finished' className={class4finish} onClick={this.onButtonClick('finished')}>完了のみ</button>
-          <button key='unfinished' className={class4unfinish} onClick={this.onButtonClick('unfinished')}>未完了のみ</button>
-        </div>
+      <div className="medium-12 medium-center columns mrv-btn-container">
+        <button key='finished' className={class4finish} onClick={this.onButtonClick('finished')}>完了のみ</button>
+        <button key='unfinished' className={class4unfinish} onClick={this.onButtonClick('unfinished')}>未完了のみ</button>
       </div>
     </div>;
   }
