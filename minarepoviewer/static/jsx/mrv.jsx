@@ -1595,17 +1595,17 @@ var ReportCommentPanel = React.createClass({
       </div>;
 
       usernameRow = <div className="row">
-        <div className="medium-8 medium-centered columns">
+        <div className="medium-9 medium-centered columns">
           <input type="text" className="comment-user" onChange={this.onUpdateCommentUser} value={this.props.commentUser} placeholder="名前" />
         </div>
       </div>;
       textAreaRow = <div className="row">
-        <div className="medium-8 medium-centered columns">
+        <div className="medium-9 medium-centered columns">
           <textarea onChange={this.onUpdateNewComment} value={this.props.newComment} placeholder="メッセージを入力" />
         </div>
       </div>;
       imageRow = <div className="row">
-        <div className="small-8 small-centered columns">
+        <div className="small-9 small-centered columns">
           <p>
             画像を登録:
             <input className="short-size" type="file" onChange={this.onUploadImage} accept="image/*" />

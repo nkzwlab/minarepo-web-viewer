@@ -403,13 +403,19 @@ var ReportLevel = React.createClass({
     </div>;
 
     var radioButtonRow = <div className="row mrv-btn-row">
-      <div className="small-11 medium-5 small-centered medium-centered columns">
+      <div className="small-11 small-centered columns text-center">
+      <label>
         <input type="radio" name="level" value="0" onChange={this.onLevelSelected(0)} checked={selectedLevel === 0} />
-        <label>{level2text[0]}</label>
+        {level2text[0]}
+      </label>
+      <label>
         <input type="radio" name="level" value="1" onChange={this.onLevelSelected(1)} checked={selectedLevel === 1} />
-        <label>{level2text[1]}</label>
+        {level2text[1]}
+      </label>
+      <label>
         <input type="radio" name="level" value="2" onChange={this.onLevelSelected(2)} checked={selectedLevel === 2} />
-        <label>{level2text[2]}</label>
+        {level2text[2]}
+      </label>
       </div>
     </div>;
 
