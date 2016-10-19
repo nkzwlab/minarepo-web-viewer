@@ -90,7 +90,6 @@ class MinaRepoViewer(object):
     def html_index(self):
         dtime = datetime.datetime.now()
         dtime_str = dtime.strftime('%Y-%m-%d-%H-%M-%S')
-        print dtime_str
         return self._render('index.html.j2', timestamp=dtime_str)
 
     def _json_response(self, data, status=200):
@@ -281,7 +280,9 @@ class MinaRepoViewer(object):
         @app.route('/new_report', method='GET')
         @auth_basic(check)
         def minarepo_new_report():
-            return self._render('new-report.html.j2')
+            dtime = datetime.datetime.now()
+            dtime_str = dtime.strftime('%Y-%m-%d-%H-%M-%S')
+            return self._render('new-report.html.j2', timestamp=dtime_str)
 
         return app
 
