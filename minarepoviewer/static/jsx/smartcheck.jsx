@@ -125,8 +125,6 @@ var SmartCheckTable = React.createClass({
       )
     );
 
-    console.log(detail);
-
     if (!isFetchingDetailFailed && detailExists) {
       var reportDate = getDateArry(detail.timestamp);
       var date = <div className="row tablediv">
@@ -140,12 +138,21 @@ var SmartCheckTable = React.createClass({
         <div className="column small-2 text-center">　</div>
       </div>;
 
-      var reporter = <div className="row tablediv">
+      var reporter = <div className="row tablediv align-middle">
         <div className="column small-3 text-center">連絡者</div>
-        <div className="column small-3 text-center sidebar-left">　</div>
-        <div className="column small-2">課</div>
-        <div className="column small-2 text-center sidebar-left">内線</div>
-        <div className="column small-2 sidebar-left">　　</div>
+        <div className="column small-3 text-center sidebar-left">
+          <input className="hmargin " type="text" />
+        </div>
+        <div className="column small-1 text-center">
+          <span>課</span>
+        </div>
+        <div className="column small-2 sidebar-right">
+          <input className="hmargin width80" type="text" />
+        </div>
+        <div className="column small-1 text-center">内線</div>
+        <div className="column small-2 sidebar-left">
+          <input className="hmargin" type="text" />
+        </div>
       </div>;
 
       var group = <div className="row tablediv align-middle">

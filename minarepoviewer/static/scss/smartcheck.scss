@@ -12,6 +12,10 @@
   border-bottom: 3px double black;
 }
 
+.sidebar-right {
+  border-right: 2px solid black;
+}
+
 .sidebar-left {
   border-left: 2px solid black;
 }
@@ -26,6 +30,11 @@
 
 .hmargin {
   margin: 0 5px 0 5px;
+}
+
+.width80 {
+  width: 80%;
+  margin-right: 5px;
 }
 
 .auto-img {
