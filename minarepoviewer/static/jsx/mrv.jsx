@@ -475,6 +475,7 @@ var constants = {
   TOGGLE_SHOWING_TABLE: 'TOGGLE_SHOWING_TABLE',
   TOGGLE_SHOWING_FILTER: 'TOGGLE_SHOWING_FILTER',
   TOGGLE_NEW_REPORT: 'TOGGLE_NEW_REPORT',
+  TOGGLE_SMARTCHECK: 'TOGGLE_SMARTCHECK',
   UPDATE_COMMENT_USER: 'UPDATE_COMMENT_USER',
   UPDATE_NEW_COMMENT: 'UPDATE_NEW_COMMENT',
   UPDATE_COMMENT_PANEL: 'UPDATE_COMMENT_PANEL',
@@ -539,6 +540,7 @@ var MinaRepoStore = Fluxxor.createStore({
     this.bindActions(constants.TOGGLE_SHOWING_TABLE, this.onToggleShowingTable);
     this.bindActions(constants.TOGGLE_SHOWING_FILTER, this.onToggleShowingFilter);
     this.bindActions(constants.TOGGLE_NEW_REPORT, this.onToggleNewReport);
+    this.bindActions(constants.TOGGLE_SMARTCHECK, this.onToggleSmartcheck);
     this.bindActions(constants.UPDATE_COMMENT_USER, this.onUpdateCommentUser);
     this.bindActions(constants.UPDATE_NEW_COMMENT, this.onUpdateNewComment);
     this.bindActions(constants.UPLOAD_COMMENT_IMAGE, this.onUploadImage);
@@ -717,6 +719,9 @@ var MinaRepoStore = Fluxxor.createStore({
   onToggleNewReport: function() {
     return;
   },
+  onToggleSmartcheck: function() {
+    return;
+  },
   onUpdateCommentUser: function(data) {
     this.commentUser = data.commentUser;
     this.emit('change');
@@ -837,6 +842,11 @@ var actions = {
   onToggleNewReport: function() {
     window.location.href = '/new_report';
   },
+  onToggleSmartcheck: function(data) {
+    var url = '/smartcheck?id=' + data.id;
+    var win = window.open(url, '_blank');
+    win.focus();
+  },
   onUpdateCommentUser: function(data) {
     this.dispatch(constants.UPDATE_COMMENT_USER, { commentUser: data.commentUser });
   },
@@ -890,6 +900,11 @@ var ReportDetail = React.createClass({
         flux.actions.onStartFetchingDetail();
       }, 0);
     }
+  },
+  smartcheckToggleButtonHandler: function(event) {
+    var hashMatch = window.location.hash.match(reportHashPattern);
+    var reportId = parseInt(hashMatch[1]);
+    flux.actions.onToggleSmartcheck({ id : reportId });
   },
   render: function() {
     var pinId = this.props.clickedPinReportId;
@@ -1065,6 +1080,9 @@ var ReportDetail = React.createClass({
           <dt>コメント</dt>
           <dd>{detailComment}</dd>
         </dl>
+        <div className="columns text-center">
+          <button className="button" onClick={this.smartcheckToggleButtonHandler}>スマートチェックに書き出す</button>
+        </div>
       </div>
     </div>;
   }
@@ -1375,7 +1393,7 @@ var ProgressButtons = React.createClass({
       <div className="small-12 columns">
         レポート完了フィルタ
       </div>
-      <div className="medium-12 medium-center columns mrv-btn-container">
+      <div className="medium-12 medium-centered columns mrv-btn-container">
         <button key='finished' className={class4finish} onClick={this.onButtonClick('finished')}>完了のみ</button>
         <button key='unfinished' className={class4unfinish} onClick={this.onButtonClick('unfinished')}>未完了のみ</button>
       </div>
