@@ -284,6 +284,13 @@ class MinaRepoViewer(object):
             dtime_str = dtime.strftime('%Y-%m-%d-%H-%M-%S')
             return self._render('new-report.html.j2', timestamp=dtime_str)
 
+        @app.route('/smartcheck', method='GET')
+        @auth_basic(check)
+        def minarepo_smartcheck():
+            dtime = datetime.datetime.now()
+            dtime_str = dtime.strftime('%Y-%m-%d-%H-%M-%S')
+            return self._render('smartcheck.html.j2', timestamp=dtime_str)
+
         return app
 
 

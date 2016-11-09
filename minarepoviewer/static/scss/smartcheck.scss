@@ -1,0 +1,66 @@
+.tablediv {
+  border-top: 2px solid black;
+  border-left: 2px solid black;
+  border-right: 2px solid black;
+}
+
+.bottom {
+  border-bottom: 2px solid black;
+}
+
+.double-bottom {
+  border-bottom: 3px double black;
+}
+
+.sidebar-left {
+  border-left: 2px solid black;
+}
+
+.vmargin {
+  margin: 5px 0 5px 0;
+}
+
+.vpadding {
+  padding: 7px 0 7px 0;
+}
+
+.hmargin {
+  margin: 0 5px 0 5px;
+}
+
+.auto-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.highbox {
+  height: 250px;
+}
+
+.inline {
+  display: inline;
+}
+
+.margin-left {
+  margin-left: 15px;
+}
+
+.lightgray {
+  color: lightgray;
+}
+
+.align-middle {
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  display: flex;
+}
+
+@media print{
+  .noprint {
+     display:none;
+   }
+}
+
+/*# sourceMappingURL=smartcheck.css.map */
