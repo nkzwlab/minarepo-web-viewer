@@ -18,13 +18,13 @@ class MinaRepoDBA(object):
 
     def get_reports(
             self, t_start=None, t_end=None, nodes=None,
-            progress=None, top_left=None, bottom_right=None):
-        result = self._get_reports(t_start, t_end, nodes, progress, top_left, bottom_right)
+            progress=None, query=None, top_left=None, bottom_right=None):
+        result = self._get_reports(t_start, t_end, nodes, progress, query, top_left, bottom_right)
         return list(result)
 
     def _get_reports(
             self, t_start=None, t_end=None, nodes=None,
-            progress=None, top_left=None, bottom_right=None):
+            progress=None, query=None, top_left=None, bottom_right=None):
         args = []
         conditions = []
 
@@ -55,6 +55,9 @@ class MinaRepoDBA(object):
             elif progress == 'unfinished':
                 conditions.append('finished = 0')
                 conditions.append('level > 0')
+
+        if query is not None and 0 < len(nodes):
+            conditions.append("user regexp '^.*%s.*'" % query)
 
         # TODO: top_left, bottom_right のcondition組み立てる
         if top_left and bottom_right:
