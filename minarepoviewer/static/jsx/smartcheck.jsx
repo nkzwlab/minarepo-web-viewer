@@ -45,7 +45,12 @@ var getDateArry = function(timestamp) {
     month: month,
     date: date
   };
-}
+};
+
+var printSmartCheck = function() {
+  window.print();
+  return;
+};
 
 var constants = {
   START_FETCHING_DETAIL: 'START_FETCHING_DETAIL',
@@ -319,7 +324,10 @@ var MinaRepoViewer = React.createClass({
       isFetchingDetailFinished={this.props.isFetchingDetailFinished}
     />;
 
-    var footer = <div className="row noprint">
+    var footer = <div className="row noprint sticky-footer text-center">
+      <div className="large-6 large-centered">
+        <div className="button expanded" onClick={printSmartCheck}>印刷</div>
+      </div>
       <div className="large-12 columns mrv-footer">
         Powered by <a href="https://www.city.fujisawa.kanagawa.jp/">藤沢市</a> and <a href="https://www.ht.sfc.keio.ac.jp/">htlab</a>
         <br/><br/>
@@ -327,12 +335,12 @@ var MinaRepoViewer = React.createClass({
     </div>;
 
     return <div className="row">
-      <div className="columns large-8 large-centered">
+      <div id="main" className="columns large-8 large-centered">
         {header}
         {smartcheckTable}
         <hr className="noprint"/>
-        {footer}
       </div>
+      {footer}
     </div>;
   }
 });
