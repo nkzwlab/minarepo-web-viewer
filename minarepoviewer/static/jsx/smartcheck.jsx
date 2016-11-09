@@ -236,7 +236,7 @@ var SmartCheckTable = React.createClass({
       </div>;
 
       var mapUrl = "https://maps.googleapis.com/maps/api/staticmap?center=" + detail.geo[0] + "," + detail.geo[1] +
-        "&zoom=17&size=240x240&sensor=false&key=AIzaSyC6Lq4RSVHU0Iu_EIE-WWX_a7hFf_XGzaQ&markers=" + detail.geo[0] + "," + detail.geo[1];
+        "&zoom=16&size=240x240&sensor=false&key=AIzaSyC6Lq4RSVHU0Iu_EIE-WWX_a7hFf_XGzaQ&markers=" + detail.geo[0] + "," + detail.geo[1];
       var imgSrc = detail.image;
       if (detail.image == '' || detail.image == 'data:,') {
         imgSrc = '/static/img/no-image.png';
