@@ -396,7 +396,7 @@ var updatePins = function(reports) {
   });
 };
 
-var fetchReports = function(types, startDate, endDate, isUsingDate, topLeft, bottomRight, progress) {
+var fetchReports = function(types, startDate, endDate, isUsingDate, topLeft, bottomRight, progress, query) {
   var url = '/api/reports';
 
   // console.debug('fetchReports: types=' + types);
@@ -406,7 +406,8 @@ var fetchReports = function(types, startDate, endDate, isUsingDate, topLeft, bot
     top_left: topLeft,
     bottom_right: bottomRight,
     progress: progress,
-    include_image: 'false'
+    include_image: 'false',
+    query: query
   };
 
   if (isUsingDate) {
@@ -475,12 +476,14 @@ var constants = {
   TOGGLE_SHOWING_TABLE: 'TOGGLE_SHOWING_TABLE',
   TOGGLE_SHOWING_FILTER: 'TOGGLE_SHOWING_FILTER',
   TOGGLE_NEW_REPORT: 'TOGGLE_NEW_REPORT',
+  TOGGLE_SMARTCHECK: 'TOGGLE_SMARTCHECK',
   UPDATE_COMMENT_USER: 'UPDATE_COMMENT_USER',
   UPDATE_NEW_COMMENT: 'UPDATE_NEW_COMMENT',
   UPDATE_COMMENT_PANEL: 'UPDATE_COMMENT_PANEL',
   UPLOAD_COMMENT_IMAGE: 'UPLOAD_COMMENT_IMAGE',
   CHECK_FINISHED: 'CHECK_FINISHED',
-  REVERT_FINISHED: 'REVERT_FINISHED'
+  REVERT_FINISHED: 'REVERT_FINISHED',
+  UPDATE_SEARCH_QUERY: 'UPDATE_SEARCH_QUERY'
 };
 
 var MinaRepoStore = Fluxxor.createStore({
@@ -514,6 +517,7 @@ var MinaRepoStore = Fluxxor.createStore({
     this.cmntImage = '';
     this.checkFinished = false;
     this.revertFinished = false;
+    this.searchQuery = '';
 
     this.bindActions(constants.START_FETCHING_REPORTS, this.onStartFetchingReports);
     this.bindActions(constants.FETCHING_REPORTS_SUCCESS, this.onFetchingReportsSuccess);
@@ -539,12 +543,14 @@ var MinaRepoStore = Fluxxor.createStore({
     this.bindActions(constants.TOGGLE_SHOWING_TABLE, this.onToggleShowingTable);
     this.bindActions(constants.TOGGLE_SHOWING_FILTER, this.onToggleShowingFilter);
     this.bindActions(constants.TOGGLE_NEW_REPORT, this.onToggleNewReport);
+    this.bindActions(constants.TOGGLE_SMARTCHECK, this.onToggleSmartcheck);
     this.bindActions(constants.UPDATE_COMMENT_USER, this.onUpdateCommentUser);
     this.bindActions(constants.UPDATE_NEW_COMMENT, this.onUpdateNewComment);
     this.bindActions(constants.UPLOAD_COMMENT_IMAGE, this.onUploadImage);
     this.bindActions(constants.CHECK_FINISHED, this.onCheckFinished);
     this.bindActions(constants.REVERT_FINISHED, this.onRevertFinished);
     this.bindActions(constants.UPDATE_COMMENT_PANEL, this.onUpdateCommentPanel);
+    this.bindActions(constants.UPDATE_SEARCH_QUERY, this.onUpdateSearchQuery);
   },
   getState: function() {
     return {
@@ -572,7 +578,8 @@ var MinaRepoStore = Fluxxor.createStore({
       cmntImage: this.cmntImage,
       checkFinished: this.checkFinished,
       revertFinished: this.revertFinished,
-      selectedProgress: this.selectedProgress
+      selectedProgress: this.selectedProgress,
+      searchQuery: this.searchQuery
     }
   },
   onStartFetchingReports: function(data) {
@@ -717,6 +724,9 @@ var MinaRepoStore = Fluxxor.createStore({
   onToggleNewReport: function() {
     return;
   },
+  onToggleSmartcheck: function() {
+    return;
+  },
   onUpdateCommentUser: function(data) {
     this.commentUser = data.commentUser;
     this.emit('change');
@@ -750,6 +760,10 @@ var MinaRepoStore = Fluxxor.createStore({
         this.onFetchingCommentsFailed();
       }
     });
+    this.emit('change');
+  },
+  onUpdateSearchQuery: function(data) {
+    this.searchQuery = data.query;
     this.emit('change');
   }
 });
@@ -837,6 +851,11 @@ var actions = {
   onToggleNewReport: function() {
     window.location.href = '/new_report';
   },
+  onToggleSmartcheck: function(data) {
+    var url = '/smartcheck?id=' + data.id;
+    var win = window.open(url, '_blank');
+    win.focus();
+  },
   onUpdateCommentUser: function(data) {
     this.dispatch(constants.UPDATE_COMMENT_USER, { commentUser: data.commentUser });
   },
@@ -854,6 +873,9 @@ var actions = {
   },
   onRevertFinished: function(data) {
     this.dispatch(constants.REVERT_FINISHED, { revert: data.revert });
+  },
+  onUpdateSearchQuery: function(data) {
+    this.dispatch(constants.UPDATE_SEARCH_QUERY, {query: data.query});
   }
 };
 
@@ -890,6 +912,11 @@ var ReportDetail = React.createClass({
         flux.actions.onStartFetchingDetail();
       }, 0);
     }
+  },
+  smartcheckToggleButtonHandler: function(event) {
+    var hashMatch = window.location.hash.match(reportHashPattern);
+    var reportId = parseInt(hashMatch[1]);
+    flux.actions.onToggleSmartcheck({ id : reportId });
   },
   render: function() {
     var pinId = this.props.clickedPinReportId;
@@ -1065,6 +1092,9 @@ var ReportDetail = React.createClass({
           <dt>コメント</dt>
           <dd>{detailComment}</dd>
         </dl>
+        <div className="columns text-center">
+          <button className="button" onClick={this.smartcheckToggleButtonHandler}>スマートチェックに書き出す</button>
+        </div>
       </div>
     </div>;
   }
@@ -1289,7 +1319,8 @@ var TypeButtons = React.createClass({
         that.props.isUsingDate,
         that.props.mapTopLeft,
         that.props.mapBottomRight,
-        that.props.selectedProgress
+        that.props.selectedProgress,
+        that.props.searchQuery
       );
       flux.actions.onTableSetPage({ page: 1 });
     };
@@ -1308,7 +1339,8 @@ var TypeButtons = React.createClass({
         that.props.isUsingDate,
         that.props.mapTopLeft,
         that.props.mapBottomRight,
-        that.props.selectedProgress
+        that.props.selectedProgress,
+        that.props.searchQuery
       );
       flux.actions.onTableSetPage({ page: 1 });
     };
@@ -1359,7 +1391,8 @@ var ProgressButtons = React.createClass({
           that.props.isUsingDate,
           that.props.mapTopLeft,
           that.props.mapBottomRight,
-          that.props.selectedProgress
+          that.props.selectedProgress,
+          that.props.searchQuery
         );
       }, 0);
       flux.actions.onTableSetPage({ page: 1 });
@@ -1375,9 +1408,58 @@ var ProgressButtons = React.createClass({
       <div className="small-12 columns">
         レポート完了フィルタ
       </div>
-      <div className="medium-12 medium-center columns mrv-btn-container">
-        <button key='finished' className={class4finish} onClick={this.onButtonClick('finished')}>完了のみ</button>
+      <div className="medium-12 medium-centered columns mrv-btn-container">
+        <button key='finished' className={class4finish} onclick={this.onButtonClick('finished')}>完了のみ</button>
         <button key='unfinished' className={class4unfinish} onClick={this.onButtonClick('unfinished')}>未完了のみ</button>
+      </div>
+    </div>;
+  }
+});
+
+var ReporterSearch = React.createClass({
+  onChangeQuery: function(text) {
+    var searchQuery = text.target.value;
+    flux.actions.onUpdateSearchQuery({ query: searchQuery });
+
+    var that = this;
+    if (searchQuery.length == 0) {
+      fetchReports(
+        selectSelected(that.props.selectedTypes),
+        that.props.startDate,
+        that.props.endDate,
+        that.props.isUsingDate,
+        that.props.mapTopLeft,
+        that.props.mapBottomRight,
+        that.props.selectedProgress,
+        ""
+      );
+    }
+
+    return;
+  },
+  onButtonClick: function() {
+    fetchReports(
+      selectSelected(this.props.selectedTypes),
+      this.props.startDate,
+      this.props.endDate,
+      this.props.isUsingDate,
+      this.props.mapTopLeft,
+      this.props.mapBottomRight,
+      this.props.selectedProgress,
+      this.props.searchQuery
+    );
+    flux.actions.onTableSetPage({ page: 1 });
+  },
+  render: function() {
+    return <div className="row mrv-btn-row">
+      <div className="small-12 columns">
+        レポート投稿者フィルタ
+      </div>
+      <div className="row">
+        <div className="small-4 small-centered columns ">
+          <input type="text" placeholder="投稿者名" onChange={this.onChangeQuery} className="columns medium-8"></input>
+          <button key='search' onClick={this.onButtonClick} className="columns medium-4 button">検索</button>
+        </div>
       </div>
     </div>;
   }
@@ -1422,7 +1504,8 @@ var ReportCommentPanel = React.createClass({
       that.props.isUsingDate,
       that.props.mapTopLeft,
       that.props.mapBottomRight,
-      that.props.selectedProgress
+      that.props.selectedProgress,
+      that.props.searchQuery
     );
   },
   clearInput: function() {
@@ -1677,11 +1760,13 @@ var MinaRepoViewer = React.createClass({
       mapTopLeft={this.props.mapTopLeft}
       mapBottomRight={this.props.mapBottomRight}
       selectedProgress={this.props.selectedProgress}
+      searchQuery={this.props.searchQuery}
     />;
 
     var progressButtons = <ProgressButtons
       selectedTypes={this.props.selectedTypes}
       selectedProgress={this.props.selectedProgress}
+      searchQuery={this.props.searchQuery}
     />;
 
     var dateController = <dateController
@@ -1690,12 +1775,19 @@ var MinaRepoViewer = React.createClass({
       isUsingDate={this.props.isUsingDate}
     />;
 
+    var reporterSearch = <ReporterSearch
+      selectedTypes={this.props.selectedTypes}
+      selectedProgress={this.props.selectedProgress}
+      searchQuery={this.props.searchQuery}
+    />;
+
     var isShowingFilter = this.props.isShowingFilter;
     var reportFilter = '';
     if (isShowingFilter) {
       reportFilter = <div>
         {buttons}
         {progressButtons}
+        {reporterSearch}
       </div>;
     }
 
@@ -1835,7 +1927,8 @@ var MinaRepoViewerApp = React.createClass({
       this.state.isUsingDate,
       this.state.mapTopLeft,
       this.state.mapBottomRight,
-      this.state.selectedProgress
+      this.state.selectedProgress,
+      this.state.searchQuery
     );
   },
   render: function() {
@@ -1867,6 +1960,7 @@ var MinaRepoViewerApp = React.createClass({
       cmntImage={s.cmntImage}
       checkFinished={s.checkFinished}
       revertFinished={s.revertFinished}
+      searchQuery={s.searchQuery}
     />;
   }
 });

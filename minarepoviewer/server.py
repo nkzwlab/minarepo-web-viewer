@@ -135,7 +135,11 @@ class MinaRepoViewer(object):
             # print 'nodes was None'
             nodes = None
 
-        reports = self._dba.get_reports(time_start, time_end, nodes, progress)
+        query = request.params.get('query', None)
+        if query is not None:
+            query = query.strip()
+
+        reports = self._dba.get_reports(time_start, time_end, nodes, progress, query)
         # print '------------------'
         # print 'nodes=%s' % nodes
         # print 'len(reports)=%d' % len(reports)
@@ -283,6 +287,13 @@ class MinaRepoViewer(object):
             dtime = datetime.datetime.now()
             dtime_str = dtime.strftime('%Y-%m-%d-%H-%M-%S')
             return self._render('new-report.html.j2', timestamp=dtime_str)
+
+        @app.route('/smartcheck', method='GET')
+        @auth_basic(check)
+        def minarepo_smartcheck():
+            dtime = datetime.datetime.now()
+            dtime_str = dtime.strftime('%Y-%m-%d-%H-%M-%S')
+            return self._render('smartcheck.html.j2', timestamp=dtime_str)
 
         return app
 
