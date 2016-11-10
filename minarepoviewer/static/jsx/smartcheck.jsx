@@ -145,18 +145,14 @@ var SmartCheckTable = React.createClass({
 
       var reporter = <div className="row tablediv align-middle">
         <div className="column small-3 text-center">連絡者</div>
-        <div className="column small-3 text-center sidebar-left">
-          <input className="hmargin " type="text" />
-        </div>
-        <div className="column small-1 text-center">
+        <div className="column small-6 sidebar-left sidebar-right">
+          <input className="hmargin width50 inline" type="text" />
           <span>課</span>
-        </div>
-        <div className="column small-2 sidebar-right">
-          <input className="hmargin width80" type="text" />
+          <input className="hmargin width40 inline" type="text" />
         </div>
         <div className="column small-1 text-center">内線</div>
         <div className="column small-2 sidebar-left">
-          <input className="hmargin" type="text" />
+          <input className="hmargin text-center" type="text" />
         </div>
       </div>;
 
@@ -235,13 +231,16 @@ var SmartCheckTable = React.createClass({
 
      var detailMap = <div className="row tablediv align-middle">
         <div className="column small-3 text-center"><small>案件の所在地(又は場所が確認できるもの)</small></div>
-        <div className="column small-9 sidebar-left text-center vpadding">
-          {detail.address}
+        <div className="column small-8 sidebar-left text-center vpadding">
+          <input className="hmargin text-center" defaultValue={detail.address} type="text"/>
+        </div>
+        <div className="column small-1 text-center vpadding">
+          付近
         </div>
       </div>;
 
       var mapUrl = "https://maps.googleapis.com/maps/api/staticmap?center=" + detail.geo[0] + "," + detail.geo[1] +
-        "&zoom=16&size=240x240&sensor=false&key=AIzaSyC6Lq4RSVHU0Iu_EIE-WWX_a7hFf_XGzaQ&markers=" + detail.geo[0] + "," + detail.geo[1];
+        "&zoom=15&size=240x240&sensor=false&key=AIzaSyC6Lq4RSVHU0Iu_EIE-WWX_a7hFf_XGzaQ&markers=" + detail.geo[0] + "," + detail.geo[1];
       var imgSrc = detail.image;
       if (detail.image == '' || detail.image == 'data:,') {
         imgSrc = '/static/img/no-image.png';
