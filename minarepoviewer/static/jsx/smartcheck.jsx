@@ -146,7 +146,7 @@ var SmartCheckTable = React.createClass({
       var reporter = <div className="row tablediv align-middle">
         <div className="column small-3 text-center">連絡者</div>
         <div className="column small-6 sidebar-left sidebar-right">
-          <input className="hmargin width50 inline" type="text" />
+          <input className="hmargin width40 inline" type="text" />
           <span>課</span>
           <input className="hmargin width40 inline" type="text" />
         </div>
