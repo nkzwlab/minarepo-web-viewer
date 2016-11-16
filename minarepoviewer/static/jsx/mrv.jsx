@@ -1409,7 +1409,7 @@ var ProgressButtons = React.createClass({
         レポート完了フィルタ
       </div>
       <div className="medium-12 medium-centered columns mrv-btn-container">
-        <button key='finished' className={class4finish} onclick={this.onButtonClick('finished')}>完了のみ</button>
+        <button key='finished' className={class4finish} onClick={this.onButtonClick('finished')}>完了のみ</button>
         <button key='unfinished' className={class4unfinish} onClick={this.onButtonClick('unfinished')}>未完了のみ</button>
       </div>
     </div>;
