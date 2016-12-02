@@ -17,3 +17,9 @@ minarepoviewer/static/css/mrv.css
 minarepoviewer/static/css/mrv.css.map
 minarepoviewer/static/css/new-report.css
 minarepoviewer/static/css/new-report.css.map
+
+sfc-minarepoviewer/static/js/*.js
+sfc-minarepoviewer/static/css/mrv.css
+sfc-minarepoviewer/static/css/mrv.css.map
+sfc-minarepoviewer/static/css/new-report.css
+sfc-minarepoviewer/static/css/new-report.css.map
