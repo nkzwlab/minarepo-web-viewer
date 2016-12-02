@@ -42,6 +42,7 @@ def setup_nginx():
     sudo('rm -f /etc/nginx/sites-enabled/default')
 
     conf_name = 'minarepo-web-viewer'
+    #conf_name = 'sfc-minarepo-web-viewer'
 
     require.files.file(
         '/etc/nginx/sites-available/%s' % conf_name,
@@ -104,6 +105,7 @@ def setup():
     sudo('apt-get install -y python-dev autoconf g++ libmysqlclient-dev')
 
     app_name = 'minarepo-web-viewer'
+    #app_name = 'sfc-minarepo-web-viewer'
 
     require.files.directory(
         '/usr/local/%s' % app_name,
@@ -142,11 +144,13 @@ def deploy():
     _deploy()
 
     supervisor_app_name = 'minarepo-web-viewer'
+    #supervisor_app_name = 'sfc-minarepo-web-viewer'
     sudo('supervisorctl restart %s' % supervisor_app_name)
 
 
 def _deploy():
     app_name = 'minarepo-web-viewer'
+    #app_name = 'sfc-minarepo-web-viewer'
     root_rsync(
         './',
         '/usr/local/%s/app/' % app_name,
