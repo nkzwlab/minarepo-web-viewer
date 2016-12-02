@@ -1,0 +1,189 @@
+.mrv-hidden {
+  display: none; }
+
+.mrv-title-container {
+  text-align: center;
+  padding-top: 15px; }
+  .mrv-title-container IMG.mrv-title-image {
+    width: 300px; }
+
+.mrv-loading-reports {
+  display: inline-block;
+  margin-bottom: 5px;
+  color: #666666; }
+  .mrv-loading-reports .mrv-img-loading-reports {
+    vertical-align: middle;
+    width: 20px;
+    height: 20px; }
+
+@media screen and (min-width: 641px) {
+  .mrv-btn-image {
+    width: 45px;
+    height: 45px;
+    margin: 0 7px 0 7px; } }
+@media screen and (max-width: 640px) {
+  .mrv-btn-image {
+    width: 55px;
+    height: 55px; } }
+
+.mrv-btn-row {
+  margin-bottom: 15px; }
+
+.mrv-btn-container {
+  text-align: center;
+  margin: 0 auto; }
+
+.mrv-select-all-btn {
+  margin-top: 1rem;
+  text-align: center; }
+
+.mrv-btn-inner-container {
+  margin-left: auto;
+  margin-right: auto;
+  width: auto; }
+
+.mrv-filter-btn {
+  background-color: #ec5840; }
+
+.mrv-report-table-container .pager1 {
+  margin-top: 12px;
+  margin-bottom: 12px; }
+.mrv-report-table-container .pager2 {
+  margin-top: 12px; }
+
+TABLE.mrv-report-table {
+  margin-bottom: 5px !important; }
+  TABLE.mrv-report-table .mrv-report-table-show-detail-link:hover {
+    text-decoration: underline;
+    cursor: pointer; }
+  TABLE.mrv-report-table .mrv-report-table-show-detail-link {
+    text-decoration: none; }
+  TABLE.mrv-report-table IMG.mrv-report-table-report-type-image {
+    width: 20px;
+    height: 20px; }
+  @media screen and (max-width: 640px) {
+    TABLE.mrv-report-table THEAD TH {
+      font-size: 12px; } }
+  @media screen and (max-width: 640px) {
+    TABLE.mrv-report-table TBODY TD {
+      font-size: 12px; } }
+  TABLE.mrv-report-table TBODY TD SPAN.report-user-abbr {
+    font-size: 12px; }
+
+DIV.mrv-detail {
+  margin-top: 20px; }
+  DIV.mrv-detail DIV.mrv-detail-img-container {
+    text-align: center; }
+    DIV.mrv-detail DIV.mrv-detail-img-container DIV.mrv-detail-img-inner-container {
+      margin-left: auto;
+      margin-right: auto;
+      width: auto; }
+      @media screen and (max-width: 1024px) {
+        DIV.mrv-detail DIV.mrv-detail-img-container DIV.mrv-detail-img-inner-container IMG.mrv-detail-image {
+          margin-bottom: 25px; } }
+  DIV.mrv-detail IMG.mrv-detail-report-type-image {
+    width: 20px;
+    height: 20px; }
+  DIV.mrv-detail DIV.mrv-detail-info-header {
+    text-align: center; }
+  DIV.mrv-detail DL.mrv-detail-info DD {
+    margin-bottom: 10px;
+    margin-left: 20px; }
+  DIV.mrv-detail .mrv-detail-no-address {
+    color: #888888; }
+  DIV.mrv-detail .mrv-detail-no-comment {
+    color: #888888; }
+  DIV.mrv-detail .mrv-detail-error {
+    color: red; }
+
+.mrv-map-container {
+  text-align: center;
+  margin: 26px 0 26px 0; }
+
+.info-img-vertical {
+  width: 72px;
+  height: 96px; }
+
+.info-img-horizontal {
+  width: 96px;
+  height: 72px; }
+
+.mrv-btn-open-table {
+  margin-top: 20px; }
+
+#report-map {
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 1rem; }
+  @media screen and (min-width: 641px) {
+    #report-map {
+      width: 95%;
+      height: 450px; } }
+  @media screen and (max-width: 640px) {
+    #report-map {
+      width: 95%;
+      height: 40%; } }
+
+.mrv-footer {
+  text-align: center;
+  font-size: 14px;
+  color: #666666; }
+
+.comment-user {
+  width: 300px; }
+
+.comment-editor {
+  margin-top: 1.5rem; }
+
+.panel {
+  border-radius: 6px;
+  border-style: solid;
+  border-width: 1px;
+  border-color: #d8d8d8;
+  margin-bottom: 1.11111rem;
+  padding: 1.11111rem;
+  background: #f2f2f2;
+  color: #333333; }
+
+.comment {
+  border-radius: 6px;
+  border-style: solid;
+  border-width: 1px;
+  border-color: #d8d8d8;
+  margin-bottom: 1.11111rem;
+  padding: 1.11111rem;
+  background: #ffffff;
+  color: #333333; }
+
+.comment-img {
+  max-width: 150px;
+  max-height: 200px; }
+
+.short-size {
+  width: 300px;
+  margin-left: 1rem; }
+
+@media screen and (max-width: 640px) {
+  .checkbox-label {
+    width: 160px; } }
+
+@media screen and (max-width: 640px) {
+  .msg-pub-btn {
+    float: right !important; } }
+
+.level-1 {
+  color: #2BA6CB; }
+
+.level-2 {
+  color: #FE2E2E; }
+
+.no-margin-btm {
+  margin-bottom: 0px; }
+
+.side-margin {
+  margin: 0 1rem 0 1rem; }
+
+.selected {
+  background: rgba(255, 174, 0, 0.3) !important; }
+
+/*# sourceMappingURL=mrv.css.map */
