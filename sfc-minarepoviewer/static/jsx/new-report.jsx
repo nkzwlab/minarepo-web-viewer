@@ -574,7 +574,7 @@ var MinaRepoViewer = React.createClass({
     var header = <div className="row">
       <div className="large-12 columns mrv-title-container">
         <a href="/">
-          <img src="/static/img/minarepo-title.png" className="mrv-title-image" />
+          <img src="/static/img/logo_sfc_minarepo.jpg" className="mrv-title-image" />
         </a>
       </div>
     </div>;
