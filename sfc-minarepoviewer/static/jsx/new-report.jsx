@@ -36,40 +36,40 @@ var reportTypes = [
 ];
 
 var type2text = {
-  'ps_sfc_animal': '動物・昆虫',
-  'ps_sfc_class': '授業',
-  'ps_sfc_garbage': 'ゴミ',
-  'ps_sfc_kyun': 'キュン',
-  'ps_sfc_line': '行列',
-  'ps_sfc_plant': '植物',
-  'ps_sfc_smell': 'くさい',
-  'ps_sfc_yummy': 'うまし',
-  'ps_sfc_illegalGarbage': '不法投棄',
-  'ps_sfc_graffiti': '落書き',
-  'ps_sfc_damage': '道路',
-  'ps_sfc_others': 'その他'
+  'ps_sfc_animal': 'animal',
+  'ps_sfc_class': 'class',
+  'ps_sfc_garbage': 'garbage',
+  'ps_sfc_kyun': 'kyun',
+  'ps_sfc_line': 'line',
+  'ps_sfc_plant': 'plant',
+  'ps_sfc_smell': 'smelly',
+  'ps_sfc_yummy': 'yummy',
+  'ps_sfc_illegalGarbage': 'illegal garbage',
+  'ps_sfc_graffiti': 'graffiti',
+  'ps_sfc_damage': 'road damage',
+  'ps_sfc_others': 'others'
 };
 
 var type2textShort = {
-  'ps_sfc_animal': '動物・昆虫',
-  'ps_sfc_class': '授業',
-  'ps_sfc_garbage': 'ゴミ',
-  'ps_sfc_kyun': 'キュン',
-  'ps_sfc_line': '行列',
-  'ps_sfc_plant': '植物',
-  'ps_sfc_smell': 'くさい',
-  'ps_sfc_yummy': 'うまし',
-  'ps_sfc_illegalGarbage': '投棄',
-  'ps_sfc_graffiti': '落書',
-  'ps_sfc_damage': '道路',
-  'ps_sfc_others': 'その他'
-}
+  'ps_sfc_animal': 'animal',
+  'ps_sfc_class': 'class',
+  'ps_sfc_garbage': 'garbage',
+  'ps_sfc_kyun': 'kyun',
+  'ps_sfc_line': 'line',
+  'ps_sfc_plant': 'plant',
+  'ps_sfc_smell': 'smelly',
+  'ps_sfc_yummy': 'yummy',
+  'ps_sfc_illegalGarbage': 'illegal',
+  'ps_sfc_graffiti': 'graffiti',
+  'ps_sfc_damage': 'damage',
+  'ps_sfc_others': 'others'
+};
 
 var level2text = [
-  '対応必要なし',
-  '対応必要(通知なし)',
-  '緊急(通知あり)'
-]
+  'no support',
+  'need support(no notification)',
+  'urgent(with notification)'
+];
 
 var type2img = function(type, isSelected) {
   var suffix = (isSelected) ? '' : '-unselected';
@@ -104,7 +104,7 @@ var postReport = function(type) {
         hideAfter: '1500',
         heading: 'Success',
         icon: 'success',
-        text: '<p class="toast-msg">送信しました</p>',
+        text: '<p class="toast-msg">Sent Report</p>',
         allowToastClose: true,
         position: 'mid-center',
         loader: false,
@@ -115,7 +115,7 @@ var postReport = function(type) {
     },
     error: function() {
       var toastMsg = '<div class="toast-msg">\
-        <p>送信できませんでした．しばらく経ってから再度お試しください</p>\
+        <p>Failed to send. Try again later.</p>\
       </div>';
       showToast('Error', toastMsg, '3000');
     }
@@ -174,7 +174,7 @@ var MinaRepoStore = Fluxxor.createStore({
     var rLng = reportValues.longitude;
 
     if (!rName || !rLat || !rLng) {
-      var toastMsg = '<p class="toast-msg">未記入の項目があります</p>';
+      var toastMsg = '<p class="toast-msg">You have some blank entries</p>';
       showToast('Error', toastMsg, '2500');
       return;
     }
@@ -188,7 +188,7 @@ var MinaRepoStore = Fluxxor.createStore({
     var rLevel = reportValues.level;
 
     if (!rName || !rLat || !rLng) {
-      var toastMsg = '<p class="toast-msg">未記入の項目があります</p>';
+      var toastMsg = '<p class="toast-msg">You have some blank entries</p>';
       showToast('Error', toastMsg, '2500');
       return;
     }
@@ -233,7 +233,7 @@ var User = React.createClass({
   render: function() {
     var descRow = <div className="row">
       <div className="small-10 small-centered columns">
-        <p>(1) 報告者名を登録してください [<font color="red">必須</font>]</p>
+        <p>(1) Insert Reporter [<font color="red">required</font>]</p>
       </div>
     </div>;
     var inputRow = <div className="row">
@@ -275,7 +275,7 @@ var TypeButtons = React.createClass({
 
     var descRow = <div className="row"> 
       <div className="small-10 small-centered columns">
-        <p>(2) レポート種類を選んでください [<font color="red">必須</font>]</p>
+        <p>(2) Select Report Type [<font color="red">required</font>]</p>
       </div>
     </div>;
     var buttonRow = <div className="row mrv-btn-row">
@@ -311,7 +311,7 @@ var ReportMap = React.createClass({
     var marker = new google.maps.Marker({
         position: null,
         map: reportMap,
-        title: 'レポート地点'
+        title: 'Report Location'
     });
 
     var input = document.getElementById('pac-input');
@@ -356,7 +356,7 @@ var ReportMap = React.createClass({
       marker = new google.maps.Marker({
         position: clickedPosition,
         map: reportMap,
-        title: 'レポート地点'
+        title: 'Report Location'
       });
     });
 
@@ -373,12 +373,12 @@ var ReportMap = React.createClass({
   render: function() {
     var descRow = <div className="row"> 
       <div className="small-10 small-centered columns">
-        <p>(3) 場所を指定してください [<font color="red">必須</font>]</p>
+        <p>(3) Select Report Location [<font color="red">required</font>]</p>
       </div>
     </div>;
     var mapRow = <div className="row">
       <div className="small-12 medium-8 small-centered columns">
-        <input id="pac-input" className="controls small-2" type="text" placeholder="検索"/>
+        <input id="pac-input" className="controls small-2" type="text" placeholder="Search"/>
         <div id="report-map" key="report-map"></div>
       </div>
     </div>;
@@ -401,7 +401,7 @@ var ReportLevel = React.createClass({
 
     var descRow = <div className="row"> 
       <div className="small-10 small-centered columns">
-        <p>(4) 対応レベルを選択してください [<font color="blue">任意</font>]</p>
+        <p>(4) Select Report Level [<font color="blue">optional</font>]</p>
       </div>
     </div>;
 
@@ -436,7 +436,7 @@ var ReportComment = React.createClass({
   render: function() {
     var descRow = <div className="row">
       <div className="small-10 small-centered columns">
-        <p>(5) コメントを記入してください [<font color="blue">任意</font>]</p>
+        <p>(5) Insert Comment [<font color="blue">optional</font>]</p>
       </div>
     </div>;
     var commentRow = <div className="row">
@@ -480,7 +480,7 @@ var ReportImage = React.createClass({
     return <div className="row">
       <div className="small-10 small-centered columns">
         <p>
-          (6) 画像を登録してください [<font color="blue">任意</font>]:
+          (6) Select Image [<font color="blue">optional</font>]:
           <input className="short-size" type="file" onChange={this.onUploadImage} accept="image/*" />
         </p>
       </div>
@@ -498,7 +498,7 @@ var PublishButton = React.createClass({
     };
     soxEventListener.connectionFailed = function(soxEvent) {
       var toastMsg = '<div class="toast-msg">\
-        <p>サーバに接続できませんでした．ページを再読み込みしてください</p>\
+        <p>Failed connecting server．Please reload the page</p>\
       </div>';
       showToast('Error', toastMsg, '2500');
       console.debug('Connection Failed' + soxEvent);
@@ -514,7 +514,7 @@ var PublishButton = React.createClass({
         hideAfter: '1500',
         heading: 'Success',
         icon: 'success',
-        text: '<p class="toast-msg">送信しました</p>',
+        text: '<p class="toast-msg">Send Report</p>',
         allowToastClose: true,
         position: 'mid-center',
         loader: false,
@@ -526,7 +526,7 @@ var PublishButton = React.createClass({
     };
     soxEventListener.publishFailed = function(soxEvent) {
       var toastMsg = '<div class="toast-msg">\
-        <p>送信できませんでした．しばらく経ってから再度お試しください</p>\
+        <p>Failed to send report．Please try again later</p>\
       </div>';
       showToast('Error', toastMsg, '3000');
       console.debug('Publish Failed' + soxEvent);
@@ -544,7 +544,7 @@ var PublishButton = React.createClass({
   render: function() {
     var togglePublishButton = <div className="large-2 large-centered columns">
       <button className="button expanded large" onClick={this.onButtonClick()}>
-        送信
+        Send Report
       </button>
     </div>;
 
@@ -563,7 +563,7 @@ var ViewerPageButton = React.createClass({
   render: function() {
      return <div className="row">
        <div className="small-10 small-centered columns mrv-btn-row">
-         <a onClick={this.onToggleViewerPageButton()}>&lt;&lt; 藤沢みなレポへ</a>
+         <a onClick={this.onToggleViewerPageButton()}>&lt;&lt; Go to SFCRepo</a>
        </div>
      </div>;
   }

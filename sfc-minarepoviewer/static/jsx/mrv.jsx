@@ -54,45 +54,45 @@ var type2pinInfo = {
 };
 
 var type2text = {
-  'ps_sfc_animal': '動物・昆虫',
-  'ps_sfc_class': '授業',
-  'ps_sfc_garbage': 'ゴミ',
-  'ps_sfc_kyun': 'キュン',
-  'ps_sfc_line': '行列',
-  'ps_sfc_plant': '植物',
-  'ps_sfc_smell': 'くさい',
-  'ps_sfc_yummy': 'うまし',
-  'ps_sfc_illegalGarbage': '不法投棄',
-  'ps_sfc_graffiti': '落書き',
-  'ps_sfc_damage': '道路',
-  'ps_sfc_others': 'その他'
+  'ps_sfc_animal': 'animal',
+  'ps_sfc_class': 'class',
+  'ps_sfc_garbage': 'garbage',
+  'ps_sfc_kyun': 'kyun',
+  'ps_sfc_line': 'line',
+  'ps_sfc_plant': 'plant',
+  'ps_sfc_smell': 'smelly',
+  'ps_sfc_yummy': 'yummy',
+  'ps_sfc_illegalGarbage': 'illegal garbage',
+  'ps_sfc_graffiti': 'graffiti',
+  'ps_sfc_damage': 'road damage',
+  'ps_sfc_others': 'others'
 };
 
 var type2textShort = {
-  'ps_sfc_animal': '動物・昆虫',
-  'ps_sfc_class': '授業',
-  'ps_sfc_garbage': 'ゴミ',
-  'ps_sfc_kyun': 'キュン',
-  'ps_sfc_line': '行列',
-  'ps_sfc_plant': '植物',
-  'ps_sfc_smell': 'くさい',
-  'ps_sfc_yummy': 'うまし',
-  'ps_sfc_illegalGarbage': '投棄',
-  'ps_sfc_graffiti': '落書',
-  'ps_sfc_damage': '道路',
-  'ps_sfc_others': 'その他'
+  'ps_sfc_animal': 'animal',
+  'ps_sfc_class': 'class',
+  'ps_sfc_garbage': 'garbage',
+  'ps_sfc_kyun': 'kyun',
+  'ps_sfc_line': 'line',
+  'ps_sfc_plant': 'plant',
+  'ps_sfc_smell': 'smelly',
+  'ps_sfc_yummy': 'yummy',
+  'ps_sfc_illegalGarbage': 'illegal',
+  'ps_sfc_graffiti': 'graffiti',
+  'ps_sfc_damage': 'damage',
+  'ps_sfc_others': 'others'
 };
 
 var reportLevel = [
-  '対応必要なし',
-  '対応必要(通知なし)',
-  '緊急(通知あり)'
+  'no support',
+  'need support(no notification)',
+  'urgent(with notification)'
 ];
 
 var reportLevelShort = [
-  '無',
-  '必要',
-  '緊急'
+  'none',
+  'support',
+  'urgent'
 ];
 
 var type2img = function(type, isSelected) {
@@ -960,8 +960,8 @@ var ReportDetail = React.createClass({
       detailComment = detail.comment;
       detailUser = detail.user;
       detailImage = detail.image;
-      var finished = (detail.finished) ? '対応完了' : '未対応';
-      detailFinishedHdr = <dt>レポート対応状況</dt>;
+      var finished = (detail.finished) ? 'Finished' : 'Unfinished';
+      detailFinishedHdr = <dt>Report Progress</dt>;
       detailFinished = <dd>{finished}</dd>;
       if (detailImage == '' || detailImage == 'data:,') {
         detailImage = '/static/img/no-image.png';
@@ -980,11 +980,11 @@ var ReportDetail = React.createClass({
         detailTimestamp += ' (' + shapedTime + ')';
       }
       if (detailComment === '') {
-        detailComment = <span className="mrv-detail-no-comment">(コメントなし)</span>
+        detailComment = <span className="mrv-detail-no-comment">(no comments)</span>
       }
       var address = detail.address;
       if (address === null) {
-        address = <span className="mrv-detail-no-address">(取得されていません)</span>;
+        address = <span className="mrv-detail-no-address">(none)</span>;
       }
 
       if (detail.level == 0) {
@@ -994,8 +994,8 @@ var ReportDetail = React.createClass({
       var reportLevelClass = 'level-' + detail.level;
       detailLevel = <span className={reportLevelClass}>{reportLevel[detail.level]}</span>;
       detailLocation = <div>
-        住所: {address}<br/>
-        GPS座標: 緯度={detail.geo[0]}, 経度={detail.geo[1]}
+        Address: {address}<br/>
+        GPS: Latitude={detail.geo[0]}, Longitude={detail.geo[1]}
       </div>;
 
       var centerButtonHandler = function(event) {
@@ -1007,7 +1007,7 @@ var ReportDetail = React.createClass({
         reportMap.setZoom(18);
         reportMap.panTo({ lat: lat, lng: lng });
       };
-      centerButtonDom = <button className="button" onClick={centerButtonHandler}>マップに表示</button>;
+      centerButtonDom = <button className="button" onClick={centerButtonHandler}>Show Map</button>;
 
       var openInfoWindow = function(imgData, lat, lng) {
         var img = new Image();
@@ -1037,62 +1037,62 @@ var ReportDetail = React.createClass({
       openInfoWindow(detailImage, detail.geo[0], detail.geo[1]);
     } else if (isFetchingDetail) {
       // console.debug('detail pattern 2: fetching');
-      detailReportId = '読み込み中...';
-      detailTimestamp = '読み込み中...';
-      detailUser = '読み込み中...';
-      detailType = '読み込み中...';
-      detailComment = '読み込み中...';
-      detailLocation = '読み込み中...';
-      detailLevel = '読み込み中...';
-      detailFinished = '読み込み中...';
+      detailReportId = 'Loading...';
+      detailTimestamp = 'Loading...';
+      detailUser = 'Loading...';
+      detailType = 'Loading...';
+      detailComment = 'Loading...';
+      detailLocation = 'Loading...';
+      detailLevel = 'Loading...';
+      detailFinished = 'Loading...';
       detailImage = '/static/img/loading-image.gif';  // FIXME: 権利？
     } else if (!isFetchingDetail && isFetchingDetailFailed) {
       // console.debug('detail pattern 3: fetch failed');
-      detailReportId = <span className="mrv-detail-error">読み込みに失敗しました</span>;
-      detailTimestamp = <span className="mrv-detail-error">読み込みに失敗しました</span>;
-      detailUser = <span className="mrv-detail-error">読み込みに失敗しました</span>;
-      detailType = <span className="mrv-detail-error">読み込みに失敗しました</span>;
-      detailComment = <span className="mrv-detail-error">読み込みに失敗しました</span>;
-      detailLocation = <span className="mrv-detail-error">読み込みに失敗しました</span>;
-      detailLevel = <span className="mrv-detail-error">読み込みに失敗しました</span>;
-      detailFinished = <span className="mrv-detail-error">読み込みに失敗しました</span>;
+      detailReportId = <span className="mrv-detail-error">Loading Failed</span>;
+      detailTimestamp = <span className="mrv-detail-error">Loading Failed</span>;
+      detailUser = <span className="mrv-detail-error">Loading Failed</span>;
+      detailType = <span className="mrv-detail-error">Loading Failed</span>;
+      detailComment = <span className="mrv-detail-error">Loading Failed</span>;
+      detailLocation = <span className="mrv-detail-error">Loading Failed</span>;
+      detailLevel = <span className="mrv-detail-error">Loading Failed</span>;
+      detailFinished = <span className="mrv-detail-error">Loading Failed</span>;
       detailImage = '/static/img/loading-image.gif';  // FIXME: もっとエラーっぽい画像にしたい
     }
 
     return <div className="row mrv-detail">
       <div className="large-6 columns mrv-detail-img-container">
         <div className="mrv-detail-img-inner-container">
-          <h3>レポート画像</h3>
+          <h3>Report Image</h3>
           <div><img src={detailImage} className="mrv-detail-image" /></div>
         </div>
       </div>
       <div className="large-6 columns">
         <div className="mrv-detail-info-header">
-          <h3>レポート内容</h3>
+          <h3>Report Contents</h3>
         </div>
         <dl className="mrv-detail-info">
-          <dt>レポートID</dt>
+          <dt>Report ID</dt>
           <dd>{detailReportId}</dd>
 
-          <dt>レポート種別</dt>
+          <dt>Report Type</dt>
           <dd>{detailType}</dd>
 
-          <dt>レポート投稿日時</dt>
+          <dt>Report DateTime</dt>
           <dd>{detailTimestamp}</dd>
 
-          <dt>場所</dt>
+          <dt>Location</dt>
           <dd>{detailLocation}</dd>
 
-          <dt>レポートユーザー</dt>
+          <dt>Reporter</dt>
           <dd>{detailUser}</dd>
 
-          <dt>レポート対応レベル</dt>
+          <dt>Report Level</dt>
           <dd>{detailLevel}</dd>
 
           {detailFinishedHdr}
           {detailFinished}
 
-          <dt>コメント</dt>
+          <dt>Comment</dt>
           <dd>{detailComment}</dd>
         </dl>
       </div>
@@ -1137,12 +1137,12 @@ var ReportMap = React.createClass({
     if (this.props.isFetchingReports) {
       msgReportNum = <div className="mrv-loading-reports">
         <img src="/static/img/loading2.gif" className="mrv-img-loading-reports" />
-        レポートを読み込み中...
+        Loading Reports...
       </div>;
     } else if (this.props.isFetchingReportsFailed) {
-      msgReportNum = 'レポートの読み込みに失敗しました';
+      msgReportNum = 'Loading Report Failed';
     } else {
-      msgReportNum = '' + nReports + '件のレポート';
+      msgReportNum = '' + nReports + ' Reports';
     }
 
     return <div className="large-6 columns mrv-map-container">
@@ -1245,7 +1245,7 @@ var ReportTable = React.createClass({
       flux.actions.onTablePrevPageClicked();
     };
     var insidePrev = null;
-    var prevMessage = '前へ';
+    var prevMessage = 'Prev';
     if (isFirstPage) {
       insidePrev = prevMessage;
     } else {
@@ -1258,7 +1258,7 @@ var ReportTable = React.createClass({
     var nextArrowClass = classNames({ 'pagination-next': true, disabled: isLastPage });
     var nextArrowKey = 'next-arrow-' + (isLastPage ? 'disabled' : 'available');
     var insideNext = null;
-    var nextMessage = '次へ';
+    var nextMessage = 'Next';
     var nextOnClick = function(event) {
       event.preventDefault();
       flux.actions.onTableNextPageClicked();
@@ -1284,11 +1284,11 @@ var ReportTable = React.createClass({
         <thead>
           <tr>
             <th>ID</th>
-            <th>レポ種類</th>
-            <th>投稿者</th>
-            <th>投稿時刻</th>
-            <th>対応</th>
-            <th>完了</th>
+            <th>Type</th>
+            <th>Reporter</th>
+            <th>Time</th>
+            <th>Lev</th>
+            <th>Fin</th>
           </tr>
         </thead>
 
@@ -1360,11 +1360,11 @@ var TypeButtons = React.createClass({
         className="mrv-btn-image"
       />;
     });
-    var selectAllButton = <button className="button" onClick={this.onSelectAllButtonClick()}>全種類選択</button>;
+    var selectAllButton = <button className="button" onClick={this.onSelectAllButtonClick()}>Select All</button>;
 
     return <div className="row mrv-btn-row">
       <div className="small-12 columns">
-        レポート種類別フィルタ
+        Filter by Report Type
       </div>
       <div className="medium-12 columns mrv-btn-container">
         {buttons}
@@ -1406,11 +1406,11 @@ var ProgressButtons = React.createClass({
 
     return <div className="row mrv-btn-row">
       <div className="small-12 columns">
-        レポート完了フィルタ
+        Filter by Report Progress
       </div>
       <div className="medium-12 medium-centered columns mrv-btn-container">
-        <button key='finished' className={class4finish} onClick={this.onButtonClick('finished')}>完了のみ</button>
-        <button key='unfinished' className={class4unfinish} onClick={this.onButtonClick('unfinished')}>未完了のみ</button>
+        <button key='finished' className={class4finish} onClick={this.onButtonClick('finished')}>Finished</button>
+        <button key='unfinished' className={class4unfinish} onClick={this.onButtonClick('unfinished')}>Unfinished</button>
       </div>
     </div>;
   }
@@ -1453,12 +1453,12 @@ var ReporterSearch = React.createClass({
   render: function() {
     return <div className="row mrv-btn-row">
       <div className="small-12 columns">
-        レポート投稿者フィルタ
+        Filter by Reporter
       </div>
       <div className="row">
         <div className="small-4 small-centered columns ">
-          <input type="text" placeholder="投稿者名" onChange={this.onChangeQuery} className="columns medium-8"></input>
-          <button key='search' onClick={this.onButtonClick} className="columns medium-4 button">検索</button>
+          <input type="text" placeholder="Reporter Name" onChange={this.onChangeQuery} className="columns medium-8"></input>
+          <button key='search' onClick={this.onButtonClick} className="columns medium-4 button">Search</button>
         </div>
       </div>
     </div>;
@@ -1554,7 +1554,7 @@ var ReportCommentPanel = React.createClass({
     var that = this;
     return function() {
       if (!that.props.commentUser || !that.props.newComment) {
-        showToast('error', '名前またはメッセージを入力してください');
+        showToast('error', 'Please input Name or Message');
         return;
       }
       var reportId = that.props.selectedReport.id;
@@ -1579,12 +1579,12 @@ var ReportCommentPanel = React.createClass({
         data: data,
         dataType: 'json',
         success: function(data) {
-          showToast('success', 'メッセージが投稿されました');
+          showToast('success', 'Message Sent');
           that.clearInput();
           that.updateCommentPanel(reportId, checked);
         },
         error: function(data) {
-          showToast('error', 'メッセージが投稿できませんでした．もう一度お試しください');
+          showToast('error', 'Failed to send Message. Please try again');
         }
       });
     }
@@ -1665,11 +1665,11 @@ var ReportCommentPanel = React.createClass({
           </div>;
         });
       } else {
-        commentLists = <p className="no-margin-btm text-center">現在メッセージはありません</p>;
+        commentLists = <p className="no-margin-btm text-center">No messages</p>;
       }
 
       headerRow = <div className="row comment-editor">
-        <h3 className="text-center">ディスカッション</h3>
+        <h3 className="text-center">Discussion</h3>
       </div>;
       commentPanel = <div id="comment-panel" className="row comment-editor">
         <div className="medium-9 medium-centered columns">
@@ -1679,18 +1679,18 @@ var ReportCommentPanel = React.createClass({
 
       usernameRow = <div className="row">
         <div className="medium-9 medium-centered columns">
-          <input type="text" className="comment-user" onChange={this.onUpdateCommentUser} value={this.props.commentUser} placeholder="名前" />
+          <input type="text" className="comment-user" onChange={this.onUpdateCommentUser} value={this.props.commentUser} placeholder="Reporter Name" />
         </div>
       </div>;
       textAreaRow = <div className="row">
         <div className="medium-9 medium-centered columns">
-          <textarea onChange={this.onUpdateNewComment} value={this.props.newComment} placeholder="メッセージを入力" />
+          <textarea onChange={this.onUpdateNewComment} value={this.props.newComment} placeholder="input message here" />
         </div>
       </div>;
       imageRow = <div className="row">
         <div className="small-9 small-centered columns">
           <p>
-            画像を登録:
+            Select Image:
             <input className="short-size" type="file" onChange={this.onUploadImage} accept="image/*" />
           </p>
         </div>
@@ -1700,7 +1700,7 @@ var ReportCommentPanel = React.createClass({
         // hide checkbox
         buttonRow = <div className="row">
           <div className="small-6 small-centered columns text-center">
-            <button className="button success text-center" onClick={this.onPushSubmitButton()}>メッセージ投稿</button>
+            <button className="button success text-center" onClick={this.onPushSubmitButton()}>Send Message</button>
           </div>
         </div>;
       } else if (detail.finished == true) {
@@ -1709,11 +1709,11 @@ var ReportCommentPanel = React.createClass({
           <div className="small-6 medium-8 columns text-center">
             <label className="checkbox-label">
               <input id="checkbox-finished" type="checkbox" onChange={this.onRevertFinished} checked={this.props.revertFinished} />
-              メッセージを書き込んで対応を未完了に戻す
+              Send message and revert report to unfinished
             </label>
           </div>
           <div className="small-6 small-centered medium-4 columns">
-            <button className="button text-center success msg-pub-btn" onClick={this.onPushSubmitButton()}>メッセージ投稿</button>
+            <button className="button text-center success msg-pub-btn" onClick={this.onPushSubmitButton()}>Send Message</button>
           </div>
         </div>;
       } else {
@@ -1721,11 +1721,11 @@ var ReportCommentPanel = React.createClass({
           <div className="small-6 medium-8 columns text-center">
             <label className="checkbox-label">
               <input id="checkbox-finished" type="checkbox" onChange={this.onCheckFinished} checked={this.props.checkFinished} />
-              メッセージを書き込んで対応を完了する
+              Send message and finished the report
             </label>
           </div>
           <div className="small-6 small-centered medium-4 columns">
-            <button className="button text-center success msg-pub-btn" onClick={this.onPushSubmitButton()}>メッセージ投稿</button>
+            <button className="button text-center success msg-pub-btn" onClick={this.onPushSubmitButton()}>Send Message</button>
           </div>
         </div>;
       }
@@ -1791,7 +1791,7 @@ var MinaRepoViewer = React.createClass({
       </div>;
     }
 
-    var filterToggleButtonMsg = (isShowingFilter) ? 'フィルタ ▲' : 'フィルタ ▼';
+    var filterToggleButtonMsg = (isShowingFilter) ? 'Filter ▲' : 'Filter ▼';
     var filterToggleButtonClass = classNames({
       button: true,
       success: true
@@ -1811,7 +1811,7 @@ var MinaRepoViewer = React.createClass({
       flux.actions.onToggleNewReport();
     };
     var newReportToggleButton = <div className="small-6 columns">
-      <button className={newReportToggleButtonClass} onClick={newReportToggleButtonHandler}>+新規レポート</button>
+      <button className={newReportToggleButtonClass} onClick={newReportToggleButtonHandler}>+New Report</button>
     </div>;
 
     var toggleButtonRow = <div className="row">
@@ -1887,7 +1887,7 @@ var MinaRepoViewer = React.createClass({
 
     var footer = <div className="row">
       <div className="large-12 columns mrv-footer">
-        Powered by <a href="https://www.city.fujisawa.kanagawa.jp/">藤沢市</a> and <a href="https://www.ht.sfc.keio.ac.jp/">htlab</a>
+        Powered by <a href="https://www.city.fujisawa.kanagawa.jp/">Fujisawa City</a> and <a href="https://www.ht.sfc.keio.ac.jp/">htlab</a>
         <br/><br/>
       </div>
     </div>;
