@@ -191,7 +191,8 @@ var timestampShaper = function(timestamp) {
     var dateDiff = (date - reportDate) / (1000 * 60 * 60 * 24);
 
     if (dateDiff > 0) {
-      shapedTime = dateDiff + '日前';
+      shapedTime = reportTime.getMonth() + '月' + reportTime.getDate() + '日';
+      // shapedTime = dateDiff + '日前';
     } else {
       var hour = String(reportTime.getHours());
       var minute = String(reportTime.getMinutes());
