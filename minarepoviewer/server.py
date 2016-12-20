@@ -212,6 +212,16 @@ class MinaRepoViewer(object):
             return self._json_response(ret, 500)
         return self._json_response(ret)
 
+    def insert_user(self):
+        email = request.params.get('email', None)
+        password = request.params.get('password', None)
+        hash = hashlib.sha256()
+        hash.update(password)
+        ret = self._dba.insert_user(email, hash.hexdigest())
+        if not ret:
+            return self._json_response(ret, 500)
+        return self._json_response(ret)
+
     def api_detail(self, report_id):
         report = self._dba.get_report(report_id)
         report['timestamp'] = report['timestamp'].strftime('%Y-%m-%d %H:%M:%S')
@@ -262,6 +272,15 @@ class MinaRepoViewer(object):
     def static(self, file_name):
         return static_file(file_name, root=self._static_dir)
 
+    def login(self):
+        email = request.params.get('email', None)
+        password = request.params.get('password', None)
+        user = self._dba.get_user(email)
+        if hashlib.sha256(password).hexdigest() == hashlib.sha256(user[2]).hexdigest():
+            return self._json_response(user)
+        else:
+            return self._json_response(None, 500)
+
     def create_wsgi_app(self):
         app = Bottle()
         BaseRequest.MEMFILE_MAX = 1024 * 1024
@@ -275,6 +294,8 @@ class MinaRepoViewer(object):
         app.route('/api/report/<report_id>/comments/new', ['GET', 'POST'], self.api_comment_new)
         app.route('/export/reports', ['GET', 'POST'], self.export_reports)
         app.route('/post/new_report', ['POST'], self.insert_report)
+        app.route('/users/create', ['POST'], self.insert_user)
+        app.route('/users/login', ['GET'], self.login)
 
         @app.route('/', method='GET')
         @auth_basic(check)
@@ -294,6 +315,12 @@ class MinaRepoViewer(object):
             dtime = datetime.datetime.now()
             dtime_str = dtime.strftime('%Y-%m-%d-%H-%M-%S')
             return self._render('smartcheck.html.j2', timestamp=dtime_str)
+
+        # @app.route('/users/create')
+        # @auth_basic(check)
+        # def minarepo_user_create():
+        #     print "user_create"
+        #     return self._render('user-create.html.j2')
 
         return app
 

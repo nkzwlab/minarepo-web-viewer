@@ -226,6 +226,37 @@ class MinaRepoDBA(object):
 
             return True
 
+    def insert_user(self, email, password):
+        with self.connection() as conn:
+            sql = 'INSERT INTO users(email, password) VALUES (%s, %s);'
+            sql_params = (email, password)
+
+            cursor = conn.cursor()
+            try:
+                cursor.execute(sql, sql_params)
+                conn.commit()
+            except MySQLdb.Error as error:
+                print error
+                return False
+            finally:
+                cursor.close()
+
+            return True
+
+    def get_user(self, email):
+        sql = 'SELECT * FROM users WHERE email = %s;'
+        sql_params = (email,)
+
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            try:
+                cursor.execute(sql, sql_params)
+                return cursor.fetchone()
+            finally:
+                cursor.close()
+
+        return None
+
     def _close(self):
         if self._conn is None:
             return
