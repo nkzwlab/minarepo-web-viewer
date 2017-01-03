@@ -182,9 +182,9 @@ var timestampShaper = function(timestamp) {
     var shapedTime = null;
 
     var currentTime = new Date();
-    var dateString = currentTime.getYear() + '/' + currentTime.getMonth() + '/' + currentTime.getDate();
+    var dateString = currentTime.getYear() + '/' + (1 + Number(currentTime.getMonth())) + '/' + currentTime.getDate();
     var reportTime = new Date(parsedTimestamp);
-    var reportDateString = reportTime.getYear() + '/' + reportTime.getMonth() + '/' + reportTime.getDate();
+    var reportDateString = reportTime.getYear() + '/' + (1 + Number(reportTime.getMonth())) + '/' + reportTime.getDate();
 
     var date = new Date(dateString);
     var reportDate = new Date(reportDateString);
