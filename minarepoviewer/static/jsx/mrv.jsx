@@ -182,16 +182,17 @@ var timestampShaper = function(timestamp) {
     var shapedTime = null;
 
     var currentTime = new Date();
-    var dateString = currentTime.getYear() + '/' + currentTime.getMonth() + '/' + currentTime.getDate();
+    var dateString = currentTime.getYear() + '/' + (1 + Number(currentTime.getMonth())) + '/' + currentTime.getDate();
     var reportTime = new Date(parsedTimestamp);
-    var reportDateString = reportTime.getYear() + '/' + reportTime.getMonth() + '/' + reportTime.getDate();
+    var reportDateString = reportTime.getYear() + '/' + (1 + Number(reportTime.getMonth())) + '/' + reportTime.getDate();
 
     var date = new Date(dateString);
     var reportDate = new Date(reportDateString);
     var dateDiff = (date - reportDate) / (1000 * 60 * 60 * 24);
 
     if (dateDiff > 0) {
-      shapedTime = dateDiff + '日前';
+      shapedTime = (reportTime.getMonth() + 1) + '月' + reportTime.getDate() + '日';
+      // shapedTime = dateDiff + '日前';
     } else {
       var hour = String(reportTime.getHours());
       var minute = String(reportTime.getMinutes());
