@@ -226,10 +226,10 @@ class MinaRepoDBA(object):
 
             return True
 
-    def insert_user(self, email, password):
+    def insert_user(self, email, password, permission):
         with self.connection() as conn:
-            sql = 'INSERT INTO users(email, password) VALUES (%s, %s);'
-            sql_params = (email, password)
+            sql = 'INSERT INTO users(email, password, permission) VALUES (%s, %s, %s);'
+            sql_params = (email, password, permission)
 
             cursor = conn.cursor()
             try:

@@ -14,6 +14,7 @@ import base64
 import click
 from bottle import Bottle, HTTPResponse, request, response, route, static_file, auth_basic, BaseRequest
 from jinja2 import Template
+from beaker.middleware import SessionMiddleware
 
 from dbaccess import MinaRepoDBA
 from export import MRExportFile
@@ -213,14 +214,19 @@ class MinaRepoViewer(object):
         return self._json_response(ret)
 
     def insert_user(self):
-        email = request.params.get('email', None)
-        password = request.params.get('password', None)
-        hash = hashlib.sha256()
-        hash.update(password)
-        ret = self._dba.insert_user(email, hash.hexdigest())
-        if not ret:
-            return self._json_response(ret, 500)
-        return self._json_response(ret)
+        auth = self.authenticate("Super")
+        if auth == True:
+            email = request.params.get('email', None)
+            password = request.params.get('password', None)
+            permission = request.params.get('permission', None)
+            hash = hashlib.sha256()
+            hash.update(password)
+            ret = self._dba.insert_user(email, hash.hexdigest(), permission)
+            if not ret:
+                return self._json_response(ret, 500)
+            return self._json_response(ret)
+        else:
+            return auth
 
     def api_detail(self, report_id):
         report = self._dba.get_report(report_id)
@@ -272,16 +278,86 @@ class MinaRepoViewer(object):
     def static(self, file_name):
         return static_file(file_name, root=self._static_dir)
 
+    def authenticate(self, permission):
+        session = request.environ.get('beaker.session')
+        if 'email' in session:
+            email = session['email'][0]
+            user = self._dba.get_user(email)
+
+            if permission == "Super":
+                if user[3] == "Super":
+                    return True
+                else:
+                    return self._json_response("not allowed", 500)
+            else if permission == "Power":
+                if user[3] == "Super" or user[3] == "Power":
+                    return True
+                else:
+                    return self._json_response("not allowed", 500)
+            else:
+                return self._json_response("unknown permission", 500)
+
+        else:
+            return self._json_response("no such user", 500)
+
     def login(self):
         email = request.params.get('email', None)
         password = request.params.get('password', None)
         user = self._dba.get_user(email)
-        if hashlib.sha256(password).hexdigest() == hashlib.sha256(user[2]).hexdigest():
+        if hashlib.sha256(password).hexdigest() == user[2]:
+            session = request.environ.get('beaker.session')
+            if not 'email' in session:
+                emails = []
+            else:
+                emails = session['email']
+            if not email in emails:
+                emails.append(email)
+            session['email'] = emails
             return self._json_response(user)
         else:
-            return self._json_response(None, 500)
+            return self._json_response(user, 500)
+
+    def logout(self):
+        session = request.environ.get('beaker.session')
+        if 'email' in session:
+            try:
+                session['email'].pop(0)
+            except ValueError:
+                return self._json_response("no such user", 500)
+        return self._json_response("success")
+
+    def switch_user(self):
+        email = request.params.get('email', None)
+        session = request.environ.get('beaker.session')
+        if email and 'email' in session:
+            print session['email']
+            try:
+                index = session['email'].index(email)
+                session['email'].pop(index)
+                session['email'].insert(0, email)
+                return self._json_response(self._dba.get_user(email))
+            except ValueError:
+                return self._json_response("no such user", 500)
+        else:
+            return self._json_response("no such user", 500)
+
+    def current_user(self):
+        session = request.environ.get('beaker.session')
+        if 'email' in session:
+            user = []
+            for email in session['email']:
+                user.append(self._dba.get_user(email))
+            return self._json_response(user)
+        else:
+            return self._json_response("no login users", 500)
 
     def create_wsgi_app(self):
+        session_opts = {
+            'session.type': 'file',
+            'session.cookie_expires': 300,
+            'session.data_dir': './data',
+            'session.auto': True
+        }
         app = Bottle()
         BaseRequest.MEMFILE_MAX = 1024 * 1024
 
@@ -296,6 +372,9 @@ class MinaRepoViewer(object):
         app.route('/post/new_report', ['POST'], self.insert_report)
         app.route('/users/create', ['POST'], self.insert_user)
         app.route('/users/login', ['GET'], self.login)
+        app.route('/users/logout', ['GET'], self.logout)
+        app.route('/users/switch_user', ['GET'], self.switch_user)
+        app.route('/users/current_user', ['GET'], self.current_user)
 
         @app.route('/', method='GET')
         @auth_basic(check)
@@ -316,11 +395,7 @@ class MinaRepoViewer(object):
             dtime_str = dtime.strftime('%Y-%m-%d-%H-%M-%S')
             return self._render('smartcheck.html.j2', timestamp=dtime_str)
 
-        # @app.route('/users/create')
-        # @auth_basic(check)
-        # def minarepo_user_create():
-        #     print "user_create"
-        #     return self._render('user-create.html.j2')
+        app = SessionMiddleware(app, session_opts)
 
         return app
 
