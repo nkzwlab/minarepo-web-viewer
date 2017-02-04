@@ -315,7 +315,7 @@ class MinaRepoViewer(object):
         email = request.params.get('email', None)
         password = request.params.get('password', None)
         user = self._dba.get_user(email)
-        if hashlib.sha256(password).hexdigest() == user[2]:
+        if hashlib.sha256(password).hexdigest() == user["password"]:
             session = request.environ.get('beaker.session')
             if not 'email' in session:
                 emails = []
@@ -362,6 +362,16 @@ class MinaRepoViewer(object):
         else:
             return self._json_response("no login users", 500)
 
+    def add_group(self):
+        email = request.params.get('email', None)
+        group = request.params.get('group', None)
+
+        ret = self._dba.add_group(email, group)
+        if not ret:
+            return self._json_response(ret, 500)
+        return self._json_response(ret)
+
+
     def create_wsgi_app(self):
         session_opts = {
             'session.type': 'file',
@@ -386,6 +396,7 @@ class MinaRepoViewer(object):
         app.route('/users/logout', ['GET'], self.logout)
         app.route('/users/switch_user', ['GET'], self.switch_user)
         app.route('/users/current_user', ['GET'], self.current_user)
+        app.route('/users/add_group', ['GET'], self.add_group)
         app.route('/groups/create', ['POST'], self.insert_group)
 
         @app.route('/', method='GET')

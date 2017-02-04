@@ -247,6 +247,34 @@ class MinaRepoDBA(object):
         sql = 'SELECT * FROM users WHERE email = %s;'
         sql_params = (email,)
 
+        group_sql = 'SELECT groups.group FROM users, users_groups, groups WHERE users.email=%s AND users.id=users_groups.user_id AND groups.id=users_groups.group_id;'
+
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            try:
+                cursor.execute(sql, sql_params)
+                result = cursor.fetchone()
+                cursor.execute(group_sql, sql_params)
+                groups = cursor.fetchall()
+                user = dict(
+                    id=result[0],
+                    email=result[1],
+                    password=result[2],
+                    permission=result[3],
+                    group=[]
+                )
+                for g in groups:
+                    user["group"].append(g[0])
+                return user
+            finally:
+                cursor.close()
+
+        return None
+
+    def get_group(self, group):
+        sql = 'SELECT * FROM groups WHERE groups.group = %s;'
+        sql_params = (group,)
+
         with self.connection() as conn:
             cursor = conn.cursor()
             try:
@@ -261,6 +289,26 @@ class MinaRepoDBA(object):
         with self.connection() as conn:
             sql = 'INSERT INTO groups(group) VALUES (%s);'
             sql_params = (group,)
+
+            cursor = conn.cursor()
+            try:
+                cursor.execute(sql, sql_params)
+                conn.commit()
+            except MySQLdb.Error as error:
+                print error
+                return False
+            finally:
+                cursor.close()
+
+            return True
+
+    def add_group(self, email, group):
+        with self.connection() as conn:
+            user = self.get_user(email)
+            group = self.get_group(group)
+
+            sql = 'INSERT INTO users_groups(user_id, group_id) VALUES (%s, %s);'
+            sql_params = (user["id"], group[0])
 
             cursor = conn.cursor()
             try:
