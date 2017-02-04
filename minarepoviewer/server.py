@@ -228,6 +228,17 @@ class MinaRepoViewer(object):
         else:
             return auth
 
+    def insert_group(self):
+        auth = self.authenticate("Super")
+        if auth == True:
+            group = request.params.get('group', None)
+            ret = self._dba.insert_group(group)
+            if not ret:
+                return self._json_response(ret, 500)
+            return self._json_response(ret)
+        else:
+            return auth
+
     def api_detail(self, report_id):
         report = self._dba.get_report(report_id)
         report['timestamp'] = report['timestamp'].strftime('%Y-%m-%d %H:%M:%S')
@@ -289,7 +300,7 @@ class MinaRepoViewer(object):
                     return True
                 else:
                     return self._json_response("not allowed", 500)
-            else if permission == "Power":
+            elif permission == "Power":
                 if user[3] == "Super" or user[3] == "Power":
                     return True
                 else:
@@ -375,6 +386,7 @@ class MinaRepoViewer(object):
         app.route('/users/logout', ['GET'], self.logout)
         app.route('/users/switch_user', ['GET'], self.switch_user)
         app.route('/users/current_user', ['GET'], self.current_user)
+        app.route('/groups/create', ['POST'], self.insert_group)
 
         @app.route('/', method='GET')
         @auth_basic(check)

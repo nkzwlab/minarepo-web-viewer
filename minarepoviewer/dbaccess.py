@@ -257,6 +257,23 @@ class MinaRepoDBA(object):
 
         return None
 
+    def insert_group(self, group):
+        with self.connection() as conn:
+            sql = 'INSERT INTO groups(group) VALUES (%s);'
+            sql_params = (group,)
+
+            cursor = conn.cursor()
+            try:
+                cursor.execute(sql, sql_params)
+                conn.commit()
+            except MySQLdb.Error as error:
+                print error
+                return False
+            finally:
+                cursor.close()
+
+            return True
+
     def _close(self):
         if self._conn is None:
             return
