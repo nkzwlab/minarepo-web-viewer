@@ -271,6 +271,36 @@ class MinaRepoDBA(object):
 
         return None
 
+    def get_user_by_token(self, token):
+        sql = 'SELECT * FROM users WHERE password = %s;'
+        sql_params = (token,)
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            try:
+                cursor.execute(sql, sql_params)
+                return cursor.fetchone()
+            finally:
+                cursor.close()
+
+        return None
+
+    def update_password(self, email, password):
+        sql = 'UPDATE users SET password = %s WHERE email = %s'
+        sql_params = (password, email)
+
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            try:
+                cursor.execute(sql, sql_params)
+                conn.commit()
+            except MySQLdb.Error as error:
+                print error
+                return False
+            finally:
+                cursor.close()
+
+            return True
+
     def get_group(self, group):
         sql = 'SELECT * FROM groups WHERE groups.group = %s;'
         sql_params = (group,)

@@ -10,6 +10,7 @@ import gzip
 import cStringIO as StringIO
 import hashlib
 import base64
+import smtplib
 
 import click
 from bottle import Bottle, HTTPResponse, request, response, route, static_file, auth_basic, BaseRequest
@@ -18,6 +19,7 @@ from beaker.middleware import SessionMiddleware
 
 from dbaccess import MinaRepoDBA
 from export import MRExportFile
+from email.mime.text import MIMEText
 
 
 DEFAULT_PORT = 3780
@@ -326,7 +328,7 @@ class MinaRepoViewer(object):
             session['email'] = emails
             return self._json_response(user)
         else:
-            return self._json_response(user, 500)
+            return self._json_response(None, 500)
 
     def logout(self):
         session = request.environ.get('beaker.session')
@@ -361,6 +363,45 @@ class MinaRepoViewer(object):
             return self._json_response(user)
         else:
             return self._json_response("no login users", 500)
+
+    def forget_password(self):
+        email = request.params.get('email', None)
+        user = self._dba.get_user(email)
+
+        f = open('email.secret.json', 'r')
+        json_email = json.load(f)
+
+        from_address = json_email["from_address"]
+        to_address = email
+
+        text = """
+            みなレポ パスワードの再設定のリクエストを受け取りました。
+            下記のURLをクリックしてパスワードを再設定してください。
+            リクエストした覚えがない場合は、本メールを無視してください。\n
+            """
+        text += "http://[リセットページヘのURL]/?token="+ str(user["password"])
+        msg = MIMEText(text)
+        msg['Subject'] = "みなレポ パスワード再設定"
+        msg['From'] = from_address
+        msg['To'] = to_address
+
+        s = smtplib.SMTP_SSL(json_email["host"], int(json_email["port"]))
+        s.ehlo()
+        s.login(json_email["user"], json_email["pass"])
+        s.sendmail(from_address, to_address, msg.as_string())
+        s.quit()
+
+    def reset_password(self):
+        token = request.params.get('token', None)
+        password = request.params.get('password', None)
+        user = self._dba.get_user_by_token(token)
+        hash = hashlib.sha256()
+        hash.update(password)
+
+        ret = self._dba.update_password(user[1], hash.hexdigest())
+        if not ret:
+            return self._json_response(ret, 500)
+        return self._json_response(ret)
 
     def add_group(self):
         email = request.params.get('email', None)
@@ -397,6 +438,8 @@ class MinaRepoViewer(object):
         app.route('/users/switch_user', ['GET'], self.switch_user)
         app.route('/users/current_user', ['GET'], self.current_user)
         app.route('/users/add_group', ['GET'], self.add_group)
+        app.route('/users/forget_password', ['GET'], self.forget_password)
+        app.route('/users/reset_password', ['GET'], self.reset_password)
         app.route('/groups/create', ['POST'], self.insert_group)
 
         @app.route('/', method='GET')
