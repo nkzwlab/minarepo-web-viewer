@@ -96,7 +96,11 @@ class MinaRepoDBA(object):
                         if col == 'geo':
                             r_obj[col] = parse_geo_point(r_obj[col])
                     yield r_obj
-
+            except:
+                conn.rollback()
+                raise
+            else:
+                conn.commit()
             finally:
                 cursor.close()
 
@@ -116,6 +120,11 @@ class MinaRepoDBA(object):
                 for i, col in enumerate(col_keys):
                     ret[col] = result[i]
                 ret['geo'] = parse_geo_point(ret['geo'])
+            except:
+                conn.rollback()
+                raise
+            else:
+                conn.commit()
             finally:
                 cursor.close()
 
@@ -134,6 +143,7 @@ class MinaRepoDBA(object):
                 cursor.execute(sql, args)
                 conn.commit()
             except MySQLdb.Error as error:
+                conn.rollback()
                 print error
                 return False
             finally:
@@ -171,6 +181,12 @@ class MinaRepoDBA(object):
                     ret.append(item)
                 return ret
 
+            except:
+                conn.rollback()
+                raise
+            else:
+                conn.commit()
+
             finally:
                 cursor.close()
 
@@ -187,6 +203,7 @@ class MinaRepoDBA(object):
                 cursor.execute(sql, sql_params)
                 conn.commit()
             except MySQLdb.Error as error:
+                conn.rollback()
                 print error
                 return False
             finally:
@@ -203,6 +220,7 @@ class MinaRepoDBA(object):
                 cursor.execute(sql)
                 conn.commit()
             except MySQLdb.Error as error:
+                conn.rollback()
                 print error
                 return False
             finally:
@@ -219,6 +237,7 @@ class MinaRepoDBA(object):
                 cursor.execute(sql)
                 conn.commit()
             except MySQLdb.Error as error:
+                conn.rollback()
                 print error
                 return False
             finally:
