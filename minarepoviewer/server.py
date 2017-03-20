@@ -10,13 +10,16 @@ import gzip
 import cStringIO as StringIO
 import hashlib
 import base64
+import smtplib
 
 import click
 from bottle import Bottle, HTTPResponse, request, response, route, static_file, auth_basic, BaseRequest
 from jinja2 import Template
+from beaker.middleware import SessionMiddleware
 
 from dbaccess import MinaRepoDBA
 from export import MRExportFile
+from email.mime.text import MIMEText
 
 
 DEFAULT_PORT = 3780
@@ -212,6 +215,32 @@ class MinaRepoViewer(object):
             return self._json_response(ret, 500)
         return self._json_response(ret)
 
+    def insert_user(self):
+        auth = self.authenticate("Super")
+        if auth == True:
+            email = request.params.get('email', None)
+            password = request.params.get('password', None)
+            permission = request.params.get('permission', None)
+            hash = hashlib.sha256()
+            hash.update(password)
+            ret = self._dba.insert_user(email, hash.hexdigest(), permission)
+            if not ret:
+                return self._json_response(ret, 500)
+            return self._json_response(ret)
+        else:
+            return auth
+
+    def insert_group(self):
+        auth = self.authenticate("Super")
+        if auth == True:
+            group = request.params.get('group', None)
+            ret = self._dba.insert_group(group)
+            if not ret:
+                return self._json_response(ret, 500)
+            return self._json_response(ret)
+        else:
+            return auth
+
     def api_detail(self, report_id):
         report = self._dba.get_report(report_id)
         report['timestamp'] = report['timestamp'].strftime('%Y-%m-%d %H:%M:%S')
@@ -262,7 +291,135 @@ class MinaRepoViewer(object):
     def static(self, file_name):
         return static_file(file_name, root=self._static_dir)
 
+    def authenticate(self, permission):
+        session = request.environ.get('beaker.session')
+        if 'email' in session:
+            email = session['email'][0]
+            user = self._dba.get_user(email)
+
+            if permission == "Super":
+                if user[3] == "Super":
+                    return True
+                else:
+                    return self._json_response("not allowed", 500)
+            elif permission == "Power":
+                if user[3] == "Super" or user[3] == "Power":
+                    return True
+                else:
+                    return self._json_response("not allowed", 500)
+            else:
+                return self._json_response("unknown permission", 500)
+
+        else:
+            return self._json_response("no such user", 500)
+
+    def login(self):
+        email = request.params.get('email', None)
+        password = request.params.get('password', None)
+        user = self._dba.get_user(email)
+        if hashlib.sha256(password).hexdigest() == user["password"]:
+            session = request.environ.get('beaker.session')
+            if not 'email' in session:
+                emails = []
+            else:
+                emails = session['email']
+            if not email in emails:
+                emails.append(email)
+            session['email'] = emails
+            return self._json_response(user)
+        else:
+            return self._json_response(None, 500)
+
+    def logout(self):
+        session = request.environ.get('beaker.session')
+        if 'email' in session:
+            try:
+                session['email'].pop(0)
+            except ValueError:
+                return self._json_response("no such user", 500)
+        return self._json_response("success")
+
+    def switch_user(self):
+        email = request.params.get('email', None)
+        session = request.environ.get('beaker.session')
+        if email and 'email' in session:
+            print session['email']
+            try:
+                index = session['email'].index(email)
+                session['email'].pop(index)
+                session['email'].insert(0, email)
+                return self._json_response(self._dba.get_user(email))
+            except ValueError:
+                return self._json_response("no such user", 500)
+        else:
+            return self._json_response("no such user", 500)
+
+    def current_user(self):
+        session = request.environ.get('beaker.session')
+        if 'email' in session:
+            user = []
+            for email in session['email']:
+                user.append(self._dba.get_user(email))
+            return self._json_response(user)
+        else:
+            return self._json_response("no login users", 500)
+
+    def forget_password(self):
+        email = request.params.get('email', None)
+        user = self._dba.get_user(email)
+
+        f = open('email.secret.json', 'r')
+        json_email = json.load(f)
+
+        from_address = json_email["from_address"]
+        to_address = email
+
+        text = """
+            みなレポ パスワードの再設定のリクエストを受け取りました。
+            下記のURLをクリックしてパスワードを再設定してください。
+            リクエストした覚えがない場合は、本メールを無視してください。\n
+            """
+        text += "http://[リセットページヘのURL]/?token="+ str(user["password"])
+        msg = MIMEText(text)
+        msg['Subject'] = "みなレポ パスワード再設定"
+        msg['From'] = from_address
+        msg['To'] = to_address
+
+        s = smtplib.SMTP_SSL(json_email["host"], int(json_email["port"]))
+        s.ehlo()
+        s.login(json_email["user"], json_email["pass"])
+        s.sendmail(from_address, to_address, msg.as_string())
+        s.quit()
+
+    def reset_password(self):
+        token = request.params.get('token', None)
+        password = request.params.get('password', None)
+        user = self._dba.get_user_by_token(token)
+        hash = hashlib.sha256()
+        hash.update(password)
+
+        ret = self._dba.update_password(user[1], hash.hexdigest())
+        if not ret:
+            return self._json_response(ret, 500)
+        return self._json_response(ret)
+
+    def add_group(self):
+        email = request.params.get('email', None)
+        group = request.params.get('group', None)
+
+        ret = self._dba.add_group(email, group)
+        if not ret:
+            return self._json_response(ret, 500)
+        return self._json_response(ret)
+
+
     def create_wsgi_app(self):
+        session_opts = {
+            'session.type': 'file',
+            'session.cookie_expires': 300,
+            'session.data_dir': './data',
+            'session.auto': True
+        }
         app = Bottle()
         BaseRequest.MEMFILE_MAX = 1024 * 1024
 
@@ -275,6 +432,15 @@ class MinaRepoViewer(object):
         app.route('/api/report/<report_id>/comments/new', ['GET', 'POST'], self.api_comment_new)
         app.route('/export/reports', ['GET', 'POST'], self.export_reports)
         app.route('/post/new_report', ['POST'], self.insert_report)
+        app.route('/users/create', ['POST'], self.insert_user)
+        app.route('/users/login', ['GET'], self.login)
+        app.route('/users/logout', ['GET'], self.logout)
+        app.route('/users/switch_user', ['GET'], self.switch_user)
+        app.route('/users/current_user', ['GET'], self.current_user)
+        app.route('/users/add_group', ['GET'], self.add_group)
+        app.route('/users/forget_password', ['GET'], self.forget_password)
+        app.route('/users/reset_password', ['GET'], self.reset_password)
+        app.route('/groups/create', ['POST'], self.insert_group)
 
         @app.route('/', method='GET')
         @auth_basic(check)
@@ -294,6 +460,8 @@ class MinaRepoViewer(object):
             dtime = datetime.datetime.now()
             dtime_str = dtime.strftime('%Y-%m-%d-%H-%M-%S')
             return self._render('smartcheck.html.j2', timestamp=dtime_str)
+
+        app = SessionMiddleware(app, session_opts)
 
         return app
 
