@@ -454,6 +454,34 @@ class MinaRepoViewer(object):
             dtime_str = dtime.strftime('%Y-%m-%d-%H-%M-%S')
             return self._render('new-report.html.j2', timestamp=dtime_str)
 
+        @app.route('/login', method='GET')
+        @auth_basic(check)
+        def minarepo_login():
+            dtime = datetime.datetime.now()
+            dtime_str = dtime.strftime('%Y-%m-%d-%H-%M-%S')
+            return self._render('login.html.j2', timestamp=dtime_str)
+
+        @app.route('/newuser', method='GET')
+        @auth_basic(check)
+        def minarepo_newuser():
+            dtime = datetime.datetime.now()
+            dtime_str = dtime.strftime('%Y-%m-%d-%H-%M-%S')
+            return self._render('new-user.html.j2', timestamp=dtime_str)
+
+        @app.route('/forget_password', method='GET')
+        @auth_basic(check)
+        def minarepo_forgot_password():
+            dtime = datetime.datetime.now()
+            dtime_str = dtime.strftime('%Y-%m-%d-%H-%M-%S')
+            return self._render('forget-password.html.j2', timestamp=dtime_str)
+
+        @app.route('/reset_password', method='GET')
+        @auth_basic(check)
+        def minarepo_reset_password():
+            dtime = datetime.datetime.now()
+            dtime_str = dtime.strftime('%Y-%m-%d-%H-%M-%S')
+            return self._render('reset-password.html.j2', timestamp=dtime_str)
+
         @app.route('/smartcheck', method='GET')
         @auth_basic(check)
         def minarepo_smartcheck():
