@@ -276,6 +276,10 @@ class MinaRepoDBA(object):
         try:
             yield self._conn
         except Exception as e:
+            try:
+                self._reconnect()
+            except:
+                pass
             raise e
         else:
             self._last_comm = time.time()
