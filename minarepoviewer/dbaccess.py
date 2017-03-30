@@ -71,7 +71,7 @@ class MinaRepoDBA(object):
             geo_cond = 'MBRWithin(geo, GeomFromText(%s, 4326)' % linestring
             conditions.append(geo_cond)
 
-        cols = 'id, type, user, astext(geo), timestamp, image, comment, address, level, finished'
+        cols = 'id, type, user, st_astext(geo), timestamp, image, comment, address, level, finished'
         col_keys = [
             'id', 'type', 'user', 'geo', 'timestamp', 'image', 'comment', 'address', 'level', 'finished'
         ]
