@@ -13,7 +13,6 @@ $rtype-mini-icon-size: 20px;
 
 $table-font-size-smartphone: 12px;
 
-
 .mrv-hidden {
     display: none;
 }
@@ -219,7 +218,7 @@ DIV.mrv-detail {
     // height: 100px;
     @media screen and (min-width: 641px) {
         width: 95%;
-        height: 450px; 
+        height: 450px;
     }
     @media screen and (max-width: 640px) {
         width: 95%;
@@ -308,4 +307,9 @@ DIV.mrv-detail {
 
 .selected {
     background: rgba(255, 174, 0, 0.3) !important;
+}
+
+.date-btn-selected {
+    color: black !important;
+    background-color: #7ddbdb !important;
 }

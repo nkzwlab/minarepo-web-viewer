@@ -11,7 +11,21 @@ CREATE TABLE `minarepo` (
   `image` mediumtext,
   `comment` mediumtext,
   `address` varchar(255) DEFAULT NULL,
+  `level` int not null default 0,
+  `finished` tinyint default 0,
   PRIMARY KEY (`id`),
   SPATIAL KEY `minarepo_geo` (`geo`)
-) ENGINE=InnoDB AUTO_INCREMENT=38 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+drop table if exists `comment`;
+CREATE TABLE comment(
+  id bigint primary key auto_increment,
+  report_id bigint not null,
+  user varchar(100),
+  comment text,
+  `timestamp` timestamp not null default CURRENT_TIMESTAMP,
+  `image` text
+);
+
+create index comment_rid_ts on comment (report_id, timestamp);
