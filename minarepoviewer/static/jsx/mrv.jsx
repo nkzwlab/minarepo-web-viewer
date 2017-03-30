@@ -15,6 +15,32 @@ var SFC = {
   lng: 139.427309  // SFC経度
 }
 
+// きちんとボタンを押した時に時刻レンジを計算するためfunctionで持つ
+var trDay =          function() { return DateUtil.dayRange(new Date()); };
+var trWeek =         function() { return DateUtil.weekRange(new Date()); };
+var trMonth =        function() { return DateUtil.monthRange(new Date()); };
+var trWeekFromNow =  function() { return DateUtil.thisWeekRange(new Date()); };
+var trMonthFromNow = function() { return DateUtil.thisMonthRange(new Date()); };
+var trAll =          function() { return [null, null]; };
+
+var timeRangeButtonDefinitions = [
+  { label: '今日', range: trDay },
+  { label: '今週', range: trWeek},
+  { label: '今月', range: trMonth },
+  { label: '直近１週間', range: trWeekFromNow },
+  { label: '直近１ヶ月', range: trMonthFromNow },
+  { label: '全期間', range: trAll }
+];
+var defaultTimeRangeButton = '直近１ヶ月';
+var defaultTimeRangeButtonIndex = 0;
+for (var i = 0; i < timeRangeButtonDefinitions.length; i++) {
+  var label = timeRangeButtonDefinitions[i].label;
+  if (label === defaultTimeRangeButton) {
+    defaultTimeRangeButtonIndex = i;
+    break;
+  }
+}
+
 var TABLE_REPORTS_PER_PAGE = 10;
 var TABLE_REPORTS_MAX_PAGINATION_SHOW_PAGES = 5;  // [Prev] [1] [2] [3] [4] [5] [Next] みたいな奴の数字の数
 
@@ -22,6 +48,161 @@ if (TABLE_REPORTS_MAX_PAGINATION_SHOW_PAGES % 2 == 0) {
   console.error('TABLE_REPORTS_MAX_PAGINATION_SHOW_PAGES should be odd number! going to +1');
   TABLE_REPORTS_MAX_PAGINATION_SHOW_PAGES += 1;
 }
+
+var DateUtil = {
+  formatNum: function(num, keta) {
+    var sn = String(num);
+    var fusoku = keta - sn.length;
+    var ret = sn;
+    for (var i = 0; i < fusoku; i++) {
+      ret = '0' + ret;
+    }
+    return ret;
+  },
+  formatDate: function(d) {
+    var y = d.getYear() + 1900;
+    var m = d.getMonth() + 1;
+    var day = d.getDate();
+
+    var hour = d.getHours();
+    var min = d.getMinutes();
+    var sec = d.getSeconds();
+    var f = DateUtil.formatNum;
+    return f(y, 4) + '-' + f(m, 2) + '-' + f(day, 2) + ' ' + f(hour, 2) + ':' + f(min, 2) + ':' + f(sec, 2);
+  },
+  startOfDay: function(d) {
+    var y = d.getYear() + 1900;
+    var m = d.getMonth() + 1;
+    var d = d.getDate();
+    return new Date(y, m - 1, d, 0, 0, 0);
+  },
+  isLeapYear: function(y) {
+    if (y % 400 === 0) {
+      return true;
+    } else if (y % 100 === 0) {
+      return false;
+    } else if (y % 4 === 0) {
+      return true;
+    } else {
+      return false;
+    }
+  },
+  daysOfMonth: function(y, m) {
+    if (m === 2) {
+      return (DateUtil.isLeapYear(y)) ? 29 : 28;
+    } else if (m === 1 || m === 3 || m === 5 || m === 7 || m === 8 || m === 10 || m === 12) {
+      return 31;
+    } else {
+      return 30;
+    }
+  },
+  prevDay: function(y, m, d) {
+    if (d === 1) {
+      if (m == 1) {
+        return [y - 1, 12, 31];
+      } else {
+        var newMonth = m - 1;
+        var endOfNewMonth = DateUtil.daysOfMonth(y, newMonth);
+        return [y, newMonth, endOfNewMonth];
+      }
+    } else {
+      return [y, m, d - 1];
+    }
+  },
+  nextDay: function(y, m, d) {
+    var eom = DateUtil.daysOfMonth(y, m);
+    if (d === eom) {
+      if (m === 12) {
+        return [y + 1, 1, 1];
+      } else {
+        return [y, m + 1, 1];
+      }
+    } else {
+      return [y, m, d + 1];
+    }
+  },
+  ymdTuple: function(d) {
+    var year = d.getYear() + 1900;
+    var month = d.getMonth() + 1;
+    var day = d.getDate();
+    return [year, month, day];
+  },
+  tupleToDate: function(tuple) {
+    var y = tuple[0];
+    var m = tuple[1];
+    var d = tuple[2];
+    return new Date(y, m - 1, d, 0, 0, 0);
+  },
+  startOfWeek: function(d) {
+    var d = DateUtil.startOfDay(d);
+    var MONDAY = 1;  // starts from 0==Sunday
+    while (d.getDay() != MONDAY) {
+      var ymd = DateUtil.ymdTuple(d);
+      var prevDayTuple = DateUtil.prevDay(ymd[0], ymd[1], ymd[2]);
+      d = DateUtil.tupleToDate(prevDayTuple);
+    }
+    return d;
+  },
+  goForward: function(startDay, n) {
+    var tuple = DateUtil.ymdTuple(startDay);
+    var y = tuple[0];
+    var m = tuple[1];
+    var d = tuple[2];
+    for (var i = 0; i < n; i++) {
+      tuple = DateUtil.nextDay(y, m, d);
+      y = tuple[0];
+      m = tuple[1];
+      d = tuple[2];
+    }
+    return new Date(y, m - 1, d, 0, 0, 0);
+  },
+  goBackward: function(startDay, n) {
+    var tuple = DateUtil.ymdTuple(startDay);
+    var y = tuple[0];
+    var m = tuple[1];
+    var d = tuple[2];
+    for (var i = 0; i < n; i++) {
+      tuple = DateUtil.prevDay(y, m, d);
+      y = tuple[0];
+      m = tuple[1];
+      d = tuple[2];
+    }
+    return new Date(y, m - 1, d, 0, 0, 0);
+  },
+  weekRange: function(d) {
+    var startOfWeek = DateUtil.startOfWeek(d);
+    var endOfWeek = DateUtil.goForward(startOfWeek, 7);
+    return [startOfWeek, endOfWeek];
+  },
+  startOfMonth: function(d) {
+    var day = d.getDate();
+    var n = day - 1;
+    return DateUtil.goBackward(d, n);
+  },
+  monthRange: function(d) {
+    var startOfMonth = DateUtil.startOfMonth(d);
+    var y = d.getYear() + 1900;
+    var m = d.getMonth() + 1;
+    var daysOfMonth = DateUtil.daysOfMonth(y, m);
+    var endOfMonth = DateUtil.goForward(startOfMonth, daysOfMonth);
+    return [startOfMonth, endOfMonth];
+  },
+  thisWeekRange: function(d) {
+    var end = d;
+    var start = new Date(end.getTime() - (7 * 24 * 60 * 60 * 1000.0));
+    return [start, end];
+  },
+  thisMonthRange: function(d) {
+    var end = d;
+    var start = new Date(end.getTime() - (30 * 24 * 60 * 60 * 1000.0));
+    return [start, end];
+  },
+  dayRange: function(d) {
+    var startOfDay = DateUtil.startOfDay(d);
+    var nextDay = DateUtil.goForward(startOfDay, 1);
+    return [startOfDay, nextDay];
+  }
+};
 
 var reportTypes = [
   'ps_animal',         // 動物
@@ -397,7 +578,7 @@ var updatePins = function(reports) {
   });
 };
 
-var fetchReports = function(types, startDate, endDate, isUsingDate, topLeft, bottomRight, progress, query) {
+var fetchReports = function(types, startDate, endDate, topLeft, bottomRight, progress, query) {
   var url = '/api/reports';
 
   // console.debug('fetchReports: types=' + types);
@@ -411,9 +592,11 @@ var fetchReports = function(types, startDate, endDate, isUsingDate, topLeft, bot
     query: query
   };
 
-  if (isUsingDate) {
-    params.startDate = startDate;
-    params.endDate = endDate;
+  if (startDate !== null && startDate !== undefined) {
+    params.time_start = DateUtil.formatDate(startDate);
+  }
+  if (endDate !== null && endDate !== undefined) {
+    params.time_end = DateUtil.formatDate(endDate);
   }
 
   $.ajax({
@@ -463,9 +646,9 @@ var constants = {
   FETCHING_COMMENTS_SUCCESS: 'FETCHING_COMMENTS_SUCCESS',
   FETCHING_COMMENTS_FAILED: 'FETCHING_COMMENTS_FAILED',
   CLICK_PIN: 'CLICK_PIN',
-  UPDATE_START_DATE: 'UPDATE_START_DATE',
-  UPDATE_END_DATE: 'UPDATE_END_DATE',
-  TOGGLE_USE_DATE: 'TOGGLE_USE_DATE',
+  // UPDATE_START_DATE: 'UPDATE_START_DATE',
+  // UPDATE_END_DATE: 'UPDATE_END_DATE',
+  UPDATE_QUERY_RANGE: 'UPDATE_QUERY_RANGE',
   DRAG_MAP: 'DRAG_MAP',
   TOGGLE_TYPE_BUTTON: 'TOGGLE_TYPE_BUTTON',
   TOGGLE_PROGRESS_BUTTON: 'TOGGLE_PROGRESS_BUTTON',
@@ -484,7 +667,8 @@ var constants = {
   UPLOAD_COMMENT_IMAGE: 'UPLOAD_COMMENT_IMAGE',
   CHECK_FINISHED: 'CHECK_FINISHED',
   REVERT_FINISHED: 'REVERT_FINISHED',
-  UPDATE_SEARCH_QUERY: 'UPDATE_SEARCH_QUERY'
+  UPDATE_SEARCH_QUERY: 'UPDATE_SEARCH_QUERY',
+  UPDATE_TIME_RANGE_BUTTON_INDEX: 'UPDATE_TIME_RANGE_BUTTON_INDEX'
 };
 
 var MinaRepoStore = Fluxxor.createStore({
@@ -501,7 +685,6 @@ var MinaRepoStore = Fluxxor.createStore({
     this.clickedPinReportId = null;
     this.startDate = null;
     this.endDate = null;
-    this.isUsingDate = false;
     this.isFetchingReports = false;
     this.isFetchingReportsFailed = false;
     this.isFetchingDetail = false;
@@ -519,6 +702,7 @@ var MinaRepoStore = Fluxxor.createStore({
     this.checkFinished = false;
     this.revertFinished = false;
     this.searchQuery = '';
+    this.timeRangeButtonIndex = defaultTimeRangeButtonIndex;  // all
 
     this.bindActions(constants.START_FETCHING_REPORTS, this.onStartFetchingReports);
     this.bindActions(constants.FETCHING_REPORTS_SUCCESS, this.onFetchingReportsSuccess);
@@ -530,9 +714,9 @@ var MinaRepoStore = Fluxxor.createStore({
     this.bindActions(constants.FETCHING_COMMENTS_SUCCESS, this.onFetchingCommentsSuccess);
     this.bindActions(constants.FETCHING_COMMENTS_FAILED, this.onFetchingCommentsFailed);
     this.bindActions(constants.CLICK_PIN, this.onClickPin);
-    this.bindActions(constants.UPDATE_START_DATE, this.onUpdateStartDate);
-    this.bindActions(constants.UPDATE_END_DATE, this.onUpdateEndDate);
-    this.bindActions(constants.TOGGLE_USE_DATE, this.onToggleUseDate);
+    // this.bindActions(constants.UPDATE_START_DATE, this.onUpdateStartDate);
+    // this.bindActions(constants.UPDATE_END_DATE, this.onUpdateEndDate);
+    this.bindActions(constants.UPDATE_QUERY_RANGE, this.onUpdateQueryRange);
     this.bindActions(constants.DRAG_MAP, this.onDragMap);
     this.bindActions(constants.TOGGLE_TYPE_BUTTON, this.onToggleTypeButton);
     this.bindActions(constants.TOGGLE_PROGRESS_BUTTON, this.onToggleProgressButton);
@@ -552,6 +736,7 @@ var MinaRepoStore = Fluxxor.createStore({
     this.bindActions(constants.REVERT_FINISHED, this.onRevertFinished);
     this.bindActions(constants.UPDATE_COMMENT_PANEL, this.onUpdateCommentPanel);
     this.bindActions(constants.UPDATE_SEARCH_QUERY, this.onUpdateSearchQuery);
+    this.bindActions(constants.UPDATE_TIME_RANGE_BUTTON_INDEX, this.onUpdateTimeRangeButtonIndex);
   },
   getState: function() {
     return {
@@ -562,7 +747,6 @@ var MinaRepoStore = Fluxxor.createStore({
       clickedPinReportId: this.clickedPinReportId,
       startDate: this.startDate,
       endDate: this.endDate,
-      isUsingDate: this.isUsingDate,
       isFetchingReports: this.isFetchingReports,
       isFetchingReportsFailed: this.isFetchingReportsFailed,
       isFetchingDetail: this.isFetchingDetail,
@@ -580,7 +764,8 @@ var MinaRepoStore = Fluxxor.createStore({
       checkFinished: this.checkFinished,
       revertFinished: this.revertFinished,
       selectedProgress: this.selectedProgress,
-      searchQuery: this.searchQuery
+      searchQuery: this.searchQuery,
+      timeRangeButtonIndex: this.timeRangeButtonIndex
     }
   },
   onStartFetchingReports: function(data) {
@@ -637,16 +822,17 @@ var MinaRepoStore = Fluxxor.createStore({
     // console.debug('updated clickedPinReportId! ' + data.reportId);
     this.emit('change');
   },
-  onUpdateStartDate: function(data) {
+  // onUpdateStartDate: function(data) {
+  //   this.startDate = data.startDate;
+  //   this.emit('change');
+  // },
+  // onUpdateEndDate: function(data) {
+  //   this.endDate = data.endDate;
+  //   this.emit('change');
+  // },
+  onUpdateQueryRange: function(data) {
     this.startDate = data.startDate;
-    this.emit('change');
-  },
-  onUpdateEndDate: function(data) {
     this.endDate = data.endDate;
-    this.emit('change');
-  },
-  onToggleUseDate: function(data) {
-    this.isUsingDate = !this.isUsingDate;
     this.emit('change');
   },
   onDragMap: function(data) {
@@ -766,6 +952,10 @@ var MinaRepoStore = Fluxxor.createStore({
   onUpdateSearchQuery: function(data) {
     this.searchQuery = data.query;
     this.emit('change');
+  },
+  onUpdateTimeRangeButtonIndex: function(data) {
+    this.timeRangeButtonIndex = data.timeRangeButtonIndex;
+    this.emit('change');
   }
 });
 
@@ -804,16 +994,16 @@ var actions = {
     var reportId = data.reportId;
     this.dispatch(constants.CLICK_PIN, { reportId: reportId });
   },
-  onUpdateStartDate: function(data) {
-    var startDate = data.startDate;
-    this.dispatch(constants.UPDATE_START_DATE, { startDate: startDate });
-  },
-  onUpdateEndDate: function(data) {
-    var endDate = data.endDate;
-    this.dispatch(constants.UPDATE_END_DATE, { endDate: endDate });
-  },
-  onToggleUseDate: function(data) {
-    this.dispatch(constants.TOGGLE_USE_DATE);
+  // onUpdateStartDate: function(data) {
+  //   var startDate = data.startDate;
+  //   this.dispatch(constants.UPDATE_START_DATE, { startDate: startDate });
+  // },
+  // onUpdateEndDate: function(data) {
+  //   var endDate = data.endDate;
+  //   this.dispatch(constants.UPDATE_END_DATE, { endDate: endDate });
+  // },
+  onUpdateQueryRange: function(data) {
+    this.dispatch(constants.UPDATE_QUERY_RANGE, data);
   },
   onDragMap: function(data) {
     var argData = {
@@ -877,6 +1067,9 @@ var actions = {
   },
   onUpdateSearchQuery: function(data) {
     this.dispatch(constants.UPDATE_SEARCH_QUERY, {query: data.query});
+  },
+  onUpdateTimeRangeButtonIndex: function(data) {
+    this.dispatch(constants.UPDATE_TIME_RANGE_BUTTON_INDEX, { timeRangeButtonIndex: data.timeRangeButtonIndex });
   }
 };
 
@@ -1101,9 +1294,63 @@ var ReportDetail = React.createClass({
   }
 });
 
+var DateControlButton = React.createClass({
+  onClick: function(event) {
+    var label = this.props.label;
+    var selected = this.props.selected;
+    var index = this.props.index;
+    console.debug('@@DateControlButton clicked: label=' + label + ', selected=' + selected + ', index=' + index);
+    var rangeCalculator = this.props.range;
+    var range = rangeCalculator();
+    var startDate = range[0];
+    var endDate = range[1];
+    flux.actions.onUpdateTimeRangeButtonIndex({ timeRangeButtonIndex: index });
+    flux.actions.onUpdateQueryRange({ startDate: startDate, endDate: endDate });
+    setTimeout(function() {
+      var state = flux.stores.MinaRepoStore.getState();
+      fetchReports(
+        selectSelected(state.selectedTypes),
+        state.startDate,
+        state.endDate,
+        state.mapTopLeft,
+        state.mapBottomRight,
+        state.selectedProgress,
+        state.searchQuery
+      );
+    }, 0);
+  },
+  render: function() {
+    var label = this.props.label;
+    var selected = this.props.selected;
+    var index = this.props.index;
+    var cssClass = classNames({
+      'button': true,
+      'date-btn-selected': selected
+    });
+    return <div className="large-2 columns text-center">
+      <button onClick={this.onClick} className={cssClass}>{label}</button>
+    </div>
+  }
+});
+
 var DateController = React.createClass({
   render: function() {
-    return '';  // FIXME: alphaバージョンではなしにする？
+    // return '';  // FIXME: alphaバージョンではなしにする？
+    var timeRangeButtonIndex = this.props.timeRangeButtonIndex;
+    // var now = new Date();
+    var i = 0;
+    var buttonDefinitions = _.map(timeRangeButtonDefinitions, function(d) {
+      var idx = i++;
+      var selected = (timeRangeButtonIndex === idx);
+      return { label: d.label, range: d.range, selected: selected, index: idx };
+    });
+    var buttons = _.map(buttonDefinitions, function(d) {
+      return <DateControlButton {...d} />;
+    });
+
+    return <div className="row">
+      {buttons}
+    </div>;
   }
 });
 
@@ -1317,7 +1564,6 @@ var TypeButtons = React.createClass({
         selectSelected(that.props.selectedTypes),
         that.props.startDate,
         that.props.endDate,
-        that.props.isUsingDate,
         that.props.mapTopLeft,
         that.props.mapBottomRight,
         that.props.selectedProgress,
@@ -1337,7 +1583,6 @@ var TypeButtons = React.createClass({
         selectSelected(that.props.selectedTypes),
         that.props.startDate,
         that.props.endDate,
-        that.props.isUsingDate,
         that.props.mapTopLeft,
         that.props.mapBottomRight,
         that.props.selectedProgress,
@@ -1389,7 +1634,6 @@ var ProgressButtons = React.createClass({
           selectSelected(that.props.selectedTypes),
           that.props.startDate,
           that.props.endDate,
-          that.props.isUsingDate,
           that.props.mapTopLeft,
           that.props.mapBottomRight,
           that.props.selectedProgress,
@@ -1428,7 +1672,6 @@ var ReporterSearch = React.createClass({
         selectSelected(that.props.selectedTypes),
         that.props.startDate,
         that.props.endDate,
-        that.props.isUsingDate,
         that.props.mapTopLeft,
         that.props.mapBottomRight,
         that.props.selectedProgress,
@@ -1443,7 +1686,6 @@ var ReporterSearch = React.createClass({
       selectSelected(this.props.selectedTypes),
       this.props.startDate,
       this.props.endDate,
-      this.props.isUsingDate,
       this.props.mapTopLeft,
       this.props.mapBottomRight,
       this.props.selectedProgress,
@@ -1502,7 +1744,6 @@ var ReportCommentPanel = React.createClass({
       selectSelected(that.props.selectedTypes),
       that.props.startDate,
       that.props.endDate,
-      that.props.isUsingDate,
       that.props.mapTopLeft,
       that.props.mapBottomRight,
       that.props.selectedProgress,
@@ -1757,7 +1998,6 @@ var MinaRepoViewer = React.createClass({
       selectedTypes={this.props.selectedTypes}
       startDate={this.props.startDate}
       endDate={this.props.endDate}
-      isUsingDate={this.props.isUsingDate}
       mapTopLeft={this.props.mapTopLeft}
       mapBottomRight={this.props.mapBottomRight}
       selectedProgress={this.props.selectedProgress}
@@ -1770,10 +2010,8 @@ var MinaRepoViewer = React.createClass({
       searchQuery={this.props.searchQuery}
     />;
 
-    var dateController = <dateController
-      startDate={this.props.startDate}
-      endDate={this.props.endDate}
-      isUsingDate={this.props.isUsingDate}
+    var dateController = <DateController
+      timeRangeButtonIndex={this.props.timeRangeButtonIndex}
     />;
 
     var reporterSearch = <ReporterSearch
@@ -1898,6 +2136,7 @@ var MinaRepoViewer = React.createClass({
       <hr/>
       {toggleButtonRow}
       {reportFilter}
+      {dateController}
       {/*
       {filterToggleButton}
       {dateController}
@@ -1925,7 +2164,6 @@ var MinaRepoViewerApp = React.createClass({
       selectSelected(this.state.selectedTypes),
       this.state.startDate,
       this.state.endDate,
-      this.state.isUsingDate,
       this.state.mapTopLeft,
       this.state.mapBottomRight,
       this.state.selectedProgress,
@@ -1944,7 +2182,6 @@ var MinaRepoViewerApp = React.createClass({
       startDate={s.startDate}
       endDate={s.endDate}
       selectedReport={s.selectedReport}
-      isUsingDate={s.isUsingDate}
       isFetchingReports={s.isFetchingReports}
       isFetchingReportsFailed={s.isFetchingReportsFailed}
       isFetchingDetail={s.isFetchingDetail}
@@ -1962,6 +2199,7 @@ var MinaRepoViewerApp = React.createClass({
       checkFinished={s.checkFinished}
       revertFinished={s.revertFinished}
       searchQuery={s.searchQuery}
+      timeRangeButtonIndex={s.timeRangeButtonIndex}
     />;
   }
 });
