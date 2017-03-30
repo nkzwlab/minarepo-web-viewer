@@ -83,8 +83,6 @@ class MinaRepoDBA(object):
             sql = 'SELECT %s FROM minarepo WHERE %s ORDER BY timestamp DESC;' % (cols, cond)
 
         with self.connection() as conn:
-            print 'sql=%s' % sql
-            print 'sql-args=%s' % args
             cursor = conn.cursor()
             try:
                 cursor.execute(sql, args)
