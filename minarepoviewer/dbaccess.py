@@ -25,6 +25,8 @@ class MinaRepoDBA(object):
     def _get_reports(
             self, t_start=None, t_end=None, nodes=None,
             progress=None, query=None, top_left=None, bottom_right=None):
+        self.ensure_connection()
+
         args = []
         conditions = []
 
@@ -82,74 +84,51 @@ class MinaRepoDBA(object):
             cond = ' AND '.join(conditions)
             sql = 'SELECT %s FROM minarepo WHERE %s ORDER BY timestamp DESC;' % (cols, cond)
 
-        with self.connection() as conn:
-            cursor = conn.cursor()
-            try:
-                cursor.execute(sql, args)
-                result = cursor.fetchall()
-                for row in result:
-                    r_obj = dict()
-                    for i, col in enumerate(col_keys):
-                        r_obj[col] = row[i]
-                        if col == 'geo':
-                            r_obj[col] = parse_geo_point(r_obj[col])
-                    yield r_obj
-            except:
-                conn.rollback()
-                raise
-            else:
-                conn.commit()
-            finally:
-                cursor.close()
+        with self.cursor() as cursor:
+            cursor.execute(sql, args)
+            result = cursor.fetchall()
+            for row in result:
+                r_obj = dict()
+                for i, col in enumerate(col_keys):
+                    r_obj[col] = row[i]
+                    if col == 'geo':
+                        r_obj[col] = parse_geo_point(r_obj[col])
+                yield r_obj
 
     def get_report(self, report_id):
+        self.ensure_connection()
+
         cols = 'id, type, user, st_astext(geo), timestamp, image, comment, address, level, finished'
         col_keys = [
             'id', 'type', 'user', 'geo', 'timestamp', 'image', 'comment', 'address', 'level', 'finished'
         ]
         sql = 'SELECT %s FROM minarepo WHERE id = %%s;' % cols
-
-        with self.connection() as conn:
+        with self.cursor() as cursor:
             ret = dict()
-            cursor = conn.cursor()
-            try:
-                cursor.execute(sql, (report_id,))
-                result = list(cursor.fetchall())[0]
-                for i, col in enumerate(col_keys):
-                    ret[col] = result[i]
-                ret['geo'] = parse_geo_point(ret['geo'])
-            except:
-                conn.rollback()
-                raise
-            else:
-                conn.commit()
-            finally:
-                cursor.close()
+            cursor.execute(sql, (report_id,))
+            result = list(cursor.fetchall())[0]
+            for i, col in enumerate(col_keys):
+                ret[col] = result[i]
+            ret['geo'] = parse_geo_point(ret['geo'])
 
         return ret
 
     def insert_report(self, repo_type, user, lat, lon, img, comm, key):
+        self.ensure_connection()
+
         timestamp = strftime('%Y-%m-%d %H:%M:%S')
         addr = geo2addr(lat, lon, key)
         sql = "INSERT INTO minarepo (type, user, geo, timestamp, image, comment, address) " \
             "VALUES (%s, %s, ST_GeomFromText('POINT(%s %s)'), %s, %s, %s, %s)"
         args = (repo_type, user, float(lat), float(lon), timestamp, img, comm, addr)
 
-        with self.connection() as conn:
-            cursor = conn.cursor()
-            try:
-                cursor.execute(sql, args)
-                conn.commit()
-            except MySQLdb.Error as error:
-                conn.rollback()
-                print error
-                return False
-            finally:
-                cursor.close()
-
+        with self.cursor() as cursor:
+            cursor.execute(sql, args)
             return True
 
     def get_comments(self, report_id, time_start=None, time_end=None):
+        self.ensure_connection()
+
         sql_params = []
         sql_conds = []
 
@@ -164,83 +143,39 @@ class MinaRepoDBA(object):
         sql_conds.append('(report_id = %s)')
         sql_params.append(report_id)
 
-        with self.connection() as conn:
-            cursor = conn.cursor()
-            try:
-                cols = ('id', 'report_id', 'user', 'comment', 'image', 'timestamp')
-                cond = ' AND '.join(sql_conds)
-                sql = 'SELECT %s FROM comment WHERE %s ORDER BY timestamp ASC;' % (','.join(cols), cond)
-                cursor.execute(sql, sql_params)
-                ret = []
-                for row in cursor.fetchall():
-                    item = dict()
-                    for i, col in enumerate(cols):
-                        item[col] = row[i]
-                    ret.append(item)
-                return ret
-
-            except:
-                conn.rollback()
-                raise
-            else:
-                conn.commit()
-
-            finally:
-                cursor.close()
+        with self.cursor() as cursor:
+            cols = ('id', 'report_id', 'user', 'comment', 'image', 'timestamp')
+            cond = ' AND '.join(sql_conds)
+            sql = 'SELECT %s FROM comment WHERE %s ORDER BY timestamp ASC;' % (','.join(cols), cond)
+            cursor.execute(sql, sql_params)
+            ret = []
+            for row in cursor.fetchall():
+                item = dict()
+                for i, col in enumerate(cols):
+                    item[col] = row[i]
+                ret.append(item)
+            return ret
 
     def insert_comment(self, report_id, comment, image, user='', timestamp=None):
         if timestamp is None:
             timestamp = datetime.datetime.now()
 
-        with self.connection() as conn:
+        with self.cursor() as cursor:
             sql = 'INSERT INTO comment(report_id, user, comment, image, timestamp) VALUES (%s, %s, %s, %s, %s);'
             sql_params = (report_id, user, comment, image, timestamp)
-
-            cursor = conn.cursor()
-            try:
-                cursor.execute(sql, sql_params)
-                conn.commit()
-            except MySQLdb.Error as error:
-                conn.rollback()
-                print error
-                return False
-            finally:
-                cursor.close()
-
+            cursor.execute(sql, sql_params)
             return True
 
     def finish_report_correspondence(self, report_id):
-        with self.connection() as conn:
+        with self.cursor() as cursor:
             sql = 'UPDATE minarepo SET finished=1 WHERE id=%s;' % report_id
-
-            cursor = conn.cursor()
-            try:
-                cursor.execute(sql)
-                conn.commit()
-            except MySQLdb.Error as error:
-                conn.rollback()
-                print error
-                return False
-            finally:
-                cursor.close()
-
+            cursor.execute(sql)
             return True
 
     def revert_report_correspondence(self, report_id):
-        with self.connection() as conn:
+        with self.cursor() as cursor:
             sql = 'UPDATE minarepo SET finished=0 WHERE id=%s;' % report_id
-
-            cursor = conn.cursor()
-            try:
-                cursor.execute(sql)
-                conn.commit()
-            except MySQLdb.Error as error:
-                conn.rollback()
-                print error
-                return False
-            finally:
-                cursor.close()
-
+            cursor.execute(sql)
             return True
 
     def _close(self):
@@ -281,3 +216,31 @@ class MinaRepoDBA(object):
             raise e
         else:
             self._last_comm = time.time()
+
+    def ensure_connection(self):
+        try:
+            with self.cursor() as cur:
+                cur.execute('select count(id) from minarepo;')
+        except:
+            pass
+
+    @contextmanager
+    def cursor(self):
+        with self.connection() as conn:
+            err = None
+            try:
+                cursor = conn.cursor()
+                yield cursor
+            except Exception as e:
+                err = e
+                raise
+            finally:
+                try:
+                    cursor.close()
+                except:
+                    pass
+
+                if err:
+                    conn.rollback()
+                else:
+                    conn.commit()
