@@ -30,7 +30,7 @@ sys.setdefaultencoding('utf-8')
 
 
 def parse_time(t_start):
-    chunks = re.split(_pat_time_sep, _pat_time_sep)
+    chunks = re.split(_pat_time_sep, t_start)
     y, m, d, hour, min, sec = [ int(c) for c in chunks ]
     return datetime.datetime(y, m, d, hour, min, sec)
 
@@ -43,11 +43,11 @@ def check(username, password):
     auth_check_word = f.readline()
     f.close()
 
-    hs= hashlib.sha1()
+    hs = hashlib.sha1()
     hs.update(password.encode("utf-8"))
     login_word = username + ":{SHA}" + str(base64.b64encode(hs.digest()).decode("utf-8"))
 
-    return auth_check_word.strip() ==login_word.strip()
+    return (auth_check_word.strip() == login_word.strip())
 
 
 class MinaRepoViewer(object):
