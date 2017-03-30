@@ -1327,7 +1327,7 @@ var DateControlButton = React.createClass({
       'button': true,
       'date-btn-selected': selected
     });
-    return <div className="large-2 columns text-center">
+    return <div className="small-2 columns text-center">
       <button onClick={this.onClick} className={cssClass}>{label}</button>
     </div>
   }
