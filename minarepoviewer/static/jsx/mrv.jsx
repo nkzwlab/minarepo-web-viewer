@@ -41,6 +41,7 @@ for (var i = 0; i < timeRangeButtonDefinitions.length; i++) {
   }
 }
 
+
 var TABLE_REPORTS_PER_PAGE = 10;
 var TABLE_REPORTS_MAX_PAGINATION_SHOW_PAGES = 5;  // [Prev] [1] [2] [3] [4] [5] [Next] みたいな奴の数字の数
 
@@ -203,6 +204,11 @@ var DateUtil = {
     return [startOfDay, nextDay];
   }
 };
+
+var defaultTimeRangeComputer = timeRangeButtonDefinitions[defaultTimeRangeButtonIndex].range;
+var defaultTimeRange = defaultTimeRangeComputer();
+var defaultStartDate = defaultTimeRange[0];
+var defaultEndDate = defaultTimeRange[1];
 
 var reportTypes = [
   'ps_animal',         // 動物
@@ -608,6 +614,17 @@ var fetchReports = function(types, startDate, endDate, topLeft, bottomRight, pro
       var reports = data.result.reports;
       // console.debug('got reports! len=' + reports.length);
       flux.actions.onFetchingReportsSuccess({ reports: reports });
+      if (0 < reports.length) {
+        var firstReportId = reports[0].id;
+        setTimeout(function() {
+          flux.actions.onClickPin({ reportId: firstReportId });
+          setTimeout(function() {
+            flux.actions.onTableSetPage({ page: 1 });
+          }, 0);
+        }, 0);
+      } else {
+        // TODO
+      }
     },
     error: function() {
       flux.actions.onFetchingReportsFailed();
@@ -683,8 +700,8 @@ var MinaRepoStore = Fluxxor.createStore({
     this.selectedTypes = selectedTypes;
     this.selectedProgress = 'none';
     this.clickedPinReportId = null;
-    this.startDate = null;
-    this.endDate = null;
+    this.startDate = defaultStartDate;
+    this.endDate = defaultEndDate;
     this.isFetchingReports = false;
     this.isFetchingReportsFailed = false;
     this.isFetchingDetail = false;
