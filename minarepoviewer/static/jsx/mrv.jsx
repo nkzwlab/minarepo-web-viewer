@@ -614,17 +614,11 @@ var fetchReports = function(types, startDate, endDate, topLeft, bottomRight, pro
       var reports = data.result.reports;
       // console.debug('got reports! len=' + reports.length);
       flux.actions.onFetchingReportsSuccess({ reports: reports });
-      if (0 < reports.length) {
-        var firstReportId = reports[0].id;
+      setTimeout(function() {
         setTimeout(function() {
-          flux.actions.onClickPin({ reportId: firstReportId });
-          setTimeout(function() {
-            flux.actions.onTableSetPage({ page: 1 });
-          }, 0);
+          flux.actions.onTableSetPage({ page: 1 });
         }, 0);
-      } else {
-        // TODO
-      }
+      }, 0);
     },
     error: function() {
       flux.actions.onFetchingReportsFailed();
