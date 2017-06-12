@@ -289,7 +289,9 @@ var SmartCheckTable = React.createClass({
 
       var picResult = <div className="row tablediv bottom align-middle">
         <div className="column small-3 text-center">対応写真等</div>
-        <div className="column small-9 text-center sidebar-left highbox">　</div>
+        <div className="column small-9 text-left sidebar-left highbox">
+          みなレポID: {this.props.detail.id}
+        </div>
       </div>;
     }
 
