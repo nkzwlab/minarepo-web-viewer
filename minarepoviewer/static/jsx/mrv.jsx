@@ -269,7 +269,7 @@ var type2textShort = {
   'ps_zansa': '残渣',
   'ps_forgetGarbage': '拾忘',
   'ps_others': '他',
-  'ps_recycleStation': 'リ'
+  'ps_recycleStation': '資源'
 };
 
 var reportLevel = [

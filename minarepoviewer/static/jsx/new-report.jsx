@@ -62,7 +62,7 @@ var type2textShort = {
   'ps_zansa': '残渣',
   'ps_forgetGarbage': '回収忘れ',
   'ps_others': '他',
-  'ps_recycleStation': 'リ'
+  'ps_recycleStation': '資源'
 };
 
 var level2text = [
