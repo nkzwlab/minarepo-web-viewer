@@ -684,7 +684,8 @@ var constants = {
   CHECK_FINISHED: 'CHECK_FINISHED',
   REVERT_FINISHED: 'REVERT_FINISHED',
   UPDATE_SEARCH_QUERY: 'UPDATE_SEARCH_QUERY',
-  UPDATE_TIME_RANGE_BUTTON_INDEX: 'UPDATE_TIME_RANGE_BUTTON_INDEX'
+  UPDATE_TIME_RANGE_BUTTON_INDEX: 'UPDATE_TIME_RANGE_BUTTON_INDEX',
+  TOGGLE_SHOW_MAP_PINS: 'TOGGLE_SHOW_MAP_PINS'
 };
 
 var MinaRepoStore = Fluxxor.createStore({
@@ -719,6 +720,7 @@ var MinaRepoStore = Fluxxor.createStore({
     this.revertFinished = false;
     this.searchQuery = '';
     this.timeRangeButtonIndex = defaultTimeRangeButtonIndex;  // all
+    this.showMapPins = true;
 
     this.bindActions(constants.START_FETCHING_REPORTS, this.onStartFetchingReports);
     this.bindActions(constants.FETCHING_REPORTS_SUCCESS, this.onFetchingReportsSuccess);
@@ -753,6 +755,7 @@ var MinaRepoStore = Fluxxor.createStore({
     this.bindActions(constants.UPDATE_COMMENT_PANEL, this.onUpdateCommentPanel);
     this.bindActions(constants.UPDATE_SEARCH_QUERY, this.onUpdateSearchQuery);
     this.bindActions(constants.UPDATE_TIME_RANGE_BUTTON_INDEX, this.onUpdateTimeRangeButtonIndex);
+    this.bindActions(constants.TOGGLE_SHOW_MAP_PINS, this.onToggleShowMapPins)
   },
   getState: function() {
     return {
@@ -781,7 +784,8 @@ var MinaRepoStore = Fluxxor.createStore({
       revertFinished: this.revertFinished,
       selectedProgress: this.selectedProgress,
       searchQuery: this.searchQuery,
-      timeRangeButtonIndex: this.timeRangeButtonIndex
+      timeRangeButtonIndex: this.timeRangeButtonIndex,
+      showMapPins: this.showMapPins
     }
   },
   onStartFetchingReports: function(data) {
@@ -972,6 +976,10 @@ var MinaRepoStore = Fluxxor.createStore({
   onUpdateTimeRangeButtonIndex: function(data) {
     this.timeRangeButtonIndex = data.timeRangeButtonIndex;
     this.emit('change');
+  },
+  onToggleShowMapPins: function(data) {
+    this.showMapPins = !this.showMapPins;
+    this.emit('change');
   }
 });
 
@@ -1086,6 +1094,9 @@ var actions = {
   },
   onUpdateTimeRangeButtonIndex: function(data) {
     this.dispatch(constants.UPDATE_TIME_RANGE_BUTTON_INDEX, { timeRangeButtonIndex: data.timeRangeButtonIndex });
+  },
+  onToggleShowMapPins: function(data) {
+    this.dispatch(constants.TOGGLE_SHOW_MAP_PINS, data);
   }
 };
 
@@ -1392,7 +1403,14 @@ var ReportMap = React.createClass({
     // updatePinsをよぶ
     // console.debug('ReportMap: componentWillReceiveProps() called');
     var reports = newProps.reports;
-    updatePins(reports);
+    if (newProps.showMapPins) {
+      updatePins(reports);
+    } else {
+      updatePins([]);
+    }
+  },
+  togglePinVisibility: function(event) {
+    flux.actions.onToggleShowMapPins();
   },
   render: function() {
     var nReports = this.props.reports.length;
@@ -1409,9 +1427,18 @@ var ReportMap = React.createClass({
       msgReportNum = '' + nReports + '件のレポート';
     }
 
+    var toggleButton = null;
+    if (this.props.showMapPins) {
+      toggleButton = <button className="button secondary" onClick={this.togglePinVisibility}>非表示にする</button>;
+    } else {
+      toggleButton = <button className="button" onClick={this.togglePinVisibility}>表示する</button>;
+    }
+    toggleButton = <div>{toggleButton}</div>;
+
     return <div className="large-6 columns mrv-map-container">
       {msgReportNum}
       <div id="report-map" key="report-map"></div>
+      {toggleButton}
     </div>;
   }
 });
@@ -2080,6 +2107,7 @@ var MinaRepoViewer = React.createClass({
       clickedPinReportId={this.props.clickedPinReportId}
       isFetchingReports={this.props.isFetchingReports}
       isFetchingReportsFailed={this.props.isFetchingReportsFailed}
+      showMapPins={this.props.showMapPins}
     />;
 
     var isShowingTable = this.props.isShowingTable;
@@ -2216,6 +2244,7 @@ var MinaRepoViewerApp = React.createClass({
       revertFinished={s.revertFinished}
       searchQuery={s.searchQuery}
       timeRangeButtonIndex={s.timeRangeButtonIndex}
+      showMapPins={s.showMapPins}
     />;
   }
 });
