@@ -245,7 +245,7 @@ var type2pinInfo = {
 var type2text = {
   'ps_animal': '動物の死骸',
   'ps_illegalGarbage': '不法投棄ごみ',
-  'ps_garbageStation': '回収されていないゴミ',
+  'ps_garbageStation': 'ゴミ置き場',
   'ps_graffiti': '落書き',
   'ps_damage': '痛んだ道路',
   'ps_streetlight': '問題のある街灯',
@@ -260,7 +260,7 @@ var type2text = {
 var type2textShort = {
   'ps_animal': '動物',
   'ps_illegalGarbage': '投棄',
-  'ps_garbageStation': 'ゴミ',
+  'ps_garbageStation': '置場',
   'ps_graffiti': '落書',
   'ps_damage': '道路',
   'ps_streetlight': '街灯',
