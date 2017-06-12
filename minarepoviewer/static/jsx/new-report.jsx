@@ -44,7 +44,7 @@ var type2text = {
   'ps_streetlight': '問題のある街灯',
   'ps_kyun': 'キュン',
   'ps_disaster': '災害の発生',
-  'ps_zansa': 'ゴミの出し間違い',
+  'ps_zansa': '残渣',
   'ps_forgetGarbage': 'ゴミの回収し忘れ',
   'ps_others': 'その他',
   'ps_recycleStation': '資源集積所'
@@ -60,7 +60,7 @@ var type2textShort = {
   'ps_kyun': '♡♡',
   'ps_disaster': '災害',
   'ps_zansa': '残渣',
-  'ps_forgetGarbage': '回収忘れ',
+  'ps_forgetGarbage': '拾い忘れ',
   'ps_others': '他',
   'ps_recycleStation': '資源'
 };
