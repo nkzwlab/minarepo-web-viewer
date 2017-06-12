@@ -303,7 +303,7 @@ var ReportMap = React.createClass({
     reportMap = new google.maps.Map(document.getElementById('report-map'), {
         center: INIT_MAP_CENTER,
         zoom: 15,
-        mapTypeControl: false,
+        mapTypeControl: true,
         streetViewControl: false
       }
     );
