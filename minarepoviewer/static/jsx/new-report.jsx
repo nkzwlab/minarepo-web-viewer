@@ -31,7 +31,8 @@ var reportTypes = [
   'ps_disaster',       // 災害
   'ps_zansa',          // 残渣
   'ps_forgetGarbage',  // 回収忘れ
-  'ps_others'          // その他
+  'ps_others',          // その他
+  'ps_recycleStation'  // 資源集積所
 ];
 
 var type2text = {
@@ -45,7 +46,8 @@ var type2text = {
   'ps_disaster': '災害の発生',
   'ps_zansa': 'ゴミの出し間違い',
   'ps_forgetGarbage': 'ゴミの回収し忘れ',
-  'ps_others': 'その他'
+  'ps_others': 'その他',
+  'ps_recycleStation': '資源集積所'
 };
 
 var type2textShort = {
@@ -59,7 +61,8 @@ var type2textShort = {
   'ps_disaster': '災害',
   'ps_zansa': '残渣',
   'ps_forgetGarbage': '回収忘れ',
-  'ps_others': '他'
+  'ps_others': '他',
+  'ps_recycleStation': 'リ'
 };
 
 var level2text = [
@@ -270,7 +273,7 @@ var TypeButtons = React.createClass({
       </div>;
     });
 
-    var descRow = <div className="row"> 
+    var descRow = <div className="row">
       <div className="small-10 small-centered columns">
         <p>(2) レポート種類を選んでください [<font color="red">必須</font>]</p>
       </div>
@@ -368,7 +371,7 @@ var ReportMap = React.createClass({
     };
   },
   render: function() {
-    var descRow = <div className="row"> 
+    var descRow = <div className="row">
       <div className="small-10 small-centered columns">
         <p>(3) 場所を指定してください [<font color="red">必須</font>]</p>
       </div>
@@ -396,7 +399,7 @@ var ReportLevel = React.createClass({
   render: function() {
     var selectedLevel = this.props.selectedLevel;
 
-    var descRow = <div className="row"> 
+    var descRow = <div className="row">
       <div className="small-10 small-centered columns">
         <p>(4) 対応レベルを選択してください [<font color="blue">任意</font>]</p>
       </div>
