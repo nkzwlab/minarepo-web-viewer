@@ -10,13 +10,18 @@ import gzip
 import cStringIO as StringIO
 import hashlib
 import base64
+from contextlib import contextmanager, closing
 
 import click
 from bottle import Bottle, HTTPResponse, request, response, route, static_file, auth_basic, BaseRequest
 from jinja2 import Template
+from beaker.middleware import SessionMiddleware
+
 
 from dbaccess import MinaRepoDBA
 from export import MRExportFile
+from util import make_alchemy_session_class, random_str
+from models import GeoLayer
 
 
 DEFAULT_PORT = 3780
@@ -70,6 +75,19 @@ class MinaRepoViewer(object):
 
         self._static_dir = static_dir
         self._template_dir = template_dir
+        self._sess_cls = make_alchemy_session_class(self._mysql_conf)
+        self._session_dir = '/tmp/minarepo.session'
+        if not os.path.exists(self._session_dir):
+            os.makedirs(self._session_dir)
+
+    @contextmanager
+    def session(self):
+        with closing(self._sess_cls()) as session:
+            yield session
+
+    @property
+    def beaker(self):
+        return request.environ.get('beaker.session')
 
     def _gzip(self, s):
         out = StringIO.StringIO()
@@ -262,8 +280,101 @@ class MinaRepoViewer(object):
     def static(self, file_name):
         return static_file(file_name, root=self._static_dir)
 
+    def kml_index(self):
+        session = self.beaker
+        print 'kml_index'
+        err, suc = [], []
+        kml_layer_name = ''
+        with self.session() as s:
+            try:
+                if request.method == 'POST':
+                    csrf = request.params.get('csrf', '')
+                    if session.get('csrf', '') != csrf:
+                        print 'csrf token mismatch'
+                        r = HTTPResponse(status=302)
+                        r.set_header('Location: /kml/')
+                        raise r
+
+                    print 'method = POST'
+                    name = request.params.get('name', '')
+                    name = name.decode('utf-8')
+                    upload = request.files.get('kml_file', '')
+                    if not name:
+                        err.append(u'KMLレイヤーの名前を入力してください')
+                    else:
+                        kml_layer_name = name
+
+                    if not upload:
+                        err.append(u'ファイルがアップロードされていません')
+
+                    if not err:
+                        tmp_fname = '/tmp/minarepo_kml_%s' % random_str(40)
+                        upload.save(tmp_fname)
+                        try:
+                            with open(tmp_fname, 'rb') as fh:
+                                fdata = fh.read()
+
+                            geo_layer = GeoLayer(
+                                name=name,
+                                content=fdata,
+                                file_size=len(fdata)
+                            )
+                            s.add(geo_layer)
+                        finally:
+                            os.remove(tmp_fname)
+
+                    suc.append(u'KMLレイヤーを作成しました: %s' % name)
+                    kml_layer_name = ''
+
+                layers = s.query(GeoLayer).order_by(GeoLayer.created.desc())
+                layers = [ l.to_api_dict() for l in layers ]
+
+            except:
+                s.rollback()
+                raise
+            else:
+                s.commit()
+                print 'commited'
+
+        session['csrf'] = random_str(100)
+
+        return self._render('kml.html.j2', err=err, suc=suc,
+            layers=layers, kml_layer_name=kml_layer_name, session=self.beaker)
+
+    def kml_file(self, kml_id):
+        with self.session() as s:
+            mime_type = 'application/vnd.google-earth.kml+xml'
+            geo_layer = s.query(GeoLayer).filter_by(id=int(kml_id)).first()
+            if not geo_layer:
+                raise HTTPResponse(status=404, body='404 Not Found')
+
+            resp = HTTPResponse(status=200, body=geo_layer.content)
+            resp.set_header('Content-Type', mime_type)
+            resp.set_header('Content-Length', str(geo_layer.file_size))
+            if request.params.get('download', '') == 'true':
+                fname = geo_layer.name + '.kml'
+                fname = fname.replace('/', '_')
+                resp.set_header('Content-Disposition', 'attachment; filename="%s"' % fname)
+            else:
+                resp.set_header('Content-Disposition', 'inline')
+            return resp
+
+    def api_kml_catalog(self):
+        with self.session() as s:
+            layers = s.query(GeoLayer)
+            ret = [ dict(id=l.id, name=l.name) for l in layers ]
+            return self._json_response(dict(layers=ret))
+
+    def api_kml_delete(self, kml_id):
+        with self.sessioN() as s:
+            geo_layer = s.query(GeoLayer).filter_by(id=int(kml_id)).first()
+            if not geo_layer:
+                raise HTTPResponse(status=404, body='404 Not Found')
+
+            return self._json_response(dict(layer=dict(id=geo_layer.id, name=geo_layer.name)))
+
     def create_wsgi_app(self):
-        app = Bottle()
+        app = Bottle(catchall=False)
         BaseRequest.MEMFILE_MAX = 1024 * 1024
 
         app.route('/static/<file_name:path>', ['GET'], self.static)
@@ -275,6 +386,11 @@ class MinaRepoViewer(object):
         app.route('/api/report/<report_id>/comments/new', ['GET', 'POST'], self.api_comment_new)
         app.route('/export/reports', ['GET', 'POST'], self.export_reports)
         app.route('/post/new_report', ['POST'], self.insert_report)
+
+        app.route('/api/kml/catalog', ['GET'], self.api_kml_catalog)
+        app.route('/api/kml/delete/<kml_id>', ['DELETE'], self.api_kml_delete)
+        app.route('/kml/', ['GET', 'POST'], self.kml_index)
+        app.route('/kml/file/<kml_id>', ['GET', 'POST'], self.kml_file)
 
         @app.route('/', method='GET')
         @auth_basic(check)
@@ -295,6 +411,14 @@ class MinaRepoViewer(object):
             dtime_str = dtime.strftime('%Y-%m-%d-%H-%M-%S')
             return self._render('smartcheck.html.j2', timestamp=dtime_str)
 
+        session_opts = {
+            'session.type': 'file',
+            'session.cookie_expires': 60 * 60 * 24 * 14,
+            'session.data_dir': self._session_dir,
+            'session.auto': True
+        }
+        app = SessionMiddleware(app, session_opts)
+
         return app
 
 
@@ -308,18 +432,35 @@ def build_wsgi_app(mysql_conf, static_dir, template_dir):
 @click.option('-m', '--mysql-conf', help='MySQL conf file(json)')
 @click.option('-s', '--static-dir', default=None)
 @click.option('-t', '--template-dir', default=None)
-@click.option('-p', '--port', type=int, default=DEFAULT_PORT)
+@click.option('-p', '--port', type=int, default=DEFAULT_PORT, help='port (default: %d)' % DEFAULT_PORT)
 def main(mysql_conf, static_dir, template_dir, port):
     from wsgiref.simple_server import make_server
 
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)
 
+    here = os.path.dirname(__file__)
+    if static_dir is None:
+        static_dir = os.path.abspath(os.path.join(here, './static'))
+        print 'default static_dir: %s' % static_dir
+
+    if template_dir is None:
+        template_dir = os.path.abspath(os.path.join(here, './template'))
+        print 'default template_dir: %s' % template_dir
+
+    if not os.path.exists(static_dir):
+        sys.stderr.write('static_dir not exists: %s\n' % static_dir)
+        sys.exit(1)
+
+    if not os.path.exists(template_dir):
+        sys.stderr.write('template_dir not exists: %s\n' % template_dir)
+        sys.exit(1)
+
     app = MinaRepoViewer(mysql_conf, static_dir, template_dir)
     wsgi_app = app.create_wsgi_app()
 
     server = make_server('', port, wsgi_app)
-    print 'port=%d' % port
+    print 'started at http://localhost:%d/' % port
     server.serve_forever()
 
 

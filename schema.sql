@@ -29,3 +29,12 @@ CREATE TABLE comment(
 );
 
 create index comment_rid_ts on comment (report_id, timestamp);
+
+drop table if exists `geo_layer`;
+create table geo_layer(
+  id bigint primary key auto_increment,
+  name varchar(100) not null,
+  file_size integer not null,
+  content longtext not null,
+  created datetime not null
+);

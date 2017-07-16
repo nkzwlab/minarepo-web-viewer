@@ -1,0 +1,77 @@
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/foundation.min.css">
+    <link rel="stylesheet" href="/static/css/mrv.css">
+    <script src="/static/js/vendor/jquery-2.1.4.min.js"></script>
+    <script src="/static/js/vendor/foundation.min.js"></script>
+    <title>KMLファイルのアップロード</title>
+  </head>
+  <body>
+    <div class="row">
+      <div class="large-12 columns">
+        <h1>KMLファイルのアップロード</h1>
+
+        <div>
+          &gt;&gt;<a href="/">もどる</a>
+        </div>
+      </div>
+
+      <div class="large-12 columns">
+        <!-- これまでアップロードされたファイルのリスト? -->
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>KMLレイヤー名</th>
+              <th>作成日時</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for layer in layers %}
+              <tr>
+                <td>{{layer.id}}</td>
+                <td>{{layer.name}} (<a href="/kml/file/{{layer.id}}?download=true" target="_blank">ダウンロード</a>)</td>
+                <td>{{layer.created}}</td>
+              </tr>
+            {% endfor %}
+            {% if not layers %}
+              <tr>
+                <td colspan="3">
+                  KMLレイヤーは１件も登録されていません
+                </td>
+              </tr>
+            {% endif%}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="large-12 columns">
+        <!-- アップロードフォーム -->
+        <h2>KMLレイヤーを追加する</h2>
+
+        {% if err %}
+          <ul class="error">
+          {% for em in err %}
+            <li>{{em}}</li>
+          {% endfor %}
+          </ul>
+        {% elif suc %}
+          <ul class="success">
+          {% for sm in suc %}
+            <li>{{sm}}</li>
+          {% endfor %}
+          </ul>
+        {% endif %}
+
+        <form action="/kml/" method="POST" enctype="multipart/form-data">
+          <input type="hidden" name="csrf" value="{{session.csrf}}">
+          KMLレイヤーの名前: <input type="text" name="name" size="20" value="{{kml_layer_name}}"><br/>
+          <input type="file" name="kml_file"><br/>
+          <input type="submit" value="KMLファイルをアップロード">
+        </form>
+      </div>
+    </div>
+  </body>
+</html>
