@@ -1526,7 +1526,15 @@ var ReportMap = React.createClass({
       var myIndex = i;
       var onLayerClick = function() {
         console.log("myIndex=" + myIndex);
-        var kmlUrl = '/kml/file/' + ly.id;
+        var proto = location.protocol;
+        var domain = location.hostname;
+        var port = location.port;
+        if (proto === 'http:' && port !== 80) {
+          domain = domain + ":" + port;
+        } else if (proto === 'https:' && port !== 443) {
+          domain = domain + ":" + port;
+        }
+        var kmlUrl = proto + '//' + domain + '/kml/file/' + ly.id;
         console.log("layer clicked: " + ly.name + ", url=" + kmlUrl);
 
         if (kmlLayer !== null) {
