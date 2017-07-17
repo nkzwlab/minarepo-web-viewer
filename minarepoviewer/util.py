@@ -4,8 +4,23 @@ import random
 import re
 import requests
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
 
 _pat_geo_point = re.compile(r'\APOINT\((-?[0-9\.]+) (-?[0-9\.]+)\)\Z')
+
+
+def make_alchemy_session_class(my_cnf):
+    uri = 'mysql://%s:%s@%s/%s?charset=utf8mb4&use_unicode=1' % (
+            my_cnf['user'],
+            my_cnf['pass'],
+            my_cnf['host'],
+            my_cnf['db']
+        )
+    engine = create_engine(uri, encoding='utf8', echo=False)
+    return sessionmaker(bind=engine, expire_on_commit=False)
+
 
 
 def parse_geo_point(geo_point_str):

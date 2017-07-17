@@ -2,6 +2,9 @@
 var reportMap = null;
 var placedReportIds = {};  // id => marker
 var infoWindow = null;
+var kmlLayer = null;
+
+var NULL_KML_LAYER = { id: 0, name: "(地図レイヤなし)" };
 
 var reportHashPattern = /^\#report=([0-9]+)$/;
 
@@ -176,7 +179,7 @@ var DateUtil = {
     return [startOfWeek, endOfWeek];
   },
   startOfMonth: function(d) {
-    var day = d.getDate();
+     var day = d.getDate();
     var n = day - 1;
     return DateUtil.goBackward(d, n);
   },
@@ -651,6 +654,25 @@ var fetchDetail = function(reportId) {
   flux.actions.onStartFetchingDetail();
 };
 
+var fetchKmlCatalog = function() {
+  console.log('going to start fetching KML catalog');
+  var url = '/api/kml/catalog';
+  $.ajax({
+    url: url,
+    method: 'GET',
+    data: {},
+    success: function(data, status, jqxhr) {
+      var layers = data.result.layers;
+      console.log('fetchKmlCatalog: received ' + JSON.stringify(layers));
+      flux.actions.onFetchingKmlCatalogSuccess({ layers: layers });
+    },
+    error: function() {
+      flux.actions.onFetchingKmlCatalogFailed();
+    }
+  });
+  flux.actions.onStartFetchingKmlCatalog();
+};
+
 var constants = {
   START_FETCHING_REPORTS: 'START_FETCHING_REPORTS',
   FETCHING_REPORTS_SUCCESS: 'FETCHING_REPORTS_SUCCESS',
@@ -661,6 +683,9 @@ var constants = {
   START_FETCHING_COMMENTS: 'START_FETCHING_COMMENTS',
   FETCHING_COMMENTS_SUCCESS: 'FETCHING_COMMENTS_SUCCESS',
   FETCHING_COMMENTS_FAILED: 'FETCHING_COMMENTS_FAILED',
+  START_FETCHING_KML_CATALOG: 'START_FETCHING_KML_CATALOG',
+  FETCHING_KML_CATALOG_SUCCESS: 'FETCHING_KML_CATALOG_SUCCESS',
+  FETCHING_KML_CATALOG_FAILED: 'FETCHING_KML_CATALOG_FAILED',
   CLICK_PIN: 'CLICK_PIN',
   // UPDATE_START_DATE: 'UPDATE_START_DATE',
   // UPDATE_END_DATE: 'UPDATE_END_DATE',
@@ -685,7 +710,8 @@ var constants = {
   REVERT_FINISHED: 'REVERT_FINISHED',
   UPDATE_SEARCH_QUERY: 'UPDATE_SEARCH_QUERY',
   UPDATE_TIME_RANGE_BUTTON_INDEX: 'UPDATE_TIME_RANGE_BUTTON_INDEX',
-  TOGGLE_SHOW_MAP_PINS: 'TOGGLE_SHOW_MAP_PINS'
+  TOGGLE_SHOW_MAP_PINS: 'TOGGLE_SHOW_MAP_PINS',
+  SELECT_LAYER: 'SELECT_LAYER'
 };
 
 var MinaRepoStore = Fluxxor.createStore({
@@ -708,6 +734,8 @@ var MinaRepoStore = Fluxxor.createStore({
     this.isFetchingDetailFailed = false;
     this.isFetchingComments = false;
     this.isFetchingCommentsFailed = false;
+    this.isFetchingKmlCatalog = false;
+    this.isFetchingKmlCatalogFailed = false;
     this.mapTopLeft = null;
     this.mapBottomRight = null;
     this.tableSelectedPage = 1;
@@ -721,6 +749,8 @@ var MinaRepoStore = Fluxxor.createStore({
     this.searchQuery = '';
     this.timeRangeButtonIndex = defaultTimeRangeButtonIndex;  // all
     this.showMapPins = true;
+    this.selectedLayerIndex = 0;
+    this.layers = [ {id: 0, name: '(地図レイヤなし)'} ];
 
     this.bindActions(constants.START_FETCHING_REPORTS, this.onStartFetchingReports);
     this.bindActions(constants.FETCHING_REPORTS_SUCCESS, this.onFetchingReportsSuccess);
@@ -756,6 +786,10 @@ var MinaRepoStore = Fluxxor.createStore({
     this.bindActions(constants.UPDATE_SEARCH_QUERY, this.onUpdateSearchQuery);
     this.bindActions(constants.UPDATE_TIME_RANGE_BUTTON_INDEX, this.onUpdateTimeRangeButtonIndex);
     this.bindActions(constants.TOGGLE_SHOW_MAP_PINS, this.onToggleShowMapPins)
+    this.bindActions(constants.START_FETCHING_KML_CATALOG, this.onStartFetchingKmlCatalog);
+    this.bindActions(constants.FETCHING_KML_CATALOG_SUCCESS, this.onFetchingKmlCatalogSuccess);
+    this.bindActions(constants.FETCHING_KML_CATALOG_FAILED, this.onFetchingKmlCatalogFailed);
+    this.bindActions(constants.SELECT_LAYER, this.onSelectLayer);
   },
   getState: function() {
     return {
@@ -772,6 +806,8 @@ var MinaRepoStore = Fluxxor.createStore({
       isFetchingDetailFailed: this.isFetchingDetailFailed,
       isFetchingComments: this.isFetchingComments,
       isFetchingCommentsFailed: this.isFetchingCommentsFailed,
+      isFetchingKmlCatalog: this.isFetchingKmlCatalog,
+      isFetchingKmlCatalogFailed: this.isFetchingKmlCatalogFailed,
       mapTopLeft: this.mapTopLeft,
       mapBottomRight: this.mapBottomRight,
       tableSelectedPage: this.tableSelectedPage,
@@ -785,7 +821,9 @@ var MinaRepoStore = Fluxxor.createStore({
       selectedProgress: this.selectedProgress,
       searchQuery: this.searchQuery,
       timeRangeButtonIndex: this.timeRangeButtonIndex,
-      showMapPins: this.showMapPins
+      showMapPins: this.showMapPins,
+      selectedLayerIndex: this.selectedLayerIndex,
+      layers: this.layers
     }
   },
   onStartFetchingReports: function(data) {
@@ -980,6 +1018,39 @@ var MinaRepoStore = Fluxxor.createStore({
   onToggleShowMapPins: function(data) {
     this.showMapPins = !this.showMapPins;
     this.emit('change');
+  },
+  onStartFetchingKmlCatalog: function(data) {
+    this.isFetchingKmlCatalog = true;
+    this.isFetchingKmlCatalogFailed = false;
+    this.emit('change');
+  },
+  onFetchingKmlCatalogSuccess: function(data) {
+    // this.layers = data.layers;
+    console.debug('onFetchingKmlCatalogSuccess');
+    var layers = [ NULL_KML_LAYER ];
+    _.each(data.layers, function(ly) {
+      layers.push(ly);
+    });
+
+    // debug
+    _.each(layers, function(ly) {
+      console.log("@ layer id=" + ly.id + ", name=" + ly.name);
+
+    });
+
+    this.layers = layers;
+    this.isFetchingKmlCatalog = false;
+    this.isFetchingKmlCatalogFailed = false;
+    this.emit('change');
+  },
+  onFetchingKmlCatalogFailed: function(data) {
+    this.isFetchingKmlCatalog = false;
+    this.isFetchingKmlCatalogFailed = true;
+    this.emit('change');
+  },
+  onSelectLayer: function(data) {
+    this.selectedLayerIndex = data.selectedLayerIndex;
+    this.emit('change');
   }
 });
 
@@ -1097,6 +1168,18 @@ var actions = {
   },
   onToggleShowMapPins: function(data) {
     this.dispatch(constants.TOGGLE_SHOW_MAP_PINS, data);
+  },
+  onStartFetchingKmlCatalog: function(data) {
+    this.dispatch(constants.START_FETCHING_KML_CATALOG, {});
+  },
+  onFetchingKmlCatalogSuccess: function(data) {
+    this.dispatch(constants.FETCHING_KML_CATALOG_SUCCESS, data);
+  },
+  onFetchingKmlCatalogFailed: function(data) {
+    this.dispatch(constants.FETCHING_KML_CATALOG_FAILED, data);
+  },
+  onSelectLayer: function(data) {
+    this.dispatch(constants.SELECT_LAYER, data);
   }
 };
 
@@ -1435,10 +1518,69 @@ var ReportMap = React.createClass({
     }
     toggleButton = <div>{toggleButton}</div>;
 
+    var selectedLayerIndex = this.props.selectedLayerIndex;
+    // console.log("selectedLayerIndex=" + selectedLayerIndex);
+    // console.log("layers.length=" + this.props.layers.length);
+    var i = 0;
+    var layerItems = _.map(this.props.layers, function(ly) {
+      var myIndex = i;
+      var onLayerClick = function() {
+        console.log("myIndex=" + myIndex);
+        var proto = location.protocol;
+        var domain = location.hostname;
+        var port = location.port;
+        if (proto === 'http:' && port !== 80) {
+          domain = domain + ":" + port;
+        } else if (proto === 'https:' && port !== 443) {
+          domain = domain + ":" + port;
+        }
+        var kmlUrl = proto + '//' + domain + '/kml/file/' + ly.id;
+        console.log("layer clicked: " + ly.name + ", url=" + kmlUrl);
+
+        if (kmlLayer !== null) {
+          console.log("set kmlLayer = null");
+          kmlLayer.setMap(null);  // 前に設定したレイヤがあったら消す
+        }
+
+        if (ly.id === 0) {
+          kmlLayer = null;
+          console.log('empty layer selection: no layer');
+        }
+
+        if (reportMap === null) {
+          console.log("??? map is null");
+        } else {
+          console.log("map is not null");
+        }
+
+        var newKmlLayer = new google.maps.KmlLayer({
+          url: kmlUrl,
+          map: reportMap,
+          preserveViewport: true,
+          zIndex: 0
+        });
+        console.log("created new layer: i=" + myIndex);
+        kmlLayer = newKmlLayer;
+
+        flux.actions.onSelectLayer({ selectedLayerIndex: myIndex });
+        $('#layerdrop').foundation('close');
+      };
+      var btnClass = (i === selectedLayerIndex) ? "button" : "button secondary";
+      i++;
+      return <div>
+        <button className={btnClass} onClick={onLayerClick}>{ly.name}</button>
+      </div>;
+    });
+    var selLayerName = this.props.layers[selectedLayerIndex].name;
+
     return <div className="large-6 columns mrv-map-container">
       {msgReportNum}
       <div id="report-map" key="report-map"></div>
       {toggleButton}
+      <button id="layerMenu" className="button" type="button" data-toggle="layerdrop">レイヤー: {selLayerName}</button>
+      <div id="layerdrop" className="dropdown-pane" data-position="bottom" data-alignment="center" data-dropdown data-auto-focus="true">
+        {layerItems}
+      </div>
     </div>;
   }
 });
@@ -2108,6 +2250,10 @@ var MinaRepoViewer = React.createClass({
       isFetchingReports={this.props.isFetchingReports}
       isFetchingReportsFailed={this.props.isFetchingReportsFailed}
       showMapPins={this.props.showMapPins}
+      isFetchingKmlCatalog={this.props.isFetchingKmlCatalog}
+      isFetchingKmlCatalogFailed={this.props.isFetchingKmlCatalogFailed}
+      selectedLayerIndex={this.props.selectedLayerIndex}
+      layers={this.props.layers}
     />;
 
     var isShowingTable = this.props.isShowingTable;
@@ -2213,6 +2359,8 @@ var MinaRepoViewerApp = React.createClass({
       this.state.selectedProgress,
       this.state.searchQuery
     );
+
+    fetchKmlCatalog();
   },
   render: function() {
     var s = this.state;
@@ -2232,6 +2380,8 @@ var MinaRepoViewerApp = React.createClass({
       isFetchingDetailFailed={s.isFetchingDetailFailed}
       isFetchingComments={s.isFetchingComments}
       isFetchingCommentsFailed={s.isFetchingCommentsFailed}
+      isFetchingKmlCatalog={s.isFetchingKmlCatalog}
+      isFetchingKmlCatalogFailed={s.isFetchingKmlCatalogFailed}
       mapTopLeft={s.mapTopLeft}
       mapBottomRight={s.mapBottomRight}
       tableSelectedPage={s.tableSelectedPage}
@@ -2245,6 +2395,8 @@ var MinaRepoViewerApp = React.createClass({
       searchQuery={s.searchQuery}
       timeRangeButtonIndex={s.timeRangeButtonIndex}
       showMapPins={s.showMapPins}
+      selectedLayerIndex={s.selectedLayerIndex}
+      layers={s.layers}
     />;
   }
 });
@@ -2256,6 +2408,11 @@ var main  = function() {
   );
 
   $(document).foundation();
+  // $(document).foundation({
+  //   dropdown: {
+  //     active_class: 'open'
+  //   }
+  // });
 
   var hashMatch = window.location.hash.match(reportHashPattern);
   if (hashMatch) {
