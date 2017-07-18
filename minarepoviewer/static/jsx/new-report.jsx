@@ -1,5 +1,6 @@
 var BOSHSERVICE = 'http://133.27.171.93/http-bind/';
 var XMPPSERVER = 'soxfujisawa.ht.sfc.keio.ac.jp';
+var client;
 
 var reportMap = null;
 var reportValues = {
@@ -77,50 +78,102 @@ var type2img = function(type, isSelected) {
 };
 
 var publishReport = function(type) {
-  var device = new Device(type);
+  client = new SoxClient(BOSHSERVICE, XMPPSERVER);
 
-  for (key in reportValues) {
-    var transducer = new Transducer();
-    transducer.name = key;
-    transducer.id = key;
-    device.addTransducer(transducer);
+  var soxEventListener = new SoxEventListener();
+  soxEventListener.connected = function(soxEvent) {
+    console.debug('Connected!' + soxEvent);
+    var device = new Device(type);
 
-    var data = new SensorData(key, new Date(), reportValues[key], reportValues[key]);
-    transducer.setSensorData(data);
-  }
+    for (key in reportValues) {
+      var transducer = new Transducer();
+      transducer.name = key;
+      transducer.id = key;
+      device.addTransducer(transducer);
 
-  client.publishDevice(device);
+      var data = new SensorData(key, new Date(), reportValues[key], reportValues[key]);
+      transducer.setSensorData(data);
+    }
+
+    client.publishDevice(device);
+  };
+  soxEventListener.connectionFailed = function(soxEvent) {
+    var toastMsg = '<div class="toast-msg">\
+      <p>サーバに接続できませんでした．ページを再読み込みしてください</p>\
+    </div>';
+    showToast('Error', toastMsg, '2500');
+    console.debug('Connection Failed' + soxEvent);
+  };
+  soxEventListener.resolved = function(soxEvent) {
+    console.debug('Resolved' + soxEvent);
+  };
+  soxEventListener.resolveFailed = function(soxEvent) {
+    console.debug('Resolve Failed' + soxEvent);
+  };
+  soxEventListener.published = function(soxEvent) {
+    $.toast({
+      hideAfter: '1500',
+      heading: 'Success',
+      icon: 'success',
+      text: '<p class="toast-msg">送信しました</p>',
+      allowToastClose: true,
+      position: 'mid-center',
+      loader: false,
+      afterHidden: function() {
+        window.location.href = "/";
+      }
+    });
+    console.debug('Published' + soxEvent);
+    client.disconnect();
+    console.debug('Published: going to disconnect');
+  };
+  soxEventListener.publishFailed = function(soxEvent) {
+    var toastMsg = '<div class="toast-msg">\
+      <p>送信できませんでした．しばらく経ってから再度お試しください</p>\
+    </div>';
+    showToast('Error', toastMsg, '3000');
+    console.debug('Publish Failed' + soxEvent);
+  };
+  soxEventListener.disconnected = function(soxEvent) {
+    console.debug('sox disconnected');
+    client = null;
+    console.debug('sox disconnected: set client null');
+  };
+
+  client.setSoxEventListener(soxEventListener);
+  client.connect();
+  //hoge
 };
 
-var postReport = function(type) {
-  reportValues['type'] = type;
-  $.ajax({
-    type: 'POST',
-    url: '/post/new_report',
-    data: reportValues,
-    dataType: 'json',
-    success: function(data) {
-      $.toast({
-        hideAfter: '1500',
-        heading: 'Success',
-        icon: 'success',
-        text: '<p class="toast-msg">送信しました</p>',
-        allowToastClose: true,
-        position: 'mid-center',
-        loader: false,
-        afterHidden: function() {
-          window.location.href = "/";
-        }
-      });
-    },
-    error: function() {
-      var toastMsg = '<div class="toast-msg">\
-        <p>送信できませんでした．しばらく経ってから再度お試しください</p>\
-      </div>';
-      showToast('Error', toastMsg, '3000');
-    }
-  });
-}
+// var postReport = function(type) {
+//   reportValues['type'] = type;
+//   $.ajax({
+//     type: 'POST',
+//     url: '/post/new_report',
+//     data: reportValues,
+//     dataType: 'json',
+//     success: function(data) {
+//       $.toast({
+//         hideAfter: '1500',
+//         heading: 'Success',
+//         icon: 'success',
+//         text: '<p class="toast-msg">送信しました</p>',
+//         allowToastClose: true,
+//         position: 'mid-center',
+//         loader: false,
+//         afterHidden: function() {
+//           window.location.href = "/";
+//         }
+//       });
+//     },
+//     error: function() {
+//       var toastMsg = '<div class="toast-msg">\
+//         <p>送信できませんでした．しばらく経ってから再度お試しください</p>\
+//       </div>';
+//       showToast('Error', toastMsg, '3000');
+//     }
+//   });
+// }
 
 var showToast = function(type, msg, msec) {
   $.toast({
@@ -490,50 +543,6 @@ var ReportImage = React.createClass({
 
 var PublishButton = React.createClass({
   componentDidMount: function() {
-    client = new SoxClient(BOSHSERVICE, XMPPSERVER);
-
-    var soxEventListener = new SoxEventListener();
-    soxEventListener.connected = function(soxEvent) {
-      console.debug('Connected!' + soxEvent);
-    };
-    soxEventListener.connectionFailed = function(soxEvent) {
-      var toastMsg = '<div class="toast-msg">\
-        <p>サーバに接続できませんでした．ページを再読み込みしてください</p>\
-      </div>';
-      showToast('Error', toastMsg, '2500');
-      console.debug('Connection Failed' + soxEvent);
-    };
-    soxEventListener.resolved = function(soxEvent) {
-      console.debug('Resolved' + soxEvent);
-    };
-    soxEventListener.resolveFailed = function(soxEvent) {
-      console.debug('Resolve Failed' + soxEvent);
-    };
-    soxEventListener.published = function(soxEvent) {
-      $.toast({
-        hideAfter: '1500',
-        heading: 'Success',
-        icon: 'success',
-        text: '<p class="toast-msg">送信しました</p>',
-        allowToastClose: true,
-        position: 'mid-center',
-        loader: false,
-        afterHidden: function() {
-          window.location.href = "/";
-        }
-      });
-      console.debug('Published' + soxEvent);
-    };
-    soxEventListener.publishFailed = function(soxEvent) {
-      var toastMsg = '<div class="toast-msg">\
-        <p>送信できませんでした．しばらく経ってから再度お試しください</p>\
-      </div>';
-      showToast('Error', toastMsg, '3000');
-      console.debug('Publish Failed' + soxEvent);
-    };
-
-    client.setSoxEventListener(soxEventListener);
-    client.connect();
   },
   onButtonClick: function() {
     return function(event) {
