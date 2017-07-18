@@ -18,7 +18,12 @@ def make_alchemy_session_class(my_cnf):
             my_cnf['host'],
             my_cnf['db']
         )
-    engine = create_engine(uri, encoding='utf8', echo=False)
+    engine = create_engine(
+        uri,
+        encoding='utf8',
+        pool_recycle=60 * 10,
+        echo=False
+    )
     return sessionmaker(bind=engine, expire_on_commit=False)
 
 
