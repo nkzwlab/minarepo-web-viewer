@@ -1480,6 +1480,13 @@ var ReportMap = React.createClass({
         zoom: 15
       }
     );
+
+    if (!(0 < navigator.userAgent.indexOf('Android'))) {
+      reportMap.controls[google.maps.ControlPosition.TOP_RIGHT].push(
+        FullScreenControl(reportMap, '最大化', '戻る')
+      );
+    }
+
     // console.debug('initialized reportMap');
   },
   componentWillReceiveProps: function(newProps) {
