@@ -102,6 +102,7 @@ class MinaRepoDBA(object):
         col_keys = [
             'id', 'type', 'user', 'geo', 'timestamp', 'image', 'comment', 'address', 'level', 'finished'
         ]
+
         sql = 'SELECT %s FROM minarepo WHERE id = %%s;' % cols
         with self.cursor() as cursor:
             ret = dict()
@@ -112,6 +113,47 @@ class MinaRepoDBA(object):
             ret['geo'] = parse_geo_point(ret['geo'])
 
         return ret
+
+    def backup_for_delete(self, report_id):
+        report = self.get_report(report_id)
+
+        now = datetime.datetime.now()
+        cols = (
+            'id', 'type', 'user', 'geo', 'timestamp', 'image',
+            'comment', 'address', 'level', 'finished', 'deleted_at'
+        )
+        orig_cols = [ c for c in cols if c != 'deleted_at' ]
+        cat_cols = ','.join(cols)
+        p_holders = ['%s'] * len(cols)
+        for i, c in enumerate(cols):
+            if c == 'geo':
+                geo_idx = i
+        p_holders[geo_idx] = 'ST_GeomFromText(\'POINT(%s %s)\')'
+        p_holders = ','.join(p_holders)
+        args = []
+        for c in orig_cols:
+            if c == 'geo':
+                lat, lng = report['geo']
+                args.append(float(lat))
+                args.append(float(lng))
+            else:
+                args.append(report[c])
+        args.append(now)
+        sql = 'INSERT INTO deleted_minarepo(%s) VALUES (%s);' % (cat_cols, p_holders)
+        # print '-----------backup_for_delete'
+        # print 'len(args) = %d' % len(args)
+        # print 'SQL: %s' % sql
+        # import pprint
+        # print 'Args: %s' % pprint.pformat(args)
+        with self.cursor() as cursor:
+            cursor.execute(sql, args)
+
+    def delete(self, report_id):
+        self.backup_for_delete(report_id)
+        with self.cursor() as cursor:
+            sql = 'DELETE FROM minarepo WHERE id = %s;'
+            args = (report_id,)
+            cursor.execute(sql, args)
 
     def insert_report(self, repo_type, user, lat, lon, img, comm, key):
         self.ensure_connection()
