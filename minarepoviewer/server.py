@@ -277,6 +277,15 @@ class MinaRepoViewer(object):
             return self._json_response(None, 500)
         return self._json_response(ret)
 
+    def api_report_delete(self, report_id):
+        report = self._dba.get_report(report_id)
+        if not report:
+            return self._json_response(None, 404)
+        self._dba.delete(report_id)
+
+        result = dict(deleted_report_id=report_id)
+        return self._json_response(result)
+
     def static(self, file_name):
         return static_file(file_name, root=self._static_dir)
 
@@ -384,6 +393,8 @@ class MinaRepoViewer(object):
         app.route('/api/detail/<report_id>', ['GET'], self.api_detail)
         app.route('/api/report/<report_id>/comments', ['GET'], self.api_report_comments)
         app.route('/api/report/<report_id>/comments/new', ['GET', 'POST'], self.api_comment_new)
+        app.route('/api/report/<report_id>/delete', ['DELETE'], self.api_report_delete)
+
         app.route('/export/reports', ['GET', 'POST'], self.export_reports)
         app.route('/post/new_report', ['POST'], self.insert_report)
 

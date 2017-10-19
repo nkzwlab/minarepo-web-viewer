@@ -38,3 +38,18 @@ create table geo_layer(
   content longtext not null,
   created datetime not null
 );
+
+drop table if exists `deleted_minarepo`;
+create table deleted_minarepo(
+  `id` bigint not null,
+  `type` varchar(100) NOT NULL,
+  `user` varchar(100) NOT NULL,
+  `geo` geometry NOT NULL,
+  `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `image` mediumtext,
+  `comment` mediumtext,
+  `address` varchar(255) DEFAULT NULL,
+  `level` int not null default 0,
+  `finished` tinyint default 0,
+  `deleted_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

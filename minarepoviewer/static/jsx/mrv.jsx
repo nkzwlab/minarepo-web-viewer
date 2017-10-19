@@ -711,7 +711,10 @@ var constants = {
   UPDATE_SEARCH_QUERY: 'UPDATE_SEARCH_QUERY',
   UPDATE_TIME_RANGE_BUTTON_INDEX: 'UPDATE_TIME_RANGE_BUTTON_INDEX',
   TOGGLE_SHOW_MAP_PINS: 'TOGGLE_SHOW_MAP_PINS',
-  SELECT_LAYER: 'SELECT_LAYER'
+  SELECT_LAYER: 'SELECT_LAYER',
+  START_DELETING: 'START_DELETING',
+  DELETE_SUCCESS: 'DELETE_SUCCESS',
+  DELETE_FAILED: 'DELETE_FAILED'
 };
 
 var MinaRepoStore = Fluxxor.createStore({
@@ -751,6 +754,8 @@ var MinaRepoStore = Fluxxor.createStore({
     this.showMapPins = true;
     this.selectedLayerIndex = 0;
     this.layers = [ {id: 0, name: '(地図レイヤなし)'} ];
+    this.isDeleteRequesting = false;
+    this.isDeleteFailed = false;
 
     this.bindActions(constants.START_FETCHING_REPORTS, this.onStartFetchingReports);
     this.bindActions(constants.FETCHING_REPORTS_SUCCESS, this.onFetchingReportsSuccess);
@@ -823,7 +828,9 @@ var MinaRepoStore = Fluxxor.createStore({
       timeRangeButtonIndex: this.timeRangeButtonIndex,
       showMapPins: this.showMapPins,
       selectedLayerIndex: this.selectedLayerIndex,
-      layers: this.layers
+      layers: this.layers,
+      isDeleteRequesting: this.isDeleteRequesting,
+      isDeleteFailed: this.isDeleteFailed
     }
   },
   onStartFetchingReports: function(data) {
@@ -1051,6 +1058,21 @@ var MinaRepoStore = Fluxxor.createStore({
   onSelectLayer: function(data) {
     this.selectedLayerIndex = data.selectedLayerIndex;
     this.emit('change');
+  },
+  onStartDeleting: function(data) {
+    this.isDeleteRequesting = true;
+    this.isDeleteFailed = false;
+    this.emit('change');
+  },
+  onDeleteSuccess: function(data) {
+    this.isDeleteRequesting = false;
+    this.isDeleteFailed = false;
+    this.emit('change');
+  },
+  onDeleteFailed: function(data) {
+    this.isDeleteRequesting = false;
+    this.isDeleteFailed = true;
+    this.emit('change');
   }
 });
 
@@ -1180,6 +1202,15 @@ var actions = {
   },
   onSelectLayer: function(data) {
     this.dispatch(constants.SELECT_LAYER, data);
+  },
+  onStartDeleting: function(data) {
+    this.dispatch(constants.START_DELETING, data);
+  },
+  onDeleteSuccess: function(data) {
+    this.dispatch(constants.DELETE_SUCCESS, data);
+  },
+  onDeleteFailed: function(data) {
+    this.dipsatch(constants.DELETE_FAILED, data);
   }
 };
 
@@ -1221,6 +1252,30 @@ var ReportDetail = React.createClass({
     var hashMatch = window.location.hash.match(reportHashPattern);
     var reportId = parseInt(hashMatch[1]);
     flux.actions.onToggleSmartcheck({ id : reportId });
+  },
+  onDeleteButtonClick: function(event) {
+    var isDeleteConfirmed = confirm('本当に削除してよろしいですか？');
+    if (isDeleteConfirmed) {
+      console.log('delete confirm: YES');
+      location.href = '/';
+
+      var url = '/api/report/' + this.props.clickedPinReportId + '/delete';
+
+      $.ajax({
+        url: url,
+        method: 'DELETE',
+        success: function(data, status, jqxhr) {
+          flux.actions.onDeleteSuccess();
+        },
+        error: function() {
+          flux.actions.onDeleteFailed();
+        }
+      });
+      flux.actions.onStartDeleting();
+    } else {
+      console.log('delete confirm: NO');
+    }
+
   },
   render: function() {
     var pinId = this.props.clickedPinReportId;
@@ -1360,6 +1415,13 @@ var ReportDetail = React.createClass({
       detailImage = '/static/img/loading-image.gif';  // FIXME: もっとエラーっぽい画像にしたい
     }
 
+    var delBtn;
+    if (this.props.isDeleteRequesting) {
+      delBtn = <button className="secondary button">削除する</button>;
+    } else {
+      delBtn = <button className="shrink alert button" onClick={this.onDeleteButtonClick}>削除する</button>;
+    }
+
     return <div className="row mrv-detail">
       <div className="large-6 columns mrv-detail-img-container">
         <div className="mrv-detail-img-inner-container">
@@ -1397,7 +1459,9 @@ var ReportDetail = React.createClass({
           <dd>{detailComment}</dd>
         </dl>
         <div className="columns text-center">
-          <button className="button" onClick={this.smartcheckToggleButtonHandler}>スマートチェックに書き出す</button>
+            <button className="shrink button" onClick={this.smartcheckToggleButtonHandler}>スマートチェックに書き出す</button>
+            &nbsp;
+            {delBtn}
         </div>
       </div>
     </div>;
@@ -2302,6 +2366,8 @@ var MinaRepoViewer = React.createClass({
       isFetchingDetailFailed={this.props.isFetchingDetailFailed}
       selectedReport={this.props.selectedReport}
       clickedPinReportId={this.props.clickedPinReportId}
+      isDeleteRequesting={this.props.isDeleteRequesting}
+      isDeleteFailed={this.props.isDeleteFailed}
     />;
 
     var reportCommentPanel = <ReportCommentPanel
@@ -2404,6 +2470,8 @@ var MinaRepoViewerApp = React.createClass({
       showMapPins={s.showMapPins}
       selectedLayerIndex={s.selectedLayerIndex}
       layers={s.layers}
+      isDeleteRequesting={s.isDeleteRequesting}
+      isDeleteFailed={s.isDeleteFailed}
     />;
   }
 });
