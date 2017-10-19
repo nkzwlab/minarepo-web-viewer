@@ -3,6 +3,8 @@ server {
   listen 80 default_server;
   listen [::]:80 default_server ipv6only=on;
 
+  client_max_body_size 20M;
+
   server_name fujisawa-minarepo.ht.sfc.keio.ac.jp;
 
   location = /favicon.ico {
