@@ -13,6 +13,9 @@ $rtype-mini-icon-size: 20px;
 
 $table-font-size-smartphone: 12px;
 
+$color_error: red;
+$bgcolor_error: #ffcccc;
+
 .mrv-hidden {
     display: none;
 }
@@ -328,7 +331,17 @@ UL.success {
 
 UL.error {
     LI {
-        color: red !important;
+        color: $color_error !important;
 
     }
+}
+
+
+DIV.error {
+    color: $color_error;
+    background-color: $bgcolor_error;
+    padding: 8px;
+    border-color: $color_error;
+    border-width: 1px;
+    border-style: solid;
 }

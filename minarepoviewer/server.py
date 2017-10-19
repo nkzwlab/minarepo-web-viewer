@@ -13,7 +13,11 @@ import base64
 from contextlib import contextmanager, closing
 
 import click
-from bottle import Bottle, HTTPResponse, request, response, route, static_file, auth_basic, BaseRequest
+from bottle import (
+    Bottle, HTTPResponse, request, response,
+    route, static_file, auth_basic, BaseRequest,
+    redirect
+)
 from jinja2 import Template
 from beaker.middleware import SessionMiddleware
 
@@ -375,12 +379,83 @@ class MinaRepoViewer(object):
             return self._json_response(dict(layers=ret))
 
     def api_kml_delete(self, kml_id):
-        with self.sessioN() as s:
+        with self.session() as s:
             geo_layer = s.query(GeoLayer).filter_by(id=int(kml_id)).first()
             if not geo_layer:
                 raise HTTPResponse(status=404, body='404 Not Found')
 
             return self._json_response(dict(layer=dict(id=geo_layer.id, name=geo_layer.name)))
+
+    def kml_update(self, kml_id):
+        session = self.beaker
+        with self.session() as s:
+            geo_layer = s.query(GeoLayer).filter_by(id=int(kml_id)).first()
+            if not geo_layer:
+                raise HTTPResponse(status=404, body='404 Not Found')
+
+            if request.method == 'POST':
+                if session['csrf'] != request.params.get('csrf', ''):
+                    return redirect('/')
+
+                errors = []
+                name = request.params.get('name', '')
+                name = name.decode('utf-8')
+                if not name:
+                    errors.append(u'KMLレイヤーの名前が指定されていません')
+
+
+                if len(errors) == 0:
+                    upload = request.files.get('kml_file', '')
+                    if upload:
+                        tmp_fname = '/tmp/minarepo_kml_%s' % random_str(40)
+                        try:
+                            upload.save(tmp_fname)
+                            with open(tmp_fname, 'rb') as fh:
+                                fdata = fh.read()
+                            geo_layer.content = fdata
+                            geo_layer.file_size= len(fdata)
+                        finally:
+                            os.remove(tmp_fname)
+
+                    geo_layer.name = name
+                    s.add(geo_layer)
+                    s.commit()
+                    return redirect('/kml/')
+                else:
+                    return self._render(
+                        'kml_update.html.j2', geo_layer=geo_layer, session=session,
+                        errors=errors
+                    )
+
+        return self._render('kml_update.html.j2', geo_layer=geo_layer, session=session)
+
+    def kml_delete(self, kml_id):
+        session = self.beaker
+        with self.session() as s:
+            geo_layer = s.query(GeoLayer).filter_by(id=int(kml_id)).first()
+            if not geo_layer:
+                raise HTTPResponse(status=404, body='404 Not Found')
+
+            if request.method == 'POST':
+                if session['csrf'] != request.params.get('csrf', ''):
+                    return redirect('/')
+
+                confirmed = request.params.get('confirmed', None)
+                if not confirmed:
+                    session['csrf'] = random_str(100)
+                    return self._render(
+                        'kml_delete.html.j2',
+                        geo_layer=geo_layer,
+                        error=u'チェックしてください',
+                        session=session
+                    )
+
+                s.delete(geo_layer)
+                s.commit()
+                return redirect('/kml/')
+            else:
+                session['csrf'] = random_str(100)
+                return self._render('kml_delete.html.j2', geo_layer=geo_layer, session=session)
 
     def create_wsgi_app(self):
         app = Bottle(catchall=False)
@@ -402,6 +477,8 @@ class MinaRepoViewer(object):
         app.route('/api/kml/delete/<kml_id>', ['DELETE'], self.api_kml_delete)
         app.route('/kml/', ['GET', 'POST'], self.kml_index)
         app.route('/kml/file/<kml_id>', ['GET', 'POST'], self.kml_file)
+        app.route('/kml/update/<kml_id>', ['GET', 'POST'], self.kml_update)
+        app.route('/kml/delete/<kml_id>', ['GET', 'POST'], self.kml_delete)
 
         @app.route('/', method='GET')
         @auth_basic(check)

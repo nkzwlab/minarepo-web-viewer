@@ -40,5 +40,6 @@ class GeoLayer(Base):
         return dict(
             id=self.id,
             name=self.name,
+            file_size=self.file_size,
             created=self.created.strftime('%Y-%m-%d %H:%M:%S')
         )

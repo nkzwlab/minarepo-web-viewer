@@ -25,7 +25,9 @@
             <tr>
               <th>ID</th>
               <th>KMLレイヤー名</th>
+              <th>ファイルサイズ</th>
               <th>作成日時</th>
+              <th>操作</th>
             </tr>
           </thead>
           <tbody>
@@ -33,12 +35,17 @@
               <tr>
                 <td>{{layer.id}}</td>
                 <td>{{layer.name}} (<a href="/kml/file/{{layer.id}}?download=true" target="_blank">ダウンロード</a>)</td>
+                <td>{{layer.file_size}}</td>
                 <td>{{layer.created}}</td>
+                <td>
+                    <a href="/kml/delete/{{layer.id}}">削除</a> /
+                    <a href="/kml/update/{{layer.id}}">更新</a>
+                </td>
               </tr>
             {% endfor %}
             {% if not layers %}
               <tr>
-                <td colspan="3">
+                <td colspan="5">
                   KMLレイヤーは１件も登録されていません
                 </td>
               </tr>
@@ -69,7 +76,7 @@
           <input type="hidden" name="csrf" value="{{session.csrf}}">
           KMLレイヤーの名前: <input type="text" name="name" size="20" value="{{kml_layer_name}}"><br/>
           <input type="file" name="kml_file"><br/>
-          <input type="submit" value="KMLファイルをアップロード">
+          <input class="button" type="submit" value="KMLファイルをアップロード">
         </form>
       </div>
     </div>

@@ -1,0 +1,39 @@
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/foundation.min.css">
+    <link rel="stylesheet" href="/static/css/mrv.css">
+    <script src="/static/js/vendor/jquery-2.1.4.min.js"></script>
+    <script src="/static/js/vendor/foundation.min.js"></script>
+    <title>KMLファイルのアップロード</title>
+  </head>
+  <body>
+    <div class="row">
+      <div class="large-12 columns">
+        <h1>KMLファイルの更新: {{geo_layer.name|safe}} (ID={{geo_layer.id|safe}})</h1>
+        &gt;&gt;<a href="/kml/">Back</a>
+
+        {% if errors %}
+          <div class="error">
+            エラーがあります:
+
+            <ul>
+              {% for item in errors %}
+                <li>{{item|safe}}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+
+        <form action="/kml/update/{{geo_layer.id}}" method="POST" enctype="multipart/form-data">
+          <input type="hidden" name="csrf" value="{{session.csrf}}">
+
+          KMLレイヤーの名前: <input type="text" name="name" value="{{geo_layer.name|safe}}"><br/>
+          <input type="file" name="kml_file"><br/>
+          <input class="button" type="submit" value="内容を更新する">
+        </form>
+      </div>
+    </div>
+  </body>
+</html>
